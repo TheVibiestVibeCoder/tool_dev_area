@@ -13,10 +13,12 @@ $config = loadConfig('config.json');
 
 // Build gruppen_labels from config
 $gruppen_labels = [];
+$logoUrl = ''; // Default (no logo)
 if ($config && isset($config['categories'])) {
     foreach ($config['categories'] as $category) {
         $gruppen_labels[$category['key']] = $category['abbreviation'];
     }
+    $logoUrl = $config['logo_url'] ?? $logoUrl;
 } else {
     // Fallback if config cannot be loaded
     $gruppen_labels = [
@@ -45,9 +47,9 @@ if (isset($_GET['mode']) && $_GET['mode'] === 'pdf' && isset($_SESSION['is_admin
     <html lang="de">
     <head>
         <meta charset="UTF-8">
-        <title>Infraprotect Strategie Protokoll</title>
+        <title>Workshop Protokoll</title>
         <style>
-            /* PDF Style angepasst an Infraprotect Clean Look */
+            /* PDF Style */
             body { font-family: sans-serif; color: #32373c; line-height: 1.5; padding: 40px; max-width: 900px; margin: 0 auto; }
             h1 { font-family: sans-serif; font-size: 2.2rem; border-bottom: 3px solid #00658b; padding-bottom: 10px; margin-bottom: 5px; color: #00658b; text-transform: uppercase; }
             .meta { color: #666; font-size: 0.9rem; margin-bottom: 3rem; }
@@ -61,7 +63,7 @@ if (isset($_GET['mode']) && $_GET['mode'] === 'pdf' && isset($_SESSION['is_admin
     </head>
     <body onload="window.print()">
         <h1>Strategische Maßnahmen</h1>
-        <div class="meta">Infraprotect Workshop Ergebnisse • Generiert am <?= date('d.m.Y \u\m H:i') ?> Uhr</div>
+        <div class="meta">Workshop Ergebnisse • Generiert am <?= date('d.m.Y \u\m H:i') ?> Uhr</div>
 
         <?php foreach ($pdf_labels as $key => $label): ?>
             <div class="section">
@@ -253,14 +255,14 @@ $data = safeReadJson($file);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel | Infraprotect</title>
+    <title>Admin Panel | Live Situation Room</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
     
     <style>
-        /* --- INFRAPROTECT DESIGN SYSTEM --- */
+        /* --- DESIGN SYSTEM --- */
         :root {
             /* Colors */
             --ip-blue: #00658b;       /* Primary Brand Color */
@@ -506,7 +508,7 @@ $data = safeReadJson($file);
 
         <header class="admin-header">
             <div>
-                <span class="subtitle">Infraprotect Board</span>
+                <span class="subtitle">Live Situation Room</span>
                 <h1>Moderation</h1>
             </div>
             <div class="header-actions">

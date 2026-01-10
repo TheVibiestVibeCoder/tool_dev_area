@@ -8,7 +8,8 @@ $config = loadConfig('config.json');
 
 // Build gruppen from config
 $gruppen = [];
-$headerTitle = 'Strategien<br>Black-Outs'; // Default
+$headerTitle = 'Live Situation Room'; // Default
+$logoUrl = ''; // Default (no logo)
 
 if ($config && isset($config['categories'])) {
     foreach ($config['categories'] as $category) {
@@ -18,6 +19,7 @@ if ($config && isset($config['categories'])) {
         ];
     }
     $headerTitle = $config['header_title'] ?? $headerTitle;
+    $logoUrl = $config['logo_url'] ?? $logoUrl;
 } else {
     // Fallback if config cannot be loaded
     $gruppen = [
@@ -50,7 +52,7 @@ $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Situation Room | Infraprotect</title>
+    <title>Live Situation Room</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -58,7 +60,7 @@ $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <style>
-        /* --- INFRAPROTECT THEME ENGINE --- */
+        /* --- THEME ENGINE --- */
         :root {
             /* Corporate Colors */
             --ip-blue: #00658b;
@@ -91,15 +93,18 @@ $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
             --spotlight-opacity: 0;
         }
 
-        /* Dark Mode Override (falls via JS getoggelt, hier als "High Contrast" interpretiert) */
+        /* Dark Mode Override */
         body.light-mode {
-            /* Wir nutzen die Klasse "light-mode" im JS, aber hier kehren wir es um 
-               oder passen es an, da das Corporate Design per se "Light" ist. */
-            --bg-body: #1a1a1a;
+            /* Dark mode colors */
+            --ip-grey-bg: #1a1a1a;
             --ip-card-bg: #2c2c2c;
+            --ip-dark: #f4f4f4;
+            --ip-border: #444444;
             --text-main: #f4f4f4;
             --text-muted: #aaaaaa;
+            --text-light: #ffffff;
             --card-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            --card-shadow-hover: 0 10px 20px rgba(0,0,0,0.8);
             --logo-filter: brightness(0) invert(1);
         }
 
@@ -144,7 +149,7 @@ $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
         /* HEADER */
         .header-split {
             display: flex; justify-content: space-between; align-items: center;
-            background: #fff;
+            background: var(--ip-card-bg);
             padding: 1.5rem 3rem;
             margin-bottom: 2rem;
             border-bottom: 1px solid var(--ip-border);
@@ -208,6 +213,24 @@ $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
         .qr-section:hover { transform: translateY(-2px); box-shadow: var(--card-shadow); border-color: var(--ip-blue); }
         .qr-text { text-align: right; color: var(--ip-dark); font-size: 0.75rem; font-weight: 600; letter-spacing: 1px; line-height: 1.3; font-family: var(--font-heading); }
         .qr-wrapper { background: white; padding: 4px; display: inline-block; border-radius: 2px; }
+
+        /* QR Link - Always visible below QR code */
+        .qr-link {
+            display: block;
+            text-align: center;
+            margin-top: 0.5rem;
+            color: var(--ip-blue);
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 600;
+            font-family: var(--font-heading);
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease;
+        }
+        .qr-link:hover {
+            color: var(--ip-dark);
+            text-decoration: underline;
+        }
 
         /* MOBILE JOIN BUTTON */
         .mobile-join-btn {
@@ -340,7 +363,7 @@ $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
         .context-menu {
             position: absolute;
             z-index: 10000;
-            background: #fff;
+            background: var(--ip-card-bg);
             border: 1px solid var(--ip-border);
             box-shadow: 0 5px 20px rgba(0,0,0,0.15);
             border-radius: var(--radius-card);
@@ -392,8 +415,9 @@ $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
             .ep-logo { height: 40px; }
             .logo-row { gap: 15px; }
 
-            /* Hide QR, Show Button */
+            /* Hide QR container, Show Button */
             .qr-section { display: none !important; }
+            .qr-link { display: none !important; }
             .mobile-join-btn { display: inline-flex; }
         }
         
@@ -435,11 +459,12 @@ $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
 <div class="container">
     <header class="header-split">
         <div class="header-content-left">
+            <?php if (!empty($logoUrl)): ?>
             <div class="logo-row">
-                <img src="https://infraprotect.com/wp-content/uploads/2019/05/Infraprotect_Logo.png" alt="Infraprotect" class="ep-logo">
-                <span class="logo-separator">|</span>
-                <img src="" alt="" class="dc-logo"> </div>
-            
+                <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Logo" class="ep-logo">
+            </div>
+            <?php endif; ?>
+
             <div>
                 <span class="subtitle">Live Situation Room</span>
                 <h1><?= $headerTitle ?></h1>
@@ -450,9 +475,12 @@ $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
             </a>
         </div>
         
-        <div class="qr-section" id="openQr">
-            <div class="qr-text">SCAN TO<br>JOIN<br><span style="opacity: 0.6; font-weight: normal;">CLICK TO ZOOM</span></div>
-            <div class="qr-wrapper" id="qrcodeSmall"></div>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <div class="qr-section" id="openQr">
+                <div class="qr-text">SCAN TO<br>JOIN<br><span style="opacity: 0.6; font-weight: normal;">CLICK TO ZOOM</span></div>
+                <div class="qr-wrapper" id="qrcodeSmall"></div>
+            </div>
+            <a href="eingabe.php" class="qr-link">oder direkt zum Formular →</a>
         </div>
     </header>
 

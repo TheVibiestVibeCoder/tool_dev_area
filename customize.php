@@ -31,6 +31,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validate and process header title
     $newHeaderTitle = trim($_POST['header_title'] ?? '');
 
+    // Validate and process logo URL
+    $newLogoUrl = trim($_POST['logo_url'] ?? '');
+
     // Validate and process categories
     $newCategories = [];
     $categoryKeys = $_POST['category_key'] ?? [];
@@ -84,6 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Save new config
         $newConfig = [
             'header_title' => $newHeaderTitle,
+            'logo_url' => $newLogoUrl,
             'categories' => $newCategories
         ];
 
@@ -105,14 +109,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anpassen | Infraprotect</title>
+    <title>Anpassen | Live Situation Room</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
 
     <style>
-        /* --- INFRAPROTECT DESIGN SYSTEM --- */
+        /* --- DESIGN SYSTEM --- */
         :root {
             /* Colors */
             --ip-blue: #00658b;
@@ -384,7 +388,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="container">
     <header class="admin-header">
         <div>
-            <span class="subtitle">Infraprotect Board</span>
+            <span class="subtitle">Live Situation Room</span>
             <h1>Anpassung</h1>
         </div>
         <div class="header-actions">
@@ -402,13 +406,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <!-- HEADER SECTION -->
         <div class="form-section">
-            <h2>Hauptüberschrift</h2>
+            <h2>Dashboard Konfiguration</h2>
             <div class="form-group">
                 <label for="header_title">
                     Titel auf dem Dashboard
                     <span class="help-text">HTML erlaubt (z.B. &lt;br&gt; für Zeilenumbruch)</span>
                 </label>
                 <input type="text" id="header_title" name="header_title" value="<?= htmlspecialchars($config['header_title'] ?? '') ?>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="logo_url">
+                    Logo URL
+                    <span class="help-text">Vollständige URL zu Ihrem Logo (z.B. https://example.com/logo.png)</span>
+                </label>
+                <input type="text" id="logo_url" name="logo_url" value="<?= htmlspecialchars($config['logo_url'] ?? '') ?>" placeholder="https://example.com/logo.png">
             </div>
         </div>
 
