@@ -11,13 +11,15 @@ $config = loadConfig('config.json');
 
 // Build gruppen from config
 $gruppen = [];
-$headerTitle = 'Strategien gegen<br>Black-Outs'; // Default
+$headerTitle = 'Live Situation Room'; // Default
+$logoUrl = ''; // Default (no logo)
 
 if ($config && isset($config['categories'])) {
     foreach ($config['categories'] as $category) {
         $gruppen[$category['key']] = $category['display_name'] ?? $category['name'];
     }
     $headerTitle = $config['header_title'] ?? $headerTitle;
+    $logoUrl = $config['logo_url'] ?? $logoUrl;
 } else {
     // Fallback if config cannot be loaded
     $gruppen = [
@@ -76,14 +78,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Eingabe | Infraprotect Workshop</title>
+    <title>Eingabe | Live Situation Room</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
     
     <style>
-        /* --- INFRAPROTECT DESIGN SYSTEM --- */
+        /* --- DESIGN SYSTEM --- */
         :root {
             /* Colors */
             --ip-blue: #00658b;
@@ -333,8 +335,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <div class="form-wrapper">
     <header>
-        <img src="https://infraprotect.com/wp-content/uploads/2019/05/Infraprotect_Logo.png" alt="Infraprotect Logo" class="header-logo">
-        <span class="subtitle">Strategie Workshop 2025</span>
+        <?php if (!empty($logoUrl)): ?>
+        <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Logo" class="header-logo">
+        <?php endif; ?>
+        <span class="subtitle">Live Workshop</span>
         <h1><?= $headerTitle ?></h1>
         <p style="color: #767676; margin-top: 10px; font-size: 0.9rem; font-weight: 400;">Wähle einen Bereich, um die Leitfragen zu laden.</p>
     </header>

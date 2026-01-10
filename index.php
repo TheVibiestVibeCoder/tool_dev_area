@@ -8,7 +8,8 @@ $config = loadConfig('config.json');
 
 // Build gruppen from config
 $gruppen = [];
-$headerTitle = 'Strategien<br>Black-Outs'; // Default
+$headerTitle = 'Live Situation Room'; // Default
+$logoUrl = ''; // Default (no logo)
 
 if ($config && isset($config['categories'])) {
     foreach ($config['categories'] as $category) {
@@ -18,6 +19,7 @@ if ($config && isset($config['categories'])) {
         ];
     }
     $headerTitle = $config['header_title'] ?? $headerTitle;
+    $logoUrl = $config['logo_url'] ?? $logoUrl;
 } else {
     // Fallback if config cannot be loaded
     $gruppen = [
@@ -50,7 +52,7 @@ $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Situation Room | Infraprotect</title>
+    <title>Live Situation Room</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -58,7 +60,7 @@ $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <style>
-        /* --- INFRAPROTECT THEME ENGINE --- */
+        /* --- THEME ENGINE --- */
         :root {
             /* Corporate Colors */
             --ip-blue: #00658b;
@@ -435,11 +437,12 @@ $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
 <div class="container">
     <header class="header-split">
         <div class="header-content-left">
+            <?php if (!empty($logoUrl)): ?>
             <div class="logo-row">
-                <img src="https://infraprotect.com/wp-content/uploads/2019/05/Infraprotect_Logo.png" alt="Infraprotect" class="ep-logo">
-                <span class="logo-separator">|</span>
-                <img src="" alt="" class="dc-logo"> </div>
-            
+                <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Logo" class="ep-logo">
+            </div>
+            <?php endif; ?>
+
             <div>
                 <span class="subtitle">Live Situation Room</span>
                 <h1><?= $headerTitle ?></h1>

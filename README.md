@@ -1,4 +1,4 @@
-# Infraprotect Live Situation Room
+# Live Situation Room
 
 A real-time collaborative workshop tool designed for collecting, moderating, and displaying ideas/strategies in live workshop settings with 50+ concurrent participants.
 
@@ -37,6 +37,7 @@ This tool provides a complete solution for interactive workshops where participa
 - **Real-time Feed**: Live view of all submissions as they arrive
 
 ### ⚙️ Customization Panel (`customize.php`)
+- **Logo Customization**: Upload and display your own logo by providing a URL
 - **Header Customization**: Set workshop title with HTML support
 - **Category Management**: Add, edit, remove categories dynamically
 - **Guiding Questions**: Configure category-specific prompts
@@ -202,12 +203,30 @@ Edit CSS variables in any PHP file's `<style>` section:
 }
 ```
 
+### Logo Customization
+Set your custom logo URL in the customization panel or directly in `config.json`:
+
+```json
+{
+    "header_title": "Your Workshop Title<br>Second Line",
+    "logo_url": "https://your-domain.com/path/to/logo.png",
+    "categories": [...]
+}
+```
+
+The logo will automatically appear on:
+- Main dashboard (`index.php`)
+- Input form (`eingabe.php`)
+
+If `logo_url` is empty or not set, no logo will be displayed.
+
 ### Categories Structure
 Edit `config.json` or use the customization panel:
 
 ```json
 {
     "header_title": "Your Workshop Title<br>Second Line",
+    "logo_url": "https://your-domain.com/path/to/logo.png",
     "categories": [
         {
             "key": "category_key",
@@ -375,7 +394,7 @@ Perfect for:
 
 ## 📄 License
 
-This tool was developed for Infraprotect workshops. Ensure you have appropriate rights before deploying or modifying.
+This tool is provided as-is for workshop and collaborative session purposes. Ensure you have appropriate rights before deploying or modifying for commercial use.
 
 ## 🤝 Support & Contribution
 
