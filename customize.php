@@ -5,13 +5,11 @@
 
 session_start();
 
-// Admin check - redirect if not logged in
-if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true) {
-    header("Location: admin.php");
-    exit;
-}
-
 require_once 'file_handling_robust.php';
+require_once 'user_management.php';
+
+// Require authentication - redirect if not logged in
+requireAuth('admin.php');
 
 $configFile = 'config.json';
 $message = '';
@@ -27,6 +25,7 @@ if ($config === null) {
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCSRFToken();
 
     // Validate and process header title
     $newHeaderTitle = trim($_POST['header_title'] ?? '');
@@ -399,6 +398,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php endif; ?>
 
     <form method="POST" id="customizeForm">
+        <?php csrfField(); ?>
 
         <!-- HEADER SECTION -->
         <div class="form-section">

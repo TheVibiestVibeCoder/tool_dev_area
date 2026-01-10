@@ -5,10 +5,9 @@
 
 session_start();
 
-$admin_passwort = "workshop2025";
-
-// Load config to get dynamic categories
+// Load dependencies
 require_once 'file_handling_robust.php';
+require_once 'user_management.php';
 $config = loadConfig('config.json');
 
 // Build gruppen_labels from config
@@ -29,7 +28,7 @@ if ($config && isset($config['categories'])) {
 }
 
 // --- PDF EXPORT MODE ---
-if (isset($_GET['mode']) && $_GET['mode'] === 'pdf' && isset($_SESSION['is_admin'])) {
+if (isset($_GET['mode']) && $_GET['mode'] === 'pdf' && isAuthenticated() && hasPermission('export')) {
     $file = 'daten.json';
     $data = safeReadJson($file);
     
@@ -89,17 +88,25 @@ if (isset($_GET['mode']) && $_GET['mode'] === 'pdf' && isset($_SESSION['is_admin
 }
 
 // --- LOGIN & LOGOUT ---
+$error = null;
+
 if (isset($_POST['login'])) {
-    if ($_POST['password'] === $admin_passwort) {
-        session_regenerate_id(true);
-        $_SESSION['is_admin'] = true;
+    $username = trim($_POST['username'] ?? '');
+    $password = $_POST['password'] ?? '';
+
+    $user = authenticateUser($username, $password);
+
+    if ($user) {
+        loginUser($user);
+        header("Location: admin.php");
+        exit;
     } else {
-        $error = "ACCESS DENIED";
+        $error = "ACCESS DENIED - Invalid username or password";
     }
 }
 
 if (isset($_GET['logout'])) {
-    session_destroy();
+    logoutUser();
     header("Location: admin.php");
     exit;
 }
@@ -107,22 +114,43 @@ if (isset($_GET['logout'])) {
 // --- ACTION HANDLER (ATOMIC) ---
 $file = 'daten.json';
 
-if (isset($_SESSION['is_admin'])) {
+if (isAuthenticated()) {
     $is_ajax = isset($_REQUEST['ajax']);
     $req = $_REQUEST;
 
+    // CSRF Protection for all write operations
+    $isWriteOperation = isset($req['delete']) || isset($req['deleteall']) || isset($req['toggle_id'])
+                       || isset($req['toggle_focus']) || (isset($req['action']) && $req['action'] === 'edit')
+                       || (isset($req['action']) && $req['action'] === 'move') || isset($req['action_col'])
+                       || isset($req['action_all']);
+
+    if ($isWriteOperation && !isset($req['csrf_token'])) {
+        http_response_code(403);
+        die("CSRF token missing");
+    }
+
+    if ($isWriteOperation && !validateCSRFToken($req['csrf_token'])) {
+        http_response_code(403);
+        die("Invalid CSRF token");
+    }
+
     // 🔒 DELETE SINGLE ENTRY
     if (isset($req['delete'])) {
+        requirePermission('delete_single');
         $id = $req['delete'];
         atomicUpdate($file, function($data) use ($id) {
-            return array_values(array_filter($data, fn($e) => $e['id'] !== $id));
+            $filtered = array_values(array_filter($data, fn($e) => $e['id'] !== $id));
+            logError("Entry deleted by " . getAuditUsername() . ": $id");
+            return $filtered;
         });
         if ($is_ajax) { echo "OK"; exit; }
     }
 
-    // 🔒 DELETE ALL
+    // 🔒 DELETE ALL (Admin only)
     if (isset($req['deleteall']) && $req['deleteall'] === 'confirm') {
+        requirePermission('all'); // Only admins can delete all
         atomicUpdate($file, function($data) {
+            logError("ALL entries deleted by " . getAuditUsername());
             return [];
         });
         if ($is_ajax) { echo "OK"; exit; }
@@ -130,11 +158,13 @@ if (isset($_SESSION['is_admin'])) {
 
     // 🔒 TOGGLE VISIBILITY
     if (isset($req['toggle_id'])) {
+        requirePermission('toggle');
         $id = $req['toggle_id'];
         atomicUpdate($file, function($data) use ($id) {
             foreach ($data as &$entry) {
                 if ($entry['id'] === $id) {
                     $entry['visible'] = !($entry['visible'] ?? false);
+                    $entry = addAuditInfo($entry, 'visibility_toggled');
                 }
             }
             return $data;
@@ -144,12 +174,14 @@ if (isset($_SESSION['is_admin'])) {
 
     // 🔒 TOGGLE FOCUS (nur EIN Eintrag kann focused sein)
     if (isset($req['toggle_focus'])) {
+        requirePermission('focus');
         $id = $req['toggle_focus'];
         atomicUpdate($file, function($data) use ($id) {
             foreach ($data as &$entry) {
                 if ($entry['id'] === $id) {
                     $currentFocus = $entry['focus'] ?? false;
                     $entry['focus'] = !$currentFocus;
+                    $entry = addAuditInfo($entry, $currentFocus ? 'unfocused' : 'focused');
                 } else {
                     $entry['focus'] = false; // Alle anderen ausschalten
                 }
@@ -161,6 +193,7 @@ if (isset($_SESSION['is_admin'])) {
 
     // 🔒 EDIT ENTRY TEXT
     if (isset($req['action']) && $req['action'] === 'edit' && isset($req['id']) && isset($req['new_text'])) {
+        requirePermission('edit');
         $id = $req['id'];
         $new_text = trim($req['new_text']);
 
@@ -169,6 +202,7 @@ if (isset($_SESSION['is_admin'])) {
                 foreach ($data as &$entry) {
                     if ($entry['id'] === $id) {
                         $entry['text'] = $new_text;
+                        $entry = addAuditInfo($entry, 'edited');
                     }
                 }
                 return $data;
@@ -181,12 +215,14 @@ if (isset($_SESSION['is_admin'])) {
 
     // 🔒 MOVE TO DIFFERENT THEMA
     if (isset($req['action']) && $req['action'] === 'move' && isset($req['id']) && isset($req['new_thema'])) {
+        requirePermission('edit');
         $id = $req['id'];
         $new_thema = $req['new_thema'];
         atomicUpdate($file, function($data) use ($id, $new_thema) {
             foreach ($data as &$entry) {
                 if ($entry['id'] === $id) {
                     $entry['thema'] = $new_thema;
+                    $entry = addAuditInfo($entry, 'moved');
                 }
             }
             return $data;
@@ -196,11 +232,13 @@ if (isset($_SESSION['is_admin'])) {
 
     // 🔒 SHOW ALL IN COLUMN
     if (isset($req['action_col']) && $req['action_col'] === 'show' && isset($req['col'])) {
+        requirePermission('toggle');
         $col = $req['col'];
         atomicUpdate($file, function($data) use ($col) {
             foreach ($data as &$entry) {
                 if ($entry['thema'] === $col) {
                     $entry['visible'] = true;
+                    $entry = addAuditInfo($entry, 'bulk_show');
                 }
             }
             return $data;
@@ -210,11 +248,13 @@ if (isset($_SESSION['is_admin'])) {
 
     // 🔒 HIDE ALL IN COLUMN
     if (isset($req['action_col']) && $req['action_col'] === 'hide' && isset($req['col'])) {
+        requirePermission('toggle');
         $col = $req['col'];
         atomicUpdate($file, function($data) use ($col) {
             foreach ($data as &$entry) {
                 if ($entry['thema'] === $col) {
                     $entry['visible'] = false;
+                    $entry = addAuditInfo($entry, 'bulk_hide');
                 }
             }
             return $data;
@@ -224,9 +264,11 @@ if (isset($_SESSION['is_admin'])) {
 
     // 🔒 SHOW ALL
     if (isset($req['action_all']) && $req['action_all'] === 'show') {
+        requirePermission('toggle');
         atomicUpdate($file, function($data) {
             foreach ($data as &$entry) {
                 $entry['visible'] = true;
+                $entry = addAuditInfo($entry, 'bulk_show_all');
             }
             return $data;
         });
@@ -235,9 +277,11 @@ if (isset($_SESSION['is_admin'])) {
 
     // 🔒 HIDE ALL
     if (isset($req['action_all']) && $req['action_all'] === 'hide') {
+        requirePermission('toggle');
         atomicUpdate($file, function($data) {
             foreach ($data as &$entry) {
                 $entry['visible'] = false;
+                $entry = addAuditInfo($entry, 'bulk_hide_all');
             }
             return $data;
         });
@@ -491,26 +535,38 @@ $data = safeReadJson($file);
 <body>
 
 <div class="container">
-    <?php if (!isset($_SESSION['is_admin'])): ?>
+    <?php if (!isAuthenticated()): ?>
         <div class="login-wrapper">
             <h1>ADMIN LOGIN</h1>
-            <?php if (isset($error)): ?>
-                <div class="error-msg">⚠️ <?= $error ?></div>
+            <?php if ($error): ?>
+                <div class="error-msg">⚠️ <?= htmlspecialchars($error) ?></div>
             <?php endif; ?>
             <form method="POST">
-                <input type="password" name="password" required autofocus placeholder="Passwort">
+                <input type="text" name="username" required autofocus placeholder="Username" autocomplete="username">
+                <input type="password" name="password" required placeholder="Password" autocomplete="current-password">
                 <button type="submit" name="login" class="btn btn-success">UNLOCK</button>
             </form>
+            <div style="margin-top: 1rem; padding: 1rem; background: #f9f9f9; border-radius: 4px; font-size: 0.85rem; color: #666;">
+                <strong>Default credentials:</strong><br>
+                Username: <code>admin</code><br>
+                Password: <code>admin123</code><br>
+                <em style="color: #cf2e2e;">⚠️ Change password after first login!</em>
+            </div>
         </div>
-    <?php else: ?>
+    <?php else:
+        $currentUser = getCurrentUser();
+    ?>
 
         <header class="admin-header">
             <div>
-                <span class="subtitle">Infraprotect Board</span>
+                <span class="subtitle">Infraprotect Board • <?= htmlspecialchars($currentUser['username']) ?> (<?= ucfirst($currentUser['role']) ?>)</span>
                 <h1>Moderation</h1>
             </div>
             <div class="header-actions">
                 <a href="customize.php" class="btn btn-primary">Anpassen</a>
+                <?php if (hasPermission('all')): ?>
+                    <a href="user_admin.php" class="btn btn-primary">Users</a>
+                <?php endif; ?>
                 <a href="admin.php?mode=pdf" target="_blank" class="btn btn-neutral">PDF Export</a>
                 <a href="index.php" target="_blank" class="btn btn-neutral">View Live</a>
                 <a href="admin.php?logout=1" class="btn btn-danger">Logout</a>
@@ -561,9 +617,10 @@ $data = safeReadJson($file);
     <?php endif; ?>
 </div>
 
-<?php if (isset($_SESSION['is_admin'])): ?>
+<?php if (isAuthenticated()): ?>
 <script>
     const gruppenLabels = <?= json_encode($gruppen_labels) ?>;
+    const csrfToken = <?= json_encode(generateCSRFToken()) ?>;
     
     function renderAdmin(data) {
         const feed = document.getElementById('admin-feed');
@@ -668,7 +725,7 @@ $data = safeReadJson($file);
         stopAutoRefresh();
 
         try {
-            const response = await fetch('admin.php?' + queryParams + '&ajax=1');
+            const response = await fetch('admin.php?' + queryParams + '&csrf_token=' + encodeURIComponent(csrfToken) + '&ajax=1');
 
             if (response.ok) {
                 updateAdminBoard();
@@ -746,7 +803,7 @@ $data = safeReadJson($file);
         document.body.style.cursor = 'wait';
 
         try {
-            const response = await fetch('admin.php?action=edit&id=' + entryId + '&new_text=' + encodeURIComponent(newText) + '&ajax=1');
+            const response = await fetch('admin.php?action=edit&id=' + entryId + '&new_text=' + encodeURIComponent(newText) + '&csrf_token=' + encodeURIComponent(csrfToken) + '&ajax=1');
             const result = await response.text();
 
             if (result === 'OK') {
