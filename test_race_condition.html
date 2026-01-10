@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Race Condition Stress Test (Real Data)</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #000;
+            color: #0f0;
+            padding: 20px;
+        }
+        .control-panel {
+            background: #111;
+            border: 2px solid #0f0;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #0f0;
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0a0; }
+        button:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+        #log {
+            background: #111;
+            border: 1px solid #333;
+            padding: 10px;
+            height: 400px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        .success { color: #0f0; }
+        .error { color: #f00; }
+        .warning { color: #ff0; }
+        .info { color: #0af; }
+    </style>
+</head>
+<body>
+
+<h1>🧪 RACE CONDITION STRESS TEST (V2)</h1>
+
+<div class="control-panel">
+    <h2>Test Configuration</h2>
+    <p>Simuliert massive gleichzeitige Eingaben mit <b>realistischem Textinhalt</b>.</p>
+    
+    <label>
+        Anzahl gleichzeitiger Requests:
+        <input type="number" id="numRequests" value="50" min="1" max="200" style="width: 80px; font-size: 16px;">
+    </label>
+    
+    <br><br>
+    
+    <button onclick="runStressTest()">▶ START STRESS TEST</button>
+    <button onclick="clearLog()">🗑 CLEAR LOG</button>
+    <button onclick="checkResults()">📊 CHECK RESULTS</button>
+    
+    <br><br>
+    
+    <div id="status" style="margin-top: 10px;">
+        <strong>Status:</strong> <span id="statusText">Bereit</span>
+    </div>
+</div>
+
+<div id="log"></div>
+
+<script>
+    const LOG = document.getElementById('log');
+    const STATUS = document.getElementById('statusText');
+    
+    // --- CONTENT GENERATOR ---
+    const buzzwords = [
+        "Desinformation", "Fake News", "Medienkompetenz", "Algorithmen", "Filterblasen", 
+        "Schulsystem", "Politik", "Transparenz", "Gesetze", "Plattformen", "TikTok", 
+        "KI-Generierung", "Quellenprüfung", "Demokratie", "Hassrede"
+    ];
+
+    const starters = [
+        "Ich finde, wir müssen", "Es ist absolut wichtig, dass", "Warum wird nicht endlich", 
+        "In der Schule fehlt", "Meiner Meinung nach sollte", "Die Regierung muss", 
+        "Wir brauchen dringend", "Es kann nicht sein, dass", "Eine Idee wäre:", 
+        "Vielleicht könnten wir", "Stop mit", "Mehr Geld für"
+    ];
+
+    const actions = [
+        "strengere Regeln einführen", "die Lehrer besser fortbilden", "das Ganze verbieten", 
+        "Faktenchecks finanzieren", "kritisch hinterfragen", "die Konzerne zerschlagen", 
+        "bessere Aufklärung betreiben", "schon im Kindergarten anfangen", 
+        "Algorithmen offenlegen", "Deepfakes kennzeichnen"
+    ];
+
+    const endings = [
+        "um unsere Gesellschaft zu schützen.", "damit Kinder sicher sind.", "und zwar sofort!", 
+        "weil es sonst zu spät ist.", "– das wäre mein Vorschlag.", "!!!", 
+        "oder was meint ihr?", "Punkt.", "im großen Stil."
+    ];
+
+    const emojis = ["😡", "🤔", "💡", "📚", "🛑", "✅", "⚖️", "📱", "🤖", "👀"];
+
+    function generateRealisticContent() {
+        // Zufallslänge simulieren
+        const lengthType = Math.random();
+        let text = "";
+
+        if (lengthType < 0.3) {
+            // Kurz und knapp (z.B. "Mehr Bildung jetzt!")
+            text = `${starters[Math.floor(Math.random() * starters.length)]} ${buzzwords[Math.floor(Math.random() * buzzwords.length)]}!`;
+        } else if (lengthType < 0.7) {
+            // Normaler Satz
+            text = `${starters[Math.floor(Math.random() * starters.length)]} ${actions[Math.floor(Math.random() * actions.length)]}, ${endings[Math.floor(Math.random() * endings.length)]}`;
+        } else {
+            // Lang / Komplex (Zwei Sätze verbunden)
+            text = `${starters[Math.floor(Math.random() * starters.length)]} ${actions[Math.floor(Math.random() * actions.length)]}. Außerdem ist ${buzzwords[Math.floor(Math.random() * buzzwords.length)]} ein riesiges Problem ${endings[Math.floor(Math.random() * endings.length)]}`;
+        }
+
+        // 30% Chance auf Emoji
+        if (Math.random() > 0.7) {
+            text += " " + emojis[Math.floor(Math.random() * emojis.length)];
+        }
+
+        return text;
+    }
+
+    // --- LOGIC ---
+
+    function log(message, type = 'info') {
+        const time = new Date().toLocaleTimeString();
+        const entry = document.createElement('div');
+        entry.className = type;
+        entry.textContent = `[${time}] ${message}`;
+        LOG.appendChild(entry);
+        LOG.scrollTop = LOG.scrollHeight;
+    }
+    
+    function clearLog() {
+        LOG.innerHTML = '';
+    }
+    
+    function setStatus(text, type = 'info') {
+        STATUS.textContent = text;
+        STATUS.className = type;
+    }
+
+    async function runStressTest() {
+        const numRequests = parseInt(document.getElementById('numRequests').value);
+        
+        if (numRequests < 1 || numRequests > 200) {
+            log('⚠️ Ungültige Anzahl! Bitte 1-200 wählen.', 'error');
+            return;
+        }
+        
+        log('═══════════════════════════════════════', 'info');
+        log(`🚀 STRESS TEST GESTARTET: ${numRequests} gleichzeitige Requests`, 'warning');
+        log('═══════════════════════════════════════', 'info');
+        
+        setStatus(`Running ${numRequests} requests...`, 'warning');
+        
+        const promises = [];
+        const startTime = Date.now();
+        
+        for (let i = 1; i <= numRequests; i++) {
+            const formData = new FormData();
+            const fakeContent = generateRealisticContent();
+            const thema = getRandomThema();
+
+            formData.append('thema', thema);
+            formData.append('idee', fakeContent);
+            
+            // Logge was gesendet wird (nur bei wenigen requests, sonst spam)
+            if(numRequests <= 5) log(`📤 Sende: "${fakeContent.substring(0, 30)}..." an ${thema}`, 'info');
+
+            const promise = fetch('eingabe.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    return { success: true, id: i };
+                } else {
+                    return { success: false, id: i, status: response.status };
+                }
+            })
+            .catch(error => {
+                return { success: false, id: i, error: error.message };
+            });
+            
+            promises.push(promise);
+        }
+        
+        const results = await Promise.all(promises);
+        const endTime = Date.now();
+        const duration = (endTime - startTime) / 1000;
+        
+        const successful = results.filter(r => r.success).length;
+        const failed = results.filter(r => !r.success).length;
+        
+        log('═══════════════════════════════════════', 'info');
+        log(`✅ Erfolgreich: ${successful}/${numRequests}`, 'success');
+        if(failed > 0) log(`❌ Fehlgeschlagen: ${failed}/${numRequests}`, 'error');
+        log(`⏱️ Dauer: ${duration.toFixed(2)} Sekunden`, 'info');
+        log('═══════════════════════════════════════', 'info');
+        
+        if (failed === 0) {
+            setStatus('✅ Test beendet (Alle OK)', 'success');
+        } else {
+            setStatus(`⚠️ Test beendet (${failed} Fehler)`, 'error');
+        }
+        
+        log('➡️ Klicke "CHECK RESULTS" um den Inhalt der JSON zu prüfen', 'info');
+    }
+    
+    async function checkResults() {
+        log('═══════════════════════════════════════', 'info');
+        log('🔍 LADE DATEN.JSON...', 'info');
+        
+        try {
+            const response = await fetch('index.php?api=1');
+            const data = await response.json();
+            
+            const totalEntries = data.length;
+            
+            log(`📊 Gesamteinträge in DB: ${totalEntries}`, 'info');
+            
+            const byThema = {};
+            data.forEach(entry => {
+                byThema[entry.thema] = (byThema[entry.thema] || 0) + 1;
+            });
+            
+            log('📂 Verteilung:', 'info');
+            Object.entries(byThema).forEach(([thema, count]) => {
+                log(`   • ${thema}: ${count}`, 'info');
+            });
+
+            // Letzten Eintrag anzeigen als Stichprobe
+            if(data.length > 0) {
+                const last = data[0]; // Neuster ist meist oben
+                log(`📝 Letzter Eintrag (${last.thema}): "${last.text}"`, 'warning');
+            }
+            
+            log('═══════════════════════════════════════', 'info');
+            
+        } catch (error) {
+            log(`❌ Fehler beim Laden der API: ${error.message}`, 'error');
+        }
+    }
+    
+    function getRandomThema() {
+        const themen = ['bildung', 'social', 'individuell', 'politik', 'kreativ'];
+        return themen[Math.floor(Math.random() * themen.length)];
+    }
+</script>
+
+</body>
+</html>

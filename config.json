@@ -1,0 +1,65 @@
+{
+    "header_title": "Strategien<br>Black-Outs",
+    "categories": [
+        {
+            "key": "bildung",
+            "name": "BILDUNG & FORSCHUNG",
+            "abbreviation": "BIL",
+            "icon": "📚",
+            "display_name": "📚 Bildung & Schule",
+            "leitfragen": [
+                "Was können Schulen tun, um beim Kampf gegen Desinformation zu helfen?",
+                "Was bräuchtet ihr im Unterricht, um besser damit umgehen zu können?",
+                "Was würdet ihr gern lernen?"
+            ]
+        },
+        {
+            "key": "social",
+            "name": "SOZIALE MEDIEN",
+            "abbreviation": "SOC",
+            "icon": "📱",
+            "display_name": "📱 Verantwortung Social Media",
+            "leitfragen": [
+                "Was würde euch auf Social Media helfen, Desinformation besser zu erkennen?",
+                "Wie sollten Plattformen mit Desinformation umgehen? Was könnten sie besser machen?",
+                "Wie könnten Plattformen gestaltet sein, damit Fakten mehr Chancen haben als Desinformation?"
+            ]
+        },
+        {
+            "key": "individuell",
+            "name": "INDIV. VERANTWORTUNG",
+            "abbreviation": "IND",
+            "icon": "🧑",
+            "display_name": "🧑 Individuelle Verantwortung",
+            "leitfragen": [
+                "Was braucht es, damit Menschen besser mit Desinformation umgehen können?",
+                "Was sollten wir als Gesellschaft tun, um Menschen aufzuklären?",
+                "Wenn ihr an eure Oma denkt: Wie wird sie resilient gegen Desinformation?"
+            ]
+        },
+        {
+            "key": "politik",
+            "name": "POLITIK & RECHT",
+            "abbreviation": "POL",
+            "icon": "⚖️",
+            "display_name": "⚖️ Politik & Recht",
+            "leitfragen": [
+                "Welche Regeln oder Gesetze braucht es, damit wir Desinformation eindämmen können?",
+                "Was sollte es geben, das es noch nicht gibt?",
+                "Was könnten Politiker:innen tun, um beim Kampf gegen Desinformation zu helfen?"
+            ]
+        },
+        {
+            "key": "kreativ",
+            "name": "INNOVATIVE ANSÄTZE",
+            "abbreviation": "INN",
+            "icon": "💡",
+            "display_name": "💡 Kreative & innovative Ansätze",
+            "leitfragen": [
+                "Welche Out-Of-The-Box-Ideen fallen dir ein, wie man das Thema besser angehen könnte?",
+                "Such dir eine Maßnahme aus, mit der du Desinformation bekämpfen würdest – wer müsste was tun und wieso?",
+                "Du hast unlimitiert viel Geld: Was würdest du bauen / tun, um Desinformation zu bekämpfen?"
+            ]
+        }
+    ]
+}
