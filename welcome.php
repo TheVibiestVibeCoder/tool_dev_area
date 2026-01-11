@@ -11,11 +11,11 @@ if (isLoggedIn()) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Situation Room - System Active</title>
+    <title>Live Situation Room - Real-time Collaborative Workshops</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@300;400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@300;400;600&display=swap" rel="stylesheet">
     
     <script type="importmap">
         {
@@ -26,526 +26,512 @@ if (isLoggedIn()) {
     </script>
 
     <style>
-        /* --- CORE SETTINGS --- */
+        /* --- RESET & VARIABLES (From Reference) --- */
         :root {
-            --bg-deep: #030303;
-            --bg-card: rgba(10, 10, 10, 0.6);
-            --text-main: #e0e0e0;
-            --text-muted: #666666;
+            --bg-color: #050505; /* Deep Pure Black */
+            --text-color: #f0f0f0;
             --highlight: #ffffff;
-            --accent-safe: #33ff00; /* Tiny status indicators */
-            --grid-line: rgba(255, 255, 255, 0.08);
-            
-            --font-display: 'Bebas Neue', display;
+            --grid-line: rgba(255, 255, 255, 0.1);
+            --font-head: 'Bebas Neue', display;
             --font-body: 'Manrope', sans-serif;
-            --font-tech: 'JetBrains Mono', monospace;
-            
-            --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+            --transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        html { scroll-behavior: smooth; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
 
         body {
             font-family: var(--font-body);
-            color: var(--text-main);
-            background-color: var(--bg-deep);
+            color: var(--text-color);
+            background: var(--bg-color);
+            line-height: 1.6;
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
         }
 
-        /* --- ATMOSPHERE LAYERS --- */
-        /* 1. Cinematic Noise Overlay */
-        .noise-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
-            pointer-events: none; z-index: 90;
-        }
-
-        /* 2. Vignette */
-        .vignette {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%);
-            pointer-events: none; z-index: 80;
-        }
-
-        /* 3. ThreeJS Canvas */
-        #canvas-container {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 1; opacity: 0.8;
-        }
-
         /* --- TYPOGRAPHY --- */
         h1, h2, h3 {
-            font-family: var(--font-display);
+            font-family: var(--font-head);
             text-transform: uppercase;
             font-weight: 400;
-            letter-spacing: 2px;
-            line-height: 0.9;
-            color: var(--highlight);
-        }
-
-        .tech-label {
-            font-family: var(--font-tech);
-            font-size: 0.75rem;
-            color: var(--text-muted);
             letter-spacing: 1px;
-            text-transform: uppercase;
-            display: block;
-            margin-bottom: 8px;
+            line-height: 0.9;
         }
 
         p {
+            font-family: var(--font-body);
             font-weight: 300;
-            color: #999;
-            line-height: 1.7;
+            color: #b0b0b0;
         }
+
+        /* --- ANIMATIONS --- */
+        .fade-in { opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease-out, transform 0.8s ease-out; }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
 
         /* --- HERO SECTION --- */
         .hero {
+            background: transparent; /* Changed from gradient to transparent for canvas */
+            color: white;
+            padding: 180px 20px 100px; /* More top padding */
+            text-align: center;
             position: relative;
-            min-height: 100vh;
+            min-height: 90vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            text-align: center;
-            padding: 20px;
             z-index: 10;
         }
 
-        .hero-content {
-            max-width: 900px;
-            position: relative;
+        /* Canvas Container */
+        #canvas-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1; opacity: 0.6; pointer-events: none;
         }
 
         .hero h1 {
-            font-size: clamp(4rem, 15vw, 11rem);
-            margin-bottom: 30px;
-            text-shadow: 0 0 30px rgba(255,255,255,0.1);
+            font-size: clamp(3.5rem, 12vw, 10rem);
+            margin-bottom: 24px;
+            color: var(--highlight);
+            text-shadow: 0 0 20px rgba(0,0,0,0.5);
         }
 
         .hero p {
-            font-size: 1.25rem;
-            max-width: 600px;
-            margin: 0 auto 50px;
+            font-size: 1.2rem;
+            margin-bottom: 50px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
             color: #ccc;
+            letter-spacing: 0.5px;
         }
 
-        /* --- BUTTONS --- */
-        .btn-group {
+        .hero-buttons {
             display: flex;
             gap: 20px;
             justify-content: center;
             flex-wrap: wrap;
+            z-index: 20;
         }
 
+        /* Redesigned Buttons */
         .btn {
-            position: relative;
-            padding: 16px 40px;
-            font-family: var(--font-display);
-            font-size: 1.3rem;
+            padding: 12px 32px;
+            font-size: 1.2rem;
+            font-family: var(--font-head);
             text-decoration: none;
-            letter-spacing: 2px;
+            display: inline-block;
+            transition: var(--transition);
+            border: 1px solid var(--highlight);
             text-transform: uppercase;
-            transition: all 0.4s var(--ease-out);
-            border: 1px solid rgba(255,255,255,0.2);
-            overflow: hidden;
+            letter-spacing: 1px;
         }
 
         .btn-primary {
-            background: rgba(255,255,255,0.05);
-            color: white;
-            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--highlight);
+            backdrop-filter: blur(5px);
         }
 
         .btn-primary:hover {
-            background: white;
-            color: black;
-            box-shadow: 0 0 40px rgba(255,255,255,0.3);
+            background: var(--highlight);
+            color: var(--bg-color);
+            transform: translateY(-2px);
+            box-shadow: 0 0 30px rgba(255,255,255,0.2);
         }
 
         .btn-secondary {
             background: transparent;
             color: #888;
-            border-color: #333;
+            border-color: #444;
         }
 
         .btn-secondary:hover {
-            color: white;
-            border-color: white;
+            border-color: var(--highlight);
+            color: var(--highlight);
         }
 
-        /* --- GRID SYSTEM UI --- */
-        .section-header {
-            text-align: center;
-            padding: 120px 20px 60px;
-            position: relative;
-            z-index: 10;
-        }
-        
-        .section-header h2 { font-size: clamp(2rem, 5vw, 4rem); }
-
+        /* --- FEATURES SECTION (Grid Style) --- */
         .features {
-            position: relative;
-            z-index: 10;
-            max-width: 1600px;
+            max-width: 1400px;
             margin: 0 auto;
-            border-top: 1px solid var(--grid-line);
+            padding: 100px 20px;
+            position: relative;
+            z-index: 2;
         }
 
-        .grid-container {
+        .features h2 {
+            font-size: clamp(2.5rem, 6vw, 5rem);
+            text-align: center;
+            margin-bottom: 80px;
+            color: var(--highlight);
+            border-left: none; /* Override ref style specifically for centered header */
+        }
+
+        /* The Grid Look */
+        .features-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 1px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1px; /* The grid line thickness */
             background: var(--grid-line);
-            border-bottom: 1px solid var(--grid-line);
+            border: 1px solid var(--grid-line);
         }
 
         .feature-card {
-            background: var(--bg-deep);
-            padding: 50px 40px;
-            position: relative;
-            transition: background 0.3s ease;
+            text-align: left;
+            padding: 40px;
+            background: var(--bg-color); /* Black cards */
+            border-radius: 0; /* Square corners */
+            transition: var(--transition);
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
         }
 
         .feature-card:hover {
-            background: #080808;
+            background: #111;
+            transform: none; /* Remove list translation */
+            outline: 1px solid var(--highlight);
+            z-index: 2;
+            box-shadow: none;
         }
-
-        /* Technical Corners on Cards */
-        .feature-card::after {
-            content: '';
-            position: absolute;
-            top: 0; right: 0;
-            width: 10px; height: 10px;
-            border-top: 1px solid rgba(255,255,255,0.5);
-            border-right: 1px solid rgba(255,255,255,0.5);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        
-        .feature-card:hover::after { opacity: 1; }
 
         .feature-icon {
             font-size: 2rem;
-            margin-bottom: 25px;
-            opacity: 0.7;
+            margin-bottom: 20px;
+            filter: grayscale(100%);
         }
 
         .feature-card h3 {
+            font-family: var(--font-head);
             font-size: 2rem;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
+            color: var(--highlight);
         }
 
-        /* --- STATS BAR --- */
-        .stats-bar {
+        .feature-card p {
+            color: #888;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* --- STATS SECTION (Mono-Box Style) --- */
+        .stats {
+            background: #0a0a0a;
+            color: white;
+            padding: 100px 20px;
+            text-align: center;
+            border-top: 1px solid var(--grid-line);
+            border-bottom: 1px solid var(--grid-line);
             position: relative;
-            z-index: 10;
+            z-index: 2;
+        }
+
+        .stats-grid {
+            max-width: 1400px;
+            margin: 0 auto;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            border-bottom: 1px solid var(--grid-line);
-            background: #050505;
+            gap: 20px;
         }
 
-        .stat-item {
-            padding: 40px;
+        .stat {
+            padding: 30px;
+            border: 1px solid var(--grid-line);
+            background: rgba(255,255,255,0.02);
+            transition: var(--transition);
+        }
+
+        .stat:hover {
+            border-color: var(--highlight);
+            background: rgba(255,255,255,0.05);
+        }
+
+        .stat-number {
+            font-family: var(--font-head);
+            font-size: 5rem;
+            font-weight: 400;
+            margin-bottom: 8px;
+            color: var(--highlight);
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #666;
+            font-family: var(--font-body);
+        }
+
+        /* --- CTA SECTION --- */
+        .cta {
+            max-width: 1000px;
+            margin: 100px auto;
+            padding: 60px 40px;
             text-align: center;
-            border-right: 1px solid var(--grid-line);
+            background: transparent;
+            border: 1px solid var(--grid-line);
+            border-radius: 0;
             position: relative;
+            z-index: 2;
         }
 
-        .stat-val {
-            font-family: var(--font-display);
-            font-size: 4rem;
-            display: block;
-            margin-bottom: 5px;
-        }
-        
-        /* Status Dot */
-        .status-dot {
-            display: inline-block;
-            width: 6px; height: 6px;
-            background: var(--accent-safe);
-            border-radius: 50%;
-            margin-right: 8px;
-            box-shadow: 0 0 5px var(--accent-safe);
-            animation: pulse 2s infinite;
+        .cta:hover {
+            border-color: #333;
         }
 
-        @keyframes pulse { 0% {opacity:1;} 50% {opacity:0.3;} 100% {opacity:1;} }
-
-        /* --- CTA & FOOTER --- */
-        .cta-section {
-            padding: 150px 20px;
-            text-align: center;
-            position: relative;
-            z-index: 10;
+        .cta h2 {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            color: var(--highlight);
         }
 
-        footer {
+        .cta p {
+            font-size: 1.2rem;
+            color: #888;
+            margin-bottom: 40px;
+        }
+
+        /* --- FOOTER --- */
+        .footer {
+            background: var(--bg-color);
             border-top: 1px solid var(--grid-line);
-            padding: 40px;
+            color: #666;
+            padding: 60px 20px;
             text-align: center;
-            color: #444;
             position: relative;
-            z-index: 10;
-            font-family: var(--font-tech);
-            font-size: 0.8rem;
-            background: #020202;
+            z-index: 2;
         }
 
-        /* --- ANIMATION UTILS --- */
-        .fade-up { opacity: 0; transform: translateY(40px); transition: all 1s var(--ease-out); }
-        .fade-up.visible { opacity: 1; transform: translateY(0); }
+        .footer p {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #444;
+        }
 
         @media (max-width: 768px) {
-            .hero h1 { line-height: 0.8; }
-            .grid-container { grid-template-columns: 1fr; }
-            .stat-item { border-right: none; border-bottom: 1px solid var(--grid-line); }
+            .hero { padding-top: 120px; }
+            .hero h1 { line-height: 0.85; }
+            .features-grid { grid-template-columns: 1fr; }
+            .feature-card { padding: 30px; }
         }
     </style>
 </head>
 <body>
-
-    <div class="noise-overlay"></div>
-    <div class="vignette"></div>
+    
     <div id="canvas-container"></div>
 
-    <section class="hero">
-        <div class="hero-content fade-up">
-            <span class="tech-label">/// SYSTEM_READY // V.2.0.4</span>
-            <h1>Situation<br>Room</h1>
-            <p>High-fidelity collaborative environment. Visualize data, moderate inputs, and display intelligence in real-time.</p>
-            
-            <div class="btn-group">
-                <a href="register.php" class="btn btn-primary">Initialize System</a>
-                <a href="login.php" class="btn btn-secondary">Admin Login</a>
+    <section class="hero fade-in">
+        <h1>Live Situation<br>Room</h1>
+        <p>Real-time collaborative workshops. Collect, moderate, and display ideas instantly with powerful visualization.</p>
+        <div class="hero-buttons">
+            <a href="register.php" class="btn btn-primary">Get Started Free</a>
+            <a href="login.php" class="btn btn-secondary">Sign In</a>
+        </div>
+    </section>
+
+    <section class="features">
+        <h2 class="fade-in">System Capabilities</h2>
+        <div class="features-grid fade-in">
+            <div class="feature-card">
+                <div class="feature-icon">👥</div>
+                <h3>50+ Concurrent Users</h3>
+                <p>Tested and optimized for large-scale workshops with dozens of simultaneous participants submitting ideas.</p>
             </div>
-        </div>
-    </section>
 
-    <div class="stats-bar fade-up">
-        <div class="stat-item">
-            <span class="tech-label"><span class="status-dot"></span>LATENCY</span>
-            <span class="stat-val">2ms</span>
-        </div>
-        <div class="stat-item">
-            <span class="tech-label">CAPACITY</span>
-            <span class="stat-val">50+</span>
-        </div>
-        <div class="stat-item">
-            <span class="tech-label">UPTIME</span>
-            <span class="stat-val">99.9%</span>
-        </div>
-        <div class="stat-item">
-            <span class="tech-label">SECURITY</span>
-            <span class="stat-val">AES</span>
-        </div>
-    </div>
-
-    <section class="section-header fade-up">
-        <span class="tech-label">/// MODULES</span>
-        <h2>System Capabilities</h2>
-    </section>
-
-    <section class="features fade-up">
-        <div class="grid-container">
             <div class="feature-card">
                 <div class="feature-icon">⚡</div>
-                <h3>Real-Time Sync</h3>
-                <p>Instantaneous data propagation across all connected clients. No refresh required.</p>
-                <span class="tech-label" style="margin-top:20px;">[SOCKET_OPEN]</span>
+                <h3>Real-Time Updates</h3>
+                <p>Submissions appear instantly on the dashboard. 2-second polling ensures everyone sees the latest content.</p>
             </div>
 
             <div class="feature-card">
-                <div class="feature-icon">🛡️</div>
-                <h3>Admin Control</h3>
-                <p>Granular moderation tools. Hide, focus, or delete entries with a single tactical click.</p>
-                <span class="tech-label" style="margin-top:20px;">[AUTH_REQ]</span>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">📊</div>
-                <h3>Data Viz</h3>
-                <p>Built-in projectors for word clouds, voting grids, and prioritized lists.</p>
-                <span class="tech-label" style="margin-top:20px;">[RENDER_ON]</span>
+                <div class="feature-icon">🎯</div>
+                <h3>Powerful Moderation</h3>
+                <p>Show/hide entries in real-time. Focus mode to spotlight important contributions. Full control over visibility.</p>
             </div>
 
             <div class="feature-card">
                 <div class="feature-icon">📱</div>
-                <h3>Mobile Input</h3>
-                <p>Participants interface via QR codes. Optimized for rapid data entry on the move.</p>
-                <span class="tech-label" style="margin-top:20px;">[RESPONSIVE]</span>
+                <h3>Mobile-First Design</h3>
+                <p>Optimized for smartphones. Participants can submit ideas easily from any device with QR code access.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🎨</div>
+                <h3>Fully Customizable</h3>
+                <p>Custom categories, colors, icons, and branding. Dark mode included. Make it match your workshop theme.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">💾</div>
+                <h3>Auto-Backups</h3>
+                <p>Every change is automatically backed up. Export to PDF or CSV. Never lose workshop data.</p>
             </div>
         </div>
     </section>
 
-    <section class="cta-section fade-up">
-        <span class="tech-label">/// DEPLOYMENT</span>
-        <h2>Ready for Operations?</h2>
-        <p style="margin-bottom: 30px;">Secure your instance now.</p>
-        <a href="register.php" class="btn btn-primary">Create Account</a>
+    <section class="stats">
+        <div class="stats-grid fade-in">
+            <div class="stat">
+                <div class="stat-number">50+</div>
+                <div class="stat-label">Participants</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">2s</div>
+                <div class="stat-label">Latency</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">0</div>
+                <div class="stat-label">Setup Time</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">100%</div>
+                <div class="stat-label">Secure</div>
+            </div>
+        </div>
     </section>
 
-    <footer>
-        <p>LIVE SITUATION ROOM © 2026 // SYSTEM ID: A-994 // VIENNA NODE</p>
+    <section class="cta fade-in">
+        <h2>Ready to Deploy?</h2>
+        <p>Create your free account and start collecting ideas in minutes.</p>
+        <a href="register.php" class="btn btn-primary">Create Account →</a>
+    </section>
+
+    <footer class="footer">
+        <p>© 2026 Live Situation Room. Built for collaborative workshops.</p>
     </footer>
 
     <script type="module">
         import * as THREE from 'three';
-
-        // --- SCENE SETUP ---
+        
+        // --- CONFIG ---
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
-        // Deep fog to hide the edges
-        scene.fog = new THREE.FogExp2(0x030303, 0.04);
-
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.z = 12;
-
+        scene.fog = new THREE.FogExp2(0x050505, 0.035);
+        
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.z = 10;
+        
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         container.appendChild(renderer.domElement);
 
-        // --- PARTICLES (THE DATA CLOUD) ---
+        // --- PARTICLES ---
         const geometry = new THREE.BufferGeometry();
-        const count = 600; // Denser cloud
-        const posArray = new Float32Array(count * 3);
-        const randomArray = new Float32Array(count); // For twinkling
-
-        for(let i = 0; i < count * 3; i+=3) {
-            // Spread particles wide
-            posArray[i] = (Math.random() - 0.5) * 50; 
-            posArray[i+1] = (Math.random() - 0.5) * 40; 
-            posArray[i+2] = (Math.random() - 0.5) * 30;
-            
-            randomArray[i/3] = Math.random();
+        const count = 300;
+        const pos = new Float32Array(count * 3);
+        const colors = new Float32Array(count * 3);
+        
+        for(let i = 0; i < count; i++) {
+            pos[i * 3] = (Math.random() - 0.5) * 40; 
+            pos[i * 3 + 1] = (Math.random() - 0.5) * 40; 
+            pos[i * 3 + 2] = (Math.random() - 0.5) * 30; 
+            colors[i * 3] = 1.0; colors[i * 3 + 1] = 1.0; colors[i * 3 + 2] = 1.0;
         }
-
-        geometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-        geometry.setAttribute('aRandom', new THREE.BufferAttribute(randomArray, 1));
-
+        
+        geometry.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        
         const material = new THREE.PointsMaterial({
-            size: 0.08,
-            color: 0xffffff,
+            size: 0.07,
+            vertexColors: true,
             transparent: true,
-            opacity: 0.4,
-            blending: THREE.AdditiveBlending
+            opacity: 0.6
         });
+        
+        const particles = new THREE.Points(geometry, material);
+        scene.add(particles);
 
-        const particlesMesh = new THREE.Points(geometry, material);
-        scene.add(particlesMesh);
-
-        // --- FLOATING DATA LABELS ---
-        const terms = ["SYNC", "DATA", "NODE", "GRID", "LIVE", "CORE", "AUTH", "NET"];
+        // --- LABELS (Context Specific) ---
+        const terms = ["VOTING", "IDEAS", "REAL-TIME", "DATA", "MODERATION", "WORKSHOP", "SYNC", "CLOUD"];
         const labels = [];
-
-        // Create DOM elements for labels (Hybrid approach: HTML overlaying Canvas)
-        if (window.innerWidth > 768) {
-            terms.forEach((term, i) => {
-                const el = document.createElement('div');
-                el.textContent = term;
-                el.style.position = 'absolute';
-                el.style.fontFamily = "'JetBrains Mono', monospace";
-                el.style.fontSize = '10px';
-                el.style.color = 'rgba(255,255,255,0.4)';
-                el.style.border = '1px solid rgba(255,255,255,0.1)';
-                el.style.padding = '2px 4px';
-                el.style.pointerEvents = 'none';
-                el.style.whiteSpace = 'nowrap';
-                container.appendChild(el);
-
-                // Assign random 3D position
+        
+        if (window.innerWidth > 800) {
+            terms.forEach((term) => {
+                const div = document.createElement('div');
+                div.textContent = term;
+                div.style.position = 'absolute';
+                div.style.color = '#fff';
+                div.style.fontFamily = "'Manrope', sans-serif";
+                div.style.fontSize = '10px';
+                div.style.padding = '2px 6px';
+                div.style.border = '1px solid rgba(255,255,255,0.3)';
+                div.style.background = 'rgba(0,0,0,0.7)';
+                div.style.pointerEvents = 'none';
+                container.appendChild(div);
+                
                 labels.push({
-                    element: el,
-                    position: new THREE.Vector3(
-                        (Math.random() - 0.5) * 30,
-                        (Math.random() - 0.5) * 20,
-                        (Math.random() - 0.5) * 10
-                    ),
-                    offset: Math.random() * 100
+                    el: div,
+                    pos: new THREE.Vector3((Math.random()-0.5)*20, (Math.random()-0.5)*10, (Math.random()-0.5)*10)
                 });
             });
         }
 
-        // --- ANIMATION LOOP ---
-        let mouseX = 0;
-        let mouseY = 0;
-        let targetX = 0;
-        let targetY = 0;
-
-        const windowHalfX = window.innerWidth / 2;
-        const windowHalfY = window.innerHeight / 2;
-
-        document.addEventListener('mousemove', (event) => {
-            mouseX = (event.clientX - windowHalfX);
-            mouseY = (event.clientY - windowHalfY);
+        // --- ANIMATION ---
+        let mouseX = 0, mouseY = 0;
+        document.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX - window.innerWidth/2) * 0.001;
+            mouseY = (e.clientY - window.innerHeight/2) * 0.001;
         });
 
         const clock = new THREE.Clock();
 
         function animate() {
             requestAnimationFrame(animate);
-            const elapsedTime = clock.getElapsedTime();
+            const time = clock.getElapsedTime();
 
-            targetX = mouseX * 0.001;
-            targetY = mouseY * 0.001;
-
-            // Smooth camera movement
-            particlesMesh.rotation.y += 0.001;
-            particlesMesh.rotation.x += 0.0005;
-
-            // Mouse parallax
-            particlesMesh.rotation.y += 0.05 * (targetX - particlesMesh.rotation.y);
-            particlesMesh.rotation.x += 0.05 * (targetY - particlesMesh.rotation.x);
+            particles.rotation.y = time * 0.05;
+            camera.rotation.x += (mouseY - camera.rotation.x) * 0.05;
+            camera.rotation.y += (mouseX - camera.rotation.y) * 0.05;
 
             // Update Labels
-            labels.forEach(label => {
-                // Gentle floating
-                const tempV = label.position.clone();
-                tempV.y += Math.sin(elapsedTime + label.offset) * 0.5;
+            labels.forEach(l => {
+                const v = l.pos.clone();
+                v.applyMatrix4(particles.matrixWorld); // Rotate with particles
+                v.project(camera);
                 
-                // Project 3D point to 2D screen
-                tempV.project(camera);
-
-                // Convert to pixels
-                const x = (tempV.x * .5 + .5) * window.innerWidth;
-                const y = (tempV.y * -.5 + .5) * window.innerHeight;
-
-                // Only show if in front of camera
-                if (tempV.z < 1 && Math.abs(tempV.x) < 1.2 && Math.abs(tempV.y) < 1.2) {
-                    label.element.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`;
-                    label.element.style.opacity = 1 - Math.abs(tempV.z); // Fade if far away
+                if(Math.abs(v.z) > 1) {
+                    l.el.style.opacity = 0;
                 } else {
-                    label.element.style.opacity = 0;
+                    const x = (v.x * .5 + .5) * window.innerWidth;
+                    const y = (v.y * -.5 + .5) * window.innerHeight;
+                    l.el.style.transform = `translate(${x}px, ${y}px)`;
+                    l.el.style.opacity = 1 - (v.z * 0.5); // Fade if far
                 }
             });
 
             renderer.render(scene, camera);
         }
-
         animate();
 
-        // --- RESIZE HANDLER ---
+        // --- RESIZE ---
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // --- INTERSECTION OBSERVER FOR FADE UPS ---
+        // --- FADE IN ---
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
-                if(entry.isIntersecting) {
+                if (entry.isIntersecting) {
                     entry.target.classList.add('visible');
                 }
             });
         }, { threshold: 0.1 });
-
-        document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+        
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
     </script>
 </body>
 </html>
