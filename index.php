@@ -148,7 +148,7 @@ $isAdmin = $is_own_workshop;
         /* --- TOOLBAR --- */
         .toolbar {
             position: absolute; top: 1.5rem; right: 2rem;
-            display: flex; gap: 10px; z-index: 100;
+            display: none; gap: 10px; z-index: 100; /* Hidden on desktop, shown on mobile */
         }
 
         /* QR + Toolbar Container */
@@ -474,11 +474,14 @@ $isAdmin = $is_own_workshop;
             .mobile-join-btn { display: inline-flex; }
             .toolbar-buttons { display: none !important; }
             .qr-toolbar-row { display: none !important; }
+
+            /* Show mobile toolbar on tablet and below */
+            .toolbar { display: flex !important; }
         }
 
         @media (max-width: 600px) {
             .dashboard-grid { grid-template-columns: 1fr; }
-            .toolbar { top: 1rem; right: 1rem; }
+            .toolbar { display: flex !important; top: 1rem; right: 1rem; }
             h1 { font-size: 2rem; }
         }
     </style>
@@ -488,12 +491,14 @@ $isAdmin = $is_own_workshop;
 <div class="mono-noise"></div>
 <div class="spotlight"></div>
 
-<!-- Old toolbar hidden on desktop, shown on mobile -->
+<!-- Mobile toolbar (hidden on desktop, shown on mobile) -->
 <div class="toolbar">
     <button class="tool-btn" id="themeToggleMobile" title="Toggle Theme">☀︎</button>
     <?php if ($is_own_workshop): ?>
         <a href="admin.php" class="tool-btn" title="Admin Dashboard">⚙</a>
         <a href="logout.php" class="tool-btn" title="Logout" style="color: #cf2e2e;">🚪</a>
+    <?php else: ?>
+        <a href="login.php" class="tool-btn" title="Login as Admin">⚙</a>
     <?php endif; ?>
 </div>
 
