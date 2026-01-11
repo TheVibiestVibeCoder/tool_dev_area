@@ -370,7 +370,7 @@ function initializeUserData($user_id) {
  */
 
 /**
- * Create a password reset token for user
+ * Create a password reset token for user and send email
  *
  * @param string $email User email
  * @return array ['success' => bool, 'message' => string, 'token' => string|null]
@@ -399,7 +399,7 @@ function createPasswordResetToken($email) {
 
     // Return generic success message even if email doesn't exist (prevent enumeration)
     if ($user === null) {
-        return ['success' => true, 'message' => 'If this email exists, a reset token has been generated.', 'token' => null];
+        return ['success' => true, 'message' => 'If this email is registered, a password reset link has been sent.', 'token' => null];
     }
 
     // Generate secure token
@@ -423,7 +423,15 @@ function createPasswordResetToken($email) {
     // Clean up expired tokens
     cleanupExpiredTokens();
 
-    return ['success' => true, 'message' => 'Password reset token created.', 'token' => $token];
+    // Send email
+    $email_sent = sendPasswordResetEmail($email, $token);
+
+    if (!$email_sent) {
+        // Email failed to send, but don't reveal this to prevent enumeration
+        error_log("Failed to send password reset email to: " . $email);
+    }
+
+    return ['success' => true, 'message' => 'If this email is registered, a password reset link has been sent.', 'token' => null];
 }
 
 /**
@@ -654,6 +662,18 @@ function redirect($url) {
 }
 
 /**
+ * Get base URL path (e.g., /tool_dev_area or empty string)
+ *
+ * @return string Base path
+ */
+function getBasePath() {
+    // Get the directory where the script is located
+    $script_dir = dirname($_SERVER['SCRIPT_NAME']);
+    // Remove trailing slash if present
+    return rtrim($script_dir, '/');
+}
+
+/**
  * Get user's public workshop URL
  *
  * @param string $user_id User ID
@@ -662,7 +682,8 @@ function redirect($url) {
 function getPublicWorkshopURL($user_id) {
     $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
     $host = $_SERVER['HTTP_HOST'];
-    return $protocol . '://' . $host . '/index.php?u=' . $user_id;
+    $base_path = getBasePath();
+    return $protocol . '://' . $host . $base_path . '/index.php?u=' . $user_id;
 }
 
 /**
@@ -674,5 +695,48 @@ function getPublicWorkshopURL($user_id) {
 function getPublicInputURL($user_id) {
     $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
     $host = $_SERVER['HTTP_HOST'];
-    return $protocol . '://' . $host . '/eingabe.php?u=' . $user_id;
+    $base_path = getBasePath();
+    return $protocol . '://' . $host . $base_path . '/eingabe.php?u=' . $user_id;
+}
+
+/**
+ * Get password reset URL with token
+ *
+ * @param string $token Reset token
+ * @return string Password reset URL
+ */
+function getPasswordResetURL($token) {
+    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'];
+    $base_path = getBasePath();
+    return $protocol . '://' . $host . $base_path . '/reset_password.php?token=' . urlencode($token);
+}
+
+/**
+ * Send password reset email
+ *
+ * @param string $email Recipient email
+ * @param string $token Reset token
+ * @return bool True if email sent successfully
+ */
+function sendPasswordResetEmail($email, $token) {
+    $reset_url = getPasswordResetURL($token);
+
+    $subject = 'Password Reset Request - Live Situation Room';
+
+    $message = "Hello,\n\n";
+    $message .= "You have requested to reset your password for Live Situation Room.\n\n";
+    $message .= "Click the link below to reset your password:\n";
+    $message .= $reset_url . "\n\n";
+    $message .= "This link will expire in 1 hour.\n\n";
+    $message .= "If you did not request this password reset, please ignore this email.\n\n";
+    $message .= "Best regards,\n";
+    $message .= "Live Situation Room Team";
+
+    $headers = "From: noreply@" . $_SERVER['HTTP_HOST'] . "\r\n";
+    $headers .= "Reply-To: noreply@" . $_SERVER['HTTP_HOST'] . "\r\n";
+    $headers .= "X-Mailer: PHP/" . phpversion() . "\r\n";
+    $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+
+    return mail($email, $subject, $message, $headers);
 }

@@ -150,6 +150,34 @@ $isAdmin = $is_own_workshop;
             position: absolute; top: 1.5rem; right: 2rem;
             display: flex; gap: 10px; z-index: 100;
         }
+
+        /* QR + Toolbar Container */
+        .qr-toolbar-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+        }
+
+        .qr-toolbar-row {
+            display: flex;
+            align-items: stretch;
+            gap: 10px;
+        }
+
+        .qr-column {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        .toolbar-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            justify-content: flex-start;
+        }
+
         .tool-btn {
             background: var(--ip-card-bg);
             border: 1px solid var(--ip-border);
@@ -444,9 +472,11 @@ $isAdmin = $is_own_workshop;
             .qr-section { display: none !important; }
             .qr-link { display: none !important; }
             .mobile-join-btn { display: inline-flex; }
+            .toolbar-buttons { display: none !important; }
+            .qr-toolbar-row { display: none !important; }
         }
-        
-        @media (max-width: 600px) { 
+
+        @media (max-width: 600px) {
             .dashboard-grid { grid-template-columns: 1fr; }
             .toolbar { top: 1rem; right: 1rem; }
             h1 { font-size: 2rem; }
@@ -458,8 +488,9 @@ $isAdmin = $is_own_workshop;
 <div class="mono-noise"></div>
 <div class="spotlight"></div>
 
+<!-- Old toolbar hidden on desktop, shown on mobile -->
 <div class="toolbar">
-    <button class="tool-btn" id="themeToggle" title="Toggle Theme">☀︎</button>
+    <button class="tool-btn" id="themeToggleMobile" title="Toggle Theme">☀︎</button>
     <?php if ($is_own_workshop): ?>
         <a href="admin.php" class="tool-btn" title="Admin Dashboard">⚙</a>
         <a href="logout.php" class="tool-btn" title="Logout" style="color: #cf2e2e;">🚪</a>
@@ -509,10 +540,23 @@ $isAdmin = $is_own_workshop;
             </a>
         </div>
 
-        <div style="display: flex; flex-direction: column; align-items: center;">
-            <div class="qr-section" id="openQr">
-                <div class="qr-text">SCAN TO<br>JOIN<br><span style="opacity: 0.6; font-weight: normal;">CLICK TO ZOOM</span></div>
-                <div class="qr-wrapper" id="qrcodeSmall"></div>
+        <div class="qr-toolbar-container">
+            <div class="qr-toolbar-row">
+                <div class="qr-column">
+                    <div class="qr-section" id="openQr">
+                        <div class="qr-text">SCAN TO<br>JOIN<br><span style="opacity: 0.6; font-weight: normal;">CLICK TO ZOOM</span></div>
+                        <div class="qr-wrapper" id="qrcodeSmall"></div>
+                    </div>
+                </div>
+                <div class="toolbar-buttons">
+                    <button class="tool-btn" id="themeToggle" title="Toggle Theme">☀︎</button>
+                    <?php if ($is_own_workshop): ?>
+                        <a href="admin.php" class="tool-btn" title="Admin Dashboard">⚙</a>
+                        <a href="logout.php" class="tool-btn" title="Logout" style="color: #cf2e2e;">🚪</a>
+                    <?php else: ?>
+                        <a href="login.php" class="tool-btn" title="Login as Admin">⚙</a>
+                    <?php endif; ?>
+                </div>
             </div>
             <a href="eingabe.php?u=<?= urlencode($viewing_user_id) ?>" class="qr-link">oder direkt zum Formular →</a>
         </div>
@@ -532,10 +576,13 @@ $isAdmin = $is_own_workshop;
 <script>
     // --- THEME LOGIC ---
     const themeBtn = document.getElementById('themeToggle');
+    const themeBtnMobile = document.getElementById('themeToggleMobile');
     const body = document.body;
-    
+
     function updateIcon(isLight) {
-        themeBtn.innerText = isLight ? '☾' : '☀︎';
+        const icon = isLight ? '☾' : '☀︎';
+        if (themeBtn) themeBtn.innerText = icon;
+        if (themeBtnMobile) themeBtnMobile.innerText = icon;
     }
 
     if (localStorage.getItem('theme') === 'light') {
@@ -543,12 +590,19 @@ $isAdmin = $is_own_workshop;
         updateIcon(true);
     }
 
-    themeBtn.addEventListener('click', () => {
+    function toggleTheme() {
         body.classList.toggle('light-mode');
         const isLight = body.classList.contains('light-mode');
         localStorage.setItem('theme', isLight ? 'light' : 'dark');
         updateIcon(isLight);
-    });
+    }
+
+    if (themeBtn) {
+        themeBtn.addEventListener('click', toggleTheme);
+    }
+    if (themeBtnMobile) {
+        themeBtnMobile.addEventListener('click', toggleTheme);
+    }
 
     // --- QR CODE LOGIC ---
     const currentUrl = window.location.href;

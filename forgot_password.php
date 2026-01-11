@@ -8,7 +8,7 @@ if (isLoggedIn()) {
 
 $error = '';
 $success = '';
-$token = '';
+$email_sent = false;
 
 // Handle password reset request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -18,14 +18,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $email = $_POST['email'] ?? '';
 
-        // Attempt to create reset token
+        // Attempt to create reset token and send email
         $result = createPasswordResetToken($email);
 
         if ($result['success']) {
             $success = $result['message'];
-            if ($result['token']) {
-                $token = $result['token'];
-            }
+            $email_sent = true;
         } else {
             $error = $result['message'];
         }
@@ -255,7 +253,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="container">
         <div class="logo">
             <h1>Reset Password</h1>
-            <p>Enter your email address and we'll generate a reset token for you.</p>
+            <p>Enter your email address and we'll send you a password reset link.</p>
         </div>
 
         <?php if ($error): ?>
@@ -264,23 +262,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         <?php endif; ?>
 
-        <?php if ($success && !$token): ?>
+        <?php if ($email_sent): ?>
             <div class="alert alert-success">
                 <?= htmlspecialchars($success) ?>
             </div>
-        <?php endif; ?>
-
-        <?php if ($token): ?>
-            <div class="alert alert-success">
-                Password reset token generated successfully!
-            </div>
 
             <div class="token-box">
-                <h3>Your Reset Token:</h3>
-                <div class="token" id="token-display"><?= htmlspecialchars($token) ?></div>
-                <p>Copy this token and use it on the password reset page. This token will expire in 1 hour.</p>
-                <button type="button" class="copy-btn" onclick="copyToken()">📋 Copy Token</button>
-                <a href="reset_password.php?token=<?= urlencode($token) ?>" class="btn">Continue to Reset Password →</a>
+                <h3>📧 Check Your Email</h3>
+                <p>If your email is registered in our system, you will receive a password reset link shortly.</p>
+                <p>The link will expire in 1 hour for security reasons.</p>
+                <p style="margin-top: 16px;"><strong>Didn't receive the email?</strong></p>
+                <ul style="font-size: 13px; color: #767676; margin-left: 20px; line-height: 1.8;">
+                    <li>Check your spam/junk folder</li>
+                    <li>Make sure you entered the correct email address</li>
+                    <li>Wait a few minutes and try again</li>
+                </ul>
+                <a href="forgot_password.php" class="btn" style="margin-top: 16px;">Request Another Link</a>
             </div>
         <?php else: ?>
             <form method="POST" action="">
@@ -299,7 +296,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     >
                 </div>
 
-                <button type="submit" class="btn">Generate Reset Token</button>
+                <button type="submit" class="btn">Send Reset Link</button>
             </form>
         <?php endif; ?>
 
@@ -309,22 +306,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <script>
-        function copyToken() {
-            const token = document.getElementById('token-display').textContent;
-            navigator.clipboard.writeText(token).then(function() {
-                const btn = document.querySelector('.copy-btn');
-                const originalText = btn.textContent;
-                btn.textContent = '✓ Copied!';
-                btn.style.background = '#00d084';
-
-                setTimeout(function() {
-                    btn.textContent = originalText;
-                    btn.style.background = '';
-                }, 2000);
-            }).catch(function(err) {
-                alert('Failed to copy token. Please copy it manually.');
-            });
-        }
+        // Auto-focus email input if form is visible
+        document.addEventListener('DOMContentLoaded', function() {
+            const emailInput = document.getElementById('email');
+            if (emailInput) {
+                emailInput.focus();
+            }
+        });
     </script>
 </body>
 </html>
