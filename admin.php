@@ -37,20 +37,41 @@ if ($config && isset($config['categories'])) {
 // --- PDF EXPORT MODE ---
 if (isset($_GET['mode']) && $_GET['mode'] === 'pdf') {
     $data = safeReadJson($data_file);
-    
-    $pdf_labels = [
-        'bildung' => 'Bildung & Schule',
-        'social' => 'Verantwortung Social Media',
-        'individuell' => 'Individuelle Verantwortung',
-        'politik' => 'Politik & Recht',
-        'kreativ' => 'Kreative & innovative Ansätze'
-    ];
+
+    // Load user's configuration for categories and title
+    $config = loadConfig($config_file);
+
+    // Build PDF labels from user's config
+    $pdf_labels = [];
+    $pdf_title = 'Workshop Protocol'; // Default
+
+    if ($config && isset($config['categories'])) {
+        foreach ($config['categories'] as $category) {
+            // Use display_name if available, otherwise use name with icon
+            if (isset($category['display_name'])) {
+                $pdf_labels[$category['key']] = $category['display_name'];
+            } else {
+                $icon = $category['icon'] ?? '';
+                $name = $category['name'] ?? $category['key'];
+                $pdf_labels[$category['key']] = $icon . ' ' . $name;
+            }
+        }
+
+        // Use custom header title if set
+        if (isset($config['header_title'])) {
+            $pdf_title = $config['header_title'];
+        }
+    } else {
+        // Fallback if no config found
+        $pdf_labels = ['general' => '💡 General'];
+        $pdf_title = 'Live Situation Room';
+    }
     ?>
     <!DOCTYPE html>
     <html lang="de">
     <head>
         <meta charset="UTF-8">
-        <title>Workshop Protokoll</title>
+        <title><?= htmlspecialchars($pdf_title) ?> - Workshop Protokoll</title>
         <style>
             /* PDF Style */
             body { font-family: sans-serif; color: #32373c; line-height: 1.5; padding: 40px; max-width: 900px; margin: 0 auto; }
@@ -65,13 +86,13 @@ if (isset($_GET['mode']) && $_GET['mode'] === 'pdf') {
         </style>
     </head>
     <body onload="window.print()">
-        <h1>Strategische Maßnahmen</h1>
+        <h1><?= htmlspecialchars($pdf_title) ?></h1>
         <div class="meta">Workshop Ergebnisse • Generiert am <?= date('d.m.Y \u\m H:i') ?> Uhr</div>
 
         <?php foreach ($pdf_labels as $key => $label): ?>
             <div class="section">
-                <div class="section-title"><?= $label ?></div>
-                <?php 
+                <div class="section-title"><?= htmlspecialchars($label) ?></div>
+                <?php
                 $hasEntries = false;
                 foreach ($data as $entry) {
                     if (($entry['thema'] ?? '') === $key) {
