@@ -1,10 +1,42 @@
 <?php
-// index.php
-session_start(); // Session starten um Admin-Status zu prüfen
-
-// Load config to get dynamic categories and header
+// index.php - Multi-tenant Workshop Dashboard
 require_once 'file_handling_robust.php';
-$config = loadConfig('config.json');
+require_once 'user_auth.php';
+
+// ===== DETERMINE VIEWING MODE =====
+// Two modes:
+// 1. Public view: ?u={user_id} - Anyone can view this user's workshop
+// 2. Authenticated view: User viewing their own workshop
+
+$viewing_user_id = null;
+$is_own_workshop = false;
+$current_user = getCurrentUser();
+
+if (isset($_GET['u'])) {
+    // Public view mode - viewing someone else's workshop
+    $viewing_user_id = $_GET['u'];
+    $is_own_workshop = false;
+
+    // Validate that this user exists
+    if (!is_dir(getUserDataPath($viewing_user_id))) {
+        die('Workshop not found.');
+    }
+} elseif ($current_user) {
+    // Authenticated view - viewing own workshop
+    $viewing_user_id = $current_user['id'];
+    $is_own_workshop = true;
+} else {
+    // Not authenticated and no public workshop specified - redirect to welcome
+    redirect('welcome.php');
+}
+
+// ===== LOAD USER-SPECIFIC DATA =====
+
+$config_file = getUserFile($viewing_user_id, 'config.json');
+$data_file = getUserFile($viewing_user_id, 'daten.json');
+
+$config = loadConfig($config_file);
+$data = safeReadJson($data_file);
 
 // Build gruppen from config
 $gruppen = [];
@@ -23,28 +55,21 @@ if ($config && isset($config['categories'])) {
 } else {
     // Fallback if config cannot be loaded
     $gruppen = [
-        'bildung' => ['title' => 'BILDUNG & FORSCHUNG', 'icon' => '📚'],
-        'social' => ['title' => 'SOZIALE MEDIEN', 'icon' => '📱'],
-        'individuell' => ['title' => 'INDIV. VERANTWORTUNG', 'icon' => '🧑'],
-        'politik' => ['title' => 'POLITIK & RECHT', 'icon' => '⚖️'],
-        'kreativ' => ['title' => 'INNOVATIVE ANSÄTZE', 'icon' => '💡']
+        'general' => ['title' => 'GENERAL', 'icon' => '💡']
     ];
 }
 
-// ===== DATA LOADING =====
+// ===== API MODE =====
 
-$file = 'daten.json';
-$data = safeReadJson($file);
-
-// API Mode
 if (isset($_GET['api']) && $_GET['api'] == '1') {
     header('Content-Type: application/json');
     echo json_encode($data);
     exit;
 }
 
-// Prüfen ob Admin eingeloggt ist (für Context Menu Berechtigung)
-$isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
+// ===== ADMIN/CONTEXT MENU PERMISSIONS =====
+// Only allow context menu if viewing own workshop
+$isAdmin = $is_own_workshop;
 ?>
 
 <!DOCTYPE html>
@@ -435,8 +460,17 @@ $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
 
 <div class="toolbar">
     <button class="tool-btn" id="themeToggle" title="Toggle Theme">☀︎</button>
-    <a href="admin.php" class="tool-btn" title="Admin Panel">⚙</a>
+    <?php if ($is_own_workshop): ?>
+        <a href="admin.php" class="tool-btn" title="Admin Dashboard">⚙</a>
+        <a href="logout.php" class="tool-btn" title="Logout" style="color: #cf2e2e;">🚪</a>
+    <?php endif; ?>
 </div>
+
+<?php if ($is_own_workshop && $current_user): ?>
+<div style="position: fixed; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,101,139,0.95); color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; z-index: 9998; backdrop-filter: blur(10px);">
+    👤 <?= htmlspecialchars($current_user['email']) ?> | Your Workshop
+</div>
+<?php endif; ?>
 
 <div class="overlay" id="qrOverlay">
     <div class="qr-overlay-content">
@@ -470,17 +504,17 @@ $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
                 <h1><?= $headerTitle ?></h1>
             </div>
             
-            <a href="eingabe.php" class="mobile-join-btn">
+            <a href="eingabe.php?u=<?= urlencode($viewing_user_id) ?>" class="mobile-join-btn">
                + Beitrag erstellen
             </a>
         </div>
-        
+
         <div style="display: flex; flex-direction: column; align-items: center;">
             <div class="qr-section" id="openQr">
                 <div class="qr-text">SCAN TO<br>JOIN<br><span style="opacity: 0.6; font-weight: normal;">CLICK TO ZOOM</span></div>
                 <div class="qr-wrapper" id="qrcodeSmall"></div>
             </div>
-            <a href="eingabe.php" class="qr-link">oder direkt zum Formular →</a>
+            <a href="eingabe.php?u=<?= urlencode($viewing_user_id) ?>" class="qr-link">oder direkt zum Formular →</a>
         </div>
     </header>
 
@@ -518,13 +552,14 @@ $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
 
     // --- QR CODE LOGIC ---
     const currentUrl = window.location.href;
-    const inputUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/')) + '/eingabe.php';
-    
+    const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/'));
+    const inputUrl = baseUrl + '/eingabe.php?u=<?= urlencode($viewing_user_id) ?>';
+
     // 1. Small QR
-    new QRCode(document.getElementById("qrcodeSmall"), { 
-        text: inputUrl, width: 60, height: 60, 
-        colorDark : "#00658b", colorLight : "#ffffff", 
-        correctLevel : QRCode.CorrectLevel.H 
+    new QRCode(document.getElementById("qrcodeSmall"), {
+        text: inputUrl, width: 60, height: 60,
+        colorDark : "#00658b", colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
     });
 
     // 2. Big QR
@@ -720,7 +755,7 @@ $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
     }
 
     function updateBoard() {
-        fetch('index.php?api=1')
+        fetch('index.php?api=1&u=<?= urlencode($viewing_user_id) ?>')
             .then(response => response.json())
             .then(data => renderData(data))
             .catch(err => console.error(err));

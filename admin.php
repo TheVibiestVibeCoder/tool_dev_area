@@ -1,15 +1,23 @@
 <?php
 // ============================================
-// ROBUSTE ADMIN.PHP - ATOMIC OPERATIONS
+// ADMIN.PHP - User Dashboard (Multi-tenant)
 // ============================================
 
-session_start();
-
-$admin_passwort = "workshop2025";
-
-// Load config to get dynamic categories
 require_once 'file_handling_robust.php';
-$config = loadConfig('config.json');
+require_once 'user_auth.php';
+
+// Require authentication
+requireAuth();
+
+// Get current user
+$current_user = getCurrentUser();
+$user_id = $current_user['id'];
+
+// Load user-specific config and data
+$config_file = getUserFile($user_id, 'config.json');
+$data_file = getUserFile($user_id, 'daten.json');
+
+$config = loadConfig($config_file);
 
 // Build gruppen_labels from config
 $gruppen_labels = [];
@@ -22,18 +30,13 @@ if ($config && isset($config['categories'])) {
 } else {
     // Fallback if config cannot be loaded
     $gruppen_labels = [
-        'bildung' => 'BIL',
-        'social' => 'SOC',
-        'individuell' => 'IND',
-        'politik' => 'POL',
-        'kreativ' => 'INN'
+        'general' => 'GEN'
     ];
 }
 
 // --- PDF EXPORT MODE ---
-if (isset($_GET['mode']) && $_GET['mode'] === 'pdf' && isset($_SESSION['is_admin'])) {
-    $file = 'daten.json';
-    $data = safeReadJson($file);
+if (isset($_GET['mode']) && $_GET['mode'] === 'pdf') {
+    $data = safeReadJson($data_file);
     
     $pdf_labels = [
         'bildung' => 'Bildung & Schule',
@@ -90,33 +93,17 @@ if (isset($_GET['mode']) && $_GET['mode'] === 'pdf' && isset($_SESSION['is_admin
     exit;
 }
 
-// --- LOGIN & LOGOUT ---
-if (isset($_POST['login'])) {
-    if ($_POST['password'] === $admin_passwort) {
-        session_regenerate_id(true);
-        $_SESSION['is_admin'] = true;
-    } else {
-        $error = "ACCESS DENIED";
-    }
-}
-
-if (isset($_GET['logout'])) {
-    session_destroy();
-    header("Location: admin.php");
-    exit;
-}
-
 // --- ACTION HANDLER (ATOMIC) ---
-$file = 'daten.json';
+// All actions now use user-specific data file
 
-if (isset($_SESSION['is_admin'])) {
+{
     $is_ajax = isset($_REQUEST['ajax']);
     $req = $_REQUEST;
 
     // 🔒 DELETE SINGLE ENTRY
     if (isset($req['delete'])) {
         $id = $req['delete'];
-        atomicUpdate($file, function($data) use ($id) {
+        atomicUpdate($data_file, function($data) use ($id) {
             return array_values(array_filter($data, fn($e) => $e['id'] !== $id));
         });
         if ($is_ajax) { echo "OK"; exit; }
@@ -124,7 +111,7 @@ if (isset($_SESSION['is_admin'])) {
 
     // 🔒 DELETE ALL
     if (isset($req['deleteall']) && $req['deleteall'] === 'confirm') {
-        atomicUpdate($file, function($data) {
+        atomicUpdate($data_file, function($data) {
             return [];
         });
         if ($is_ajax) { echo "OK"; exit; }
@@ -133,7 +120,7 @@ if (isset($_SESSION['is_admin'])) {
     // 🔒 TOGGLE VISIBILITY
     if (isset($req['toggle_id'])) {
         $id = $req['toggle_id'];
-        atomicUpdate($file, function($data) use ($id) {
+        atomicUpdate($data_file, function($data) use ($id) {
             foreach ($data as &$entry) {
                 if ($entry['id'] === $id) {
                     $entry['visible'] = !($entry['visible'] ?? false);
@@ -147,7 +134,7 @@ if (isset($_SESSION['is_admin'])) {
     // 🔒 TOGGLE FOCUS (nur EIN Eintrag kann focused sein)
     if (isset($req['toggle_focus'])) {
         $id = $req['toggle_focus'];
-        atomicUpdate($file, function($data) use ($id) {
+        atomicUpdate($data_file, function($data) use ($id) {
             foreach ($data as &$entry) {
                 if ($entry['id'] === $id) {
                     $currentFocus = $entry['focus'] ?? false;
@@ -167,7 +154,7 @@ if (isset($_SESSION['is_admin'])) {
         $new_text = trim($req['new_text']);
 
         if (!empty($new_text)) {
-            atomicUpdate($file, function($data) use ($id, $new_text) {
+            atomicUpdate($data_file, function($data) use ($id, $new_text) {
                 foreach ($data as &$entry) {
                     if ($entry['id'] === $id) {
                         $entry['text'] = $new_text;
@@ -185,7 +172,7 @@ if (isset($_SESSION['is_admin'])) {
     if (isset($req['action']) && $req['action'] === 'move' && isset($req['id']) && isset($req['new_thema'])) {
         $id = $req['id'];
         $new_thema = $req['new_thema'];
-        atomicUpdate($file, function($data) use ($id, $new_thema) {
+        atomicUpdate($data_file, function($data) use ($id, $new_thema) {
             foreach ($data as &$entry) {
                 if ($entry['id'] === $id) {
                     $entry['thema'] = $new_thema;
@@ -199,7 +186,7 @@ if (isset($_SESSION['is_admin'])) {
     // 🔒 SHOW ALL IN COLUMN
     if (isset($req['action_col']) && $req['action_col'] === 'show' && isset($req['col'])) {
         $col = $req['col'];
-        atomicUpdate($file, function($data) use ($col) {
+        atomicUpdate($data_file, function($data) use ($col) {
             foreach ($data as &$entry) {
                 if ($entry['thema'] === $col) {
                     $entry['visible'] = true;
@@ -213,7 +200,7 @@ if (isset($_SESSION['is_admin'])) {
     // 🔒 HIDE ALL IN COLUMN
     if (isset($req['action_col']) && $req['action_col'] === 'hide' && isset($req['col'])) {
         $col = $req['col'];
-        atomicUpdate($file, function($data) use ($col) {
+        atomicUpdate($data_file, function($data) use ($col) {
             foreach ($data as &$entry) {
                 if ($entry['thema'] === $col) {
                     $entry['visible'] = false;
@@ -226,7 +213,7 @@ if (isset($_SESSION['is_admin'])) {
 
     // 🔒 SHOW ALL
     if (isset($req['action_all']) && $req['action_all'] === 'show') {
-        atomicUpdate($file, function($data) {
+        atomicUpdate($data_file, function($data) {
             foreach ($data as &$entry) {
                 $entry['visible'] = true;
             }
@@ -237,7 +224,7 @@ if (isset($_SESSION['is_admin'])) {
 
     // 🔒 HIDE ALL
     if (isset($req['action_all']) && $req['action_all'] === 'hide') {
-        atomicUpdate($file, function($data) {
+        atomicUpdate($data_file, function($data) {
             foreach ($data as &$entry) {
                 $entry['visible'] = false;
             }
@@ -248,7 +235,7 @@ if (isset($_SESSION['is_admin'])) {
 }
 
 // Daten für Display laden (Read-Only)
-$data = safeReadJson($file);
+$data = safeReadJson($data_file);
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -493,31 +480,36 @@ $data = safeReadJson($file);
 <body>
 
 <div class="container">
-    <?php if (!isset($_SESSION['is_admin'])): ?>
-        <div class="login-wrapper">
-            <h1>ADMIN LOGIN</h1>
-            <?php if (isset($error)): ?>
-                <div class="error-msg">⚠️ <?= $error ?></div>
-            <?php endif; ?>
-            <form method="POST">
-                <input type="password" name="password" required autofocus placeholder="Passwort">
-                <button type="submit" name="login" class="btn btn-success">UNLOCK</button>
-            </form>
+    <header class="admin-header">
+        <div>
+            <span class="subtitle">Live Situation Room</span>
+            <h1>Your Workshop Dashboard</h1>
+            <p style="font-size: 14px; color: #767676; margin-top: 8px;">👤 <?= htmlspecialchars($current_user['email']) ?></p>
         </div>
-    <?php else: ?>
+        <div class="header-actions">
+            <a href="customize.php" class="btn btn-primary">Customize</a>
+            <a href="admin.php?mode=pdf" target="_blank" class="btn btn-neutral">PDF Export</a>
+            <a href="index.php?u=<?= urlencode($user_id) ?>" target="_blank" class="btn btn-neutral">View Live</a>
+            <a href="logout.php" class="btn btn-danger">Logout</a>
+        </div>
+    </header>
 
-        <header class="admin-header">
-            <div>
-                <span class="subtitle">Live Situation Room</span>
-                <h1>Moderation</h1>
-            </div>
-            <div class="header-actions">
-                <a href="customize.php" class="btn btn-primary">Anpassen</a>
-                <a href="admin.php?mode=pdf" target="_blank" class="btn btn-neutral">PDF Export</a>
-                <a href="index.php" target="_blank" class="btn btn-neutral">View Live</a>
-                <a href="admin.php?logout=1" class="btn btn-danger">Logout</a>
-            </div>
-        </header>
+    <div style="background: #e7f3f8; border: 2px solid #00658b; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+        <h3 style="margin: 0 0 12px 0; color: #00658b; font-size: 16px;">🔗 Your Workshop URLs</h3>
+        <p style="margin: 0 0 12px 0; font-size: 14px; color: #32373c;">Share these links with workshop participants:</p>
+
+        <div style="margin-bottom: 12px;">
+            <strong style="display: block; font-size: 13px; color: #767676; margin-bottom: 4px;">Live Dashboard (View Only):</strong>
+            <input type="text" readonly value="<?= getPublicWorkshopURL($user_id) ?>" onclick="this.select(); document.execCommand('copy');" style="width: 100%; padding: 8px; font-family: monospace; font-size: 12px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;" title="Click to copy">
+        </div>
+
+        <div>
+            <strong style="display: block; font-size: 13px; color: #767676; margin-bottom: 4px;">Submission Form (Participants):</strong>
+            <input type="text" readonly value="<?= getPublicInputURL($user_id) ?>" onclick="this.select(); document.execCommand('copy');" style="width: 100%; padding: 8px; font-family: monospace; font-size: 12px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;" title="Click to copy">
+        </div>
+
+        <p style="margin: 12px 0 0 0; font-size: 12px; color: #767676;">💡 Click any URL to copy to clipboard</p>
+    </div>
 
         <div class="command-panel">
             <h3>Mass Control</h3>
@@ -560,10 +552,8 @@ $data = safeReadJson($file);
              <div style="padding: 3rem; text-align: center; color: #999; grid-column: 1 / -1;">Loading Data...</div>
         </div>
 
-    <?php endif; ?>
 </div>
 
-<?php if (isset($_SESSION['is_admin'])): ?>
 <script>
     const gruppenLabels = <?= json_encode($gruppen_labels) ?>;
     
@@ -794,7 +784,7 @@ $data = safeReadJson($file);
         if (isEditMode) {
             return;
         }
-        fetch('index.php?api=1')
+        fetch('index.php?api=1&u=<?= urlencode($user_id) ?>')
             .then(response => response.json())
             .then(data => renderAdmin(data))
             .catch(err => console.error(err));
@@ -805,6 +795,5 @@ $data = safeReadJson($file);
     startAutoRefresh();
 
 </script>
-<?php endif; ?>
 </body>
 </html>

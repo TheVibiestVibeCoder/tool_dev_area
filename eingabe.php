@@ -1,42 +1,59 @@
 <?php
 // ============================================
-// ROBUSTE EINGABE.PHP FÜR 50+ GLEICHZEITIGE NUTZER
+// EINGABE.PHP - Multi-tenant Public Submission Form
+// Supports public submissions to user-specific workshops
 // ============================================
 
-// ===== ROBUSTE FILE-HANDLING MIT AUTO-BACKUP =====
 require_once 'file_handling_robust.php';
+require_once 'user_auth.php';
 
-// Load config to get dynamic categories and header
-$config = loadConfig('config.json');
+// ===== DETERMINE WORKSHOP OWNER =====
+// Public submissions via ?u={user_id}
+
+if (!isset($_GET['u'])) {
+    die('Workshop ID is required. Please use the correct link.');
+}
+
+$workshop_user_id = $_GET['u'];
+
+// Validate that this user/workshop exists
+if (!is_dir(getUserDataPath($workshop_user_id))) {
+    die('Workshop not found.');
+}
+
+// ===== LOAD USER-SPECIFIC CONFIG =====
+
+$config_file = getUserFile($workshop_user_id, 'config.json');
+$data_file = getUserFile($workshop_user_id, 'daten.json');
+
+$config = loadConfig($config_file);
 
 // Build gruppen from config
 $gruppen = [];
 $headerTitle = 'Live Situation Room'; // Default
 $logoUrl = ''; // Default (no logo)
+$leitfragen_by_key = []; // Store guiding questions per category
 
 if ($config && isset($config['categories'])) {
     foreach ($config['categories'] as $category) {
         $gruppen[$category['key']] = $category['display_name'] ?? $category['name'];
+        $leitfragen_by_key[$category['key']] = $category['leitfragen'] ?? [];
     }
     $headerTitle = $config['header_title'] ?? $headerTitle;
     $logoUrl = $config['logo_url'] ?? $logoUrl;
 } else {
     // Fallback if config cannot be loaded
     $gruppen = [
-        'bildung' => '📚 Bildung & Schule',
-        'social' => '📱 Verantwortung Social Media',
-        'individuell' => '🧑 Individuelle Verantwortung',
-        'politik' => '⚖️ Politik & Recht',
-        'kreativ' => '💡 Kreative & innovative Ansätze'
+        'general' => '💡 General Ideas'
     ];
+    $leitfragen_by_key = ['general' => []];
 }
 
 $message = '';
 
-// ===== HAUPTLOGIK =====
+// ===== SUBMISSION LOGIC =====
 
-$file = 'daten.json';
-ensureFileExists($file);
+ensureFileExists($data_file);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $thema = $_POST['thema'] ?? '';
@@ -61,8 +78,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ];
         
         // 🔒 ATOMIC WRITE - Keine Race Condition möglich!
-        $writeSuccess = atomicAddEntry($file, $new_entry);
-        
+        $writeSuccess = atomicAddEntry($data_file, $new_entry);
+
         if ($writeSuccess) {
             $message = '<div class="alert alert-success">✅ ANTWORT ERFOLGREICH ÜBERMITTELT. (KEEP GOING!)</div>';
             $_POST = [];
@@ -382,7 +399,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </form>
 
     <div style="text-align: center; margin-top: 3rem; margin-bottom: 1rem;">
-        <a href="index.php" class="link-subtle">← Zurück zum Live-Dashboard</a>
+        <a href="index.php?u=<?= urlencode($workshop_user_id) ?>" class="link-subtle">← Zurück zum Live-Dashboard</a>
     </div>
 </div>
 
