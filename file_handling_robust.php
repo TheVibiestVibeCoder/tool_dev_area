@@ -2,7 +2,45 @@
 /**
  * KOLLISIONSSICHERE FILE-HANDLING FUNKTIONEN
  * Für Workshop mit 50+ gleichzeitigen Nutzern
+ *
+ * MULTI-TENANCY SUPPORT:
+ * All functions now support user-specific file paths via $user_id parameter.
+ * When $user_id is provided, files are loaded from: data/{user_id}/filename
+ * When $user_id is null, files are loaded from root directory (backward compatibility)
  */
+
+/**
+ * USER-SPECIFIC FILE PATHS
+ * Helper functions for multi-tenant file handling
+ */
+
+/**
+ * Get user-specific file path
+ *
+ * @param string $file Base filename (e.g., 'daten.json')
+ * @param string|null $user_id User ID (null for root directory)
+ * @return string Full file path
+ */
+function getUserSpecificFile($file, $user_id = null) {
+    if ($user_id === null) {
+        return $file;
+    }
+    return 'data/' . $user_id . '/' . $file;
+}
+
+/**
+ * Get backup directory for user
+ *
+ * @param string $file Base filename
+ * @param string|null $user_id User ID
+ * @return string Backup directory path
+ */
+function getUserBackupDir($file, $user_id = null) {
+    if ($user_id === null) {
+        return dirname($file) . '/backups';
+    }
+    return 'data/' . $user_id . '/backups';
+}
 
 /**
  * AUTO-BACKUP FUNKTION
