@@ -1,28 +1,29 @@
 <?php
 // ============================================
-// CUSTOMIZE.PHP - CONFIGURATION PANEL
+// CUSTOMIZE.PHP - Configuration Panel (Multi-tenant)
 // ============================================
 
-session_start();
-
-// Admin check - redirect if not logged in
-if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true) {
-    header("Location: admin.php");
-    exit;
-}
-
 require_once 'file_handling_robust.php';
+require_once 'user_auth.php';
 
-$configFile = 'config.json';
+// Require authentication
+requireAuth();
+
+// Get current user
+$current_user = getCurrentUser();
+$user_id = $current_user['id'];
+
+// Load user-specific config
+$configFile = getUserFile($user_id, 'config.json');
 $message = '';
 $messageType = '';
 
 // Load config
 $config = loadConfig($configFile);
 if ($config === null) {
-    $message = '⚠️ KONFIGURATIONSDATEI KONNTE NICHT GELADEN WERDEN.';
+    $message = '⚠️ CONFIGURATION COULD NOT BE LOADED.';
     $messageType = 'error';
-    $config = ['header_title' => '', 'categories' => []];
+    $config = ['header_title' => '', 'logo_url' => '', 'categories' => []];
 }
 
 // Handle form submission
