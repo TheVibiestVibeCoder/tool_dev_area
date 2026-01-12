@@ -5,6 +5,10 @@
 
 require_once 'file_handling_robust.php';
 require_once 'user_auth.php';
+require_once 'security_helpers.php';
+
+// Set security headers
+setSecurityHeaders();
 
 // Require authentication
 requireAuth();
@@ -509,6 +513,7 @@ $data = safeReadJson($data_file);
         </div>
         <div class="header-actions">
             <a href="customize.php" class="btn btn-primary">Customize</a>
+            <a href="subscription_manage.php" class="btn btn-neutral">Subscription</a>
             <a href="admin.php?mode=pdf" target="_blank" class="btn btn-neutral">PDF Export</a>
             <a href="index.php?u=<?= urlencode($user_id) ?>" target="_blank" class="btn btn-neutral">View Live</a>
             <a href="logout.php" class="btn btn-danger">Logout</a>
@@ -577,7 +582,14 @@ $data = safeReadJson($data_file);
 
 <script>
     const gruppenLabels = <?= json_encode($gruppen_labels) ?>;
-    
+
+    // HTML escape function to prevent XSS
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
     function renderAdmin(data) {
         const feed = document.getElementById('admin-feed');
         const purgeWrapper = document.getElementById('purge-btn-wrapper');
@@ -616,36 +628,37 @@ $data = safeReadJson($data_file);
             const focusClass = isFocused ? 'is-focused' : '';
 
             const escapedText = entry.text.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+            const escapedId = escapeHtml(entry.id);
 
             html += `
-            <div class="admin-card ${cardStatusClass}" id="card-${entry.id}" data-original-text="${escapedText}">
+            <div class="admin-card ${cardStatusClass}" id="card-${escapedId}" data-original-text="${escapedText}">
                 <div class="card-header">
-                    <select class="admin-select" onchange="runCmd('action=move&id=${entry.id}&new_thema='+this.value)">
+                    <select class="admin-select" onchange="runCmd('action=move&id=${escapedId}&new_thema='+this.value)">
                         ${optionsHtml}
                     </select>
                     <span class="card-time">${new Date(entry.zeit * 1000).toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'})}</span>
                 </div>
 
-                <div class="card-body" data-id="${entry.id}">
-                    <div class="entry-text-display">${entry.text}</div>
-                    <textarea class="entry-text-edit" style="display: none;">${entry.text}</textarea>
+                <div class="card-body" data-id="${escapedId}">
+                    <div class="entry-text-display">${escapeHtml(entry.text)}</div>
+                    <textarea class="entry-text-edit" style="display: none;">${escapeHtml(entry.text)}</textarea>
                 </div>
 
                 <div class="card-actions">
-                    <button onclick="toggleEditMode('${entry.id}')" class="btn btn-neutral btn-edit" data-id="${entry.id}">EDIT</button>
+                    <button onclick="toggleEditMode('${escapedId}')" class="btn btn-neutral btn-edit" data-id="${escapedId}">EDIT</button>
 
-                    <button onclick="runCmd('toggle_focus=${entry.id}')" class="btn btn-focus ${focusClass}">FOCUS</button>
+                    <button onclick="runCmd('toggle_focus=${escapedId}')" class="btn btn-focus ${focusClass}">FOCUS</button>
 
-                    <button onclick="runCmd('toggle_id=${entry.id}')" class="btn ${btnClass}">
+                    <button onclick="runCmd('toggle_id=${escapedId}')" class="btn ${btnClass}">
                         ${btnText}
                     </button>
 
-                    <button onclick="if(confirm('Delete?')) runCmd('delete=${entry.id}')" class="btn btn-danger" style="flex: 0 0 auto;">✕</button>
+                    <button onclick="if(confirm('Delete?')) runCmd('delete=${escapedId}')" class="btn btn-danger" style="flex: 0 0 auto;">✕</button>
                 </div>
 
                 <div class="card-edit-actions" style="display: none;">
-                    <button onclick="saveEdit('${entry.id}')" class="btn btn-success">💾 SAVE</button>
-                    <button onclick="cancelEdit('${entry.id}')" class="btn btn-neutral">CANCEL</button>
+                    <button onclick="saveEdit('${escapedId}')" class="btn btn-success">💾 SAVE</button>
+                    <button onclick="cancelEdit('${escapedId}')" class="btn btn-neutral">CANCEL</button>
                 </div>
             </div>`;
         });

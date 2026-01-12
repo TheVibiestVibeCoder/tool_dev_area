@@ -13,6 +13,12 @@
  * - User data isolation
  */
 
+// Load security helpers
+require_once __DIR__ . '/security_helpers.php';
+
+// Configure secure session before starting
+configureSecureSession();
+
 // Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -119,7 +125,18 @@ function registerUser($email, $password) {
         'email' => $email,
         'password_hash' => $password_hash,
         'created_at' => time(),
-        'last_login' => time()
+        'last_login' => time(),
+        'subscription' => [
+            'plan_id' => 'free',
+            'status' => 'active',
+            'stripe_customer_id' => null,
+            'stripe_subscription_id' => null,
+            'current_period_start' => null,
+            'current_period_end' => null,
+            'cancel_at_period_end' => false,
+            'created_at' => time(),
+            'updated_at' => time()
+        ]
     ];
 
     // Add user to database
