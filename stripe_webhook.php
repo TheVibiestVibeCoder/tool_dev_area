@@ -13,7 +13,15 @@
  */
 
 require_once 'subscription_manager.php';
-require_once 'stripe_config.php';
+require_once 'stripe_api_client.php';
+
+// Load config
+if (file_exists('stripe_config_secure.php')) {
+    require_once 'stripe_config_secure.php';
+} elseif (file_exists('stripe_config.php')) {
+    require_once 'stripe_config.php';
+}
+
 require_once 'file_handling_robust.php';
 
 // Get the webhook payload
@@ -26,47 +34,46 @@ $log_entry = date('Y-m-d H:i:s') . " - Received webhook\n";
 file_put_contents($log_file, $log_entry, FILE_APPEND);
 
 try {
-    // Initialize Stripe
-    require_once 'stripe-php/init.php';
-    \Stripe\Stripe::setApiKey(STRIPE_SECRET_KEY);
-
-    // Verify webhook signature
-    $event = \Stripe\Webhook::constructEvent(
+    // Verify webhook signature using lightweight client
+    StripeApiClient::verifyWebhookSignature(
         $payload,
         $sig_header,
         STRIPE_WEBHOOK_SECRET
     );
 
+    // Parse the event
+    $event = json_decode($payload, true);
+
     // Log event type
-    $log_entry = date('Y-m-d H:i:s') . " - Event type: {$event->type}\n";
+    $log_entry = date('Y-m-d H:i:s') . " - Event type: {$event['type']}\n";
     file_put_contents($log_file, $log_entry, FILE_APPEND);
 
     // Handle the event
-    switch ($event->type) {
+    switch ($event['type']) {
         case 'customer.subscription.created':
         case 'customer.subscription.updated':
-            handleSubscriptionUpdate($event->data->object);
+            handleSubscriptionUpdate($event['data']['object']);
             break;
 
         case 'customer.subscription.deleted':
-            handleSubscriptionCancellation($event->data->object);
+            handleSubscriptionCancellation($event['data']['object']);
             break;
 
         case 'invoice.payment_succeeded':
-            handlePaymentSucceeded($event->data->object);
+            handlePaymentSucceeded($event['data']['object']);
             break;
 
         case 'invoice.payment_failed':
-            handlePaymentFailed($event->data->object);
+            handlePaymentFailed($event['data']['object']);
             break;
 
         case 'checkout.session.completed':
-            handleCheckoutCompleted($event->data->object);
+            handleCheckoutCompleted($event['data']['object']);
             break;
 
         default:
             // Unhandled event type
-            $log_entry = date('Y-m-d H:i:s') . " - Unhandled event type: {$event->type}\n";
+            $log_entry = date('Y-m-d H:i:s') . " - Unhandled event type: {$event['type']}\n";
             file_put_contents($log_file, $log_entry, FILE_APPEND);
     }
 
@@ -74,27 +81,27 @@ try {
     http_response_code(200);
     echo json_encode(['status' => 'success']);
 
-} catch (\Stripe\Exception\SignatureVerificationException $e) {
-    // Invalid signature
-    $log_entry = date('Y-m-d H:i:s') . " - Signature verification failed: {$e->getMessage()}\n";
-    file_put_contents($log_file, $log_entry, FILE_APPEND);
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid signature']);
-
 } catch (Exception $e) {
-    // Other errors
+    // Log error
     $log_entry = date('Y-m-d H:i:s') . " - Error: {$e->getMessage()}\n";
     file_put_contents($log_file, $log_entry, FILE_APPEND);
-    http_response_code(500);
-    echo json_encode(['error' => 'Webhook handler error']);
+
+    // Check if it's a signature verification error
+    if (strpos($e->getMessage(), 'Signature') !== false || strpos($e->getMessage(), 'signature') !== false) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Invalid signature']);
+    } else {
+        http_response_code(500);
+        echo json_encode(['error' => 'Webhook handler error']);
+    }
 }
 
 /**
  * Handle subscription creation/update
  */
 function handleSubscriptionUpdate($subscription) {
-    $user_id = $subscription->metadata->user_id ?? null;
-    $plan_id = $subscription->metadata->plan_id ?? 'premium';
+    $user_id = $subscription['metadata']['user_id'] ?? null;
+    $plan_id = $subscription['metadata']['plan_id'] ?? 'premium';
 
     if (!$user_id) {
         error_log('Webhook: No user_id in subscription metadata');
@@ -102,18 +109,18 @@ function handleSubscriptionUpdate($subscription) {
     }
 
     // Determine subscription status
-    $status = $subscription->status; // active, past_due, canceled, etc.
+    $status = $subscription['status']; // active, past_due, canceled, etc.
 
     // Update user subscription
     $sub_manager = new SubscriptionManager();
     $sub_manager->updateUserSubscription($user_id, [
         'plan_id' => $status === 'active' ? $plan_id : 'free',
         'status' => $status,
-        'stripe_customer_id' => $subscription->customer,
-        'stripe_subscription_id' => $subscription->id,
-        'current_period_start' => $subscription->current_period_start,
-        'current_period_end' => $subscription->current_period_end,
-        'cancel_at_period_end' => $subscription->cancel_at_period_end ?? false
+        'stripe_customer_id' => $subscription['customer'],
+        'stripe_subscription_id' => $subscription['id'],
+        'current_period_start' => $subscription['current_period_start'],
+        'current_period_end' => $subscription['current_period_end'],
+        'cancel_at_period_end' => $subscription['cancel_at_period_end'] ?? false
     ]);
 
     $log_entry = date('Y-m-d H:i:s') . " - Updated subscription for user {$user_id} to {$plan_id} ({$status})\n";
@@ -124,7 +131,7 @@ function handleSubscriptionUpdate($subscription) {
  * Handle subscription cancellation
  */
 function handleSubscriptionCancellation($subscription) {
-    $user_id = $subscription->metadata->user_id ?? null;
+    $user_id = $subscription['metadata']['user_id'] ?? null;
 
     if (!$user_id) {
         error_log('Webhook: No user_id in subscription metadata');
@@ -150,8 +157,8 @@ function handleSubscriptionCancellation($subscription) {
  * Handle successful payment
  */
 function handlePaymentSucceeded($invoice) {
-    $customer_id = $invoice->customer;
-    $subscription_id = $invoice->subscription;
+    $customer_id = $invoice['customer'];
+    $subscription_id = $invoice['subscription'];
 
     // Log successful payment
     $log_entry = date('Y-m-d H:i:s') . " - Payment succeeded for subscription {$subscription_id}\n";
@@ -164,8 +171,8 @@ function handlePaymentSucceeded($invoice) {
  * Handle failed payment
  */
 function handlePaymentFailed($invoice) {
-    $customer_id = $invoice->customer;
-    $subscription_id = $invoice->subscription;
+    $customer_id = $invoice['customer'];
+    $subscription_id = $invoice['subscription'];
 
     // Log failed payment
     $log_entry = date('Y-m-d H:i:s') . " - Payment FAILED for subscription {$subscription_id}\n";
@@ -178,32 +185,30 @@ function handlePaymentFailed($invoice) {
  * Handle checkout session completed
  */
 function handleCheckoutCompleted($session) {
-    $user_id = $session->client_reference_id;
-    $customer_id = $session->customer;
+    $user_id = $session['client_reference_id'] ?? null;
+    $customer_id = $session['customer'] ?? null;
 
     if (!$user_id) {
         error_log('Webhook: No user_id in checkout session');
         return;
     }
 
-    // Get subscription details
-    require_once 'stripe-php/init.php';
-    \Stripe\Stripe::setApiKey(STRIPE_SECRET_KEY);
-
+    // Get subscription details using lightweight API client
     try {
-        $subscription = \Stripe\Subscription::retrieve($session->subscription);
+        $stripe_client = new StripeApiClient(STRIPE_SECRET_KEY);
+        $subscription = $stripe_client->retrieveSubscription($session['subscription']);
 
         // Update user subscription
         $sub_manager = new SubscriptionManager();
-        $plan_id = $subscription->metadata->plan_id ?? 'premium';
+        $plan_id = $subscription['metadata']['plan_id'] ?? 'premium';
 
         $sub_manager->updateUserSubscription($user_id, [
             'plan_id' => $plan_id,
-            'status' => $subscription->status,
+            'status' => $subscription['status'],
             'stripe_customer_id' => $customer_id,
-            'stripe_subscription_id' => $subscription->id,
-            'current_period_start' => $subscription->current_period_start,
-            'current_period_end' => $subscription->current_period_end,
+            'stripe_subscription_id' => $subscription['id'],
+            'current_period_start' => $subscription['current_period_start'],
+            'current_period_end' => $subscription['current_period_end'],
             'cancel_at_period_end' => false
         ]);
 

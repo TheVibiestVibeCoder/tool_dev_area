@@ -6,6 +6,7 @@
  */
 
 require_once 'file_handling_robust.php';
+require_once 'stripe_api_client.php';
 
 // Try to load secure config first, fallback to regular config
 if (file_exists('stripe_config_secure.php')) {
@@ -20,6 +21,9 @@ if (file_exists('stripe_config_secure.php')) {
     if (!defined('STRIPE_PREMIUM_YEARLY_PRICE_ID')) {
         define('STRIPE_PREMIUM_YEARLY_PRICE_ID', 'price_NOT_CONFIGURED');
     }
+    if (!defined('STRIPE_SECRET_KEY')) {
+        define('STRIPE_SECRET_KEY', 'sk_test_NOT_CONFIGURED');
+    }
     error_log('WARNING: Stripe configuration file not found');
 }
 
@@ -27,26 +31,19 @@ class SubscriptionManager {
 
     private $pricing_config;
     private $users_file = 'users.json';
-    private $stripe_available = false;
+    private $stripe_client;
 
     public function __construct() {
         $this->loadPricingConfig();
-        $this->checkStripeAvailability();
+        $this->initializeStripeClient();
     }
 
     /**
-     * Check if Stripe SDK is available
+     * Initialize Stripe API client (no external dependencies needed!)
      */
-    private function checkStripeAvailability() {
-        // Check if Stripe SDK is installed
-        if (file_exists(__DIR__ . '/stripe-php/init.php')) {
-            $this->stripe_available = true;
-        } elseif (file_exists(__DIR__ . '/vendor/autoload.php')) {
-            // Check for Composer installation
-            $this->stripe_available = true;
-        } else {
-            error_log('WARNING: Stripe PHP SDK not found. Please run install_stripe.sh or use Composer.');
-            $this->stripe_available = false;
+    private function initializeStripeClient() {
+        if (defined('STRIPE_SECRET_KEY') && strpos(STRIPE_SECRET_KEY, 'NOT_CONFIGURED') === false) {
+            $this->stripe_client = new StripeApiClient(STRIPE_SECRET_KEY);
         }
     }
 
@@ -263,9 +260,9 @@ class SubscriptionManager {
      * Create Stripe Checkout Session
      */
     public function createCheckoutSession($user_id, $user_email, $plan_id, $billing_period = 'monthly') {
-        // Check if Stripe is available
-        if (!$this->stripe_available) {
-            return ['error' => 'Payment system not available. Please contact administrator. (Stripe SDK not installed)'];
+        // Check if Stripe client is initialized
+        if (!$this->stripe_client) {
+            return ['error' => 'Payment system not configured. Please contact administrator.'];
         }
 
         $plan = $this->getPlan($plan_id);
@@ -283,23 +280,13 @@ class SubscriptionManager {
             ? $plan['stripe_price_id_yearly']
             : $plan['stripe_price_id_monthly'];
 
-        if (!$price_id || strpos($price_id, 'REPLACE') !== false || strpos($price_id, 'NOT_CONFIGURED') !== false) {
-            return ['error' => 'Payment system not configured. Please contact administrator.'];
+        if (!$price_id || strpos($price_id, 'REPLACE') !== false || strpos($price_id, 'NOT_CONFIGURED') !== false || strpos($price_id, 'prod_') === 0) {
+            return ['error' => 'Payment system not configured. Please use Price IDs (start with price_...) not Product IDs (start with prod_...)'];
         }
-
-        // Initialize Stripe
-        if (file_exists(__DIR__ . '/stripe-php/init.php')) {
-            require_once __DIR__ . '/stripe-php/init.php';
-        } elseif (file_exists(__DIR__ . '/vendor/autoload.php')) {
-            require_once __DIR__ . '/vendor/autoload.php';
-        } else {
-            return ['error' => 'Payment system unavailable. Stripe SDK not found.'];
-        }
-
-        \Stripe\Stripe::setApiKey(STRIPE_SECRET_KEY);
 
         try {
-            $session = \Stripe\Checkout\Session::create([
+            // Create checkout session using lightweight API client
+            $session = $this->stripe_client->createCheckoutSession([
                 'customer_email' => $user_email,
                 'client_reference_id' => $user_id,
                 'payment_method_types' => ['card', 'sepa_debit'],
@@ -319,13 +306,13 @@ class SubscriptionManager {
 
             return [
                 'success' => true,
-                'session_id' => $session->id,
-                'checkout_url' => $session->url
+                'session_id' => $session['id'],
+                'checkout_url' => $session['url']
             ];
 
-        } catch (\Stripe\Exception\ApiErrorException $e) {
+        } catch (Exception $e) {
             error_log('Stripe API Error: ' . $e->getMessage());
-            return ['error' => 'Payment processing error. Please try again.'];
+            return ['error' => 'Payment processing error: ' . $e->getMessage()];
         }
     }
 
@@ -339,20 +326,20 @@ class SubscriptionManager {
             return ['error' => 'No active subscription found'];
         }
 
-        require_once 'stripe-php/init.php';
-        \Stripe\Stripe::setApiKey(STRIPE_SECRET_KEY);
+        if (!$this->stripe_client) {
+            return ['error' => 'Payment system not configured'];
+        }
 
         try {
             // Cancel at period end (don't terminate immediately)
-            $stripe_subscription = \Stripe\Subscription::update(
-                $subscription['stripe_subscription_id'],
-                ['cancel_at_period_end' => true]
+            $stripe_subscription = $this->stripe_client->cancelSubscription(
+                $subscription['stripe_subscription_id']
             );
 
             // Update local database
             $this->updateUserSubscription($user_id, [
                 'cancel_at_period_end' => true,
-                'cancels_at' => $stripe_subscription->current_period_end
+                'cancels_at' => $stripe_subscription['current_period_end']
             ]);
 
             return [
@@ -360,7 +347,7 @@ class SubscriptionManager {
                 'message' => 'Subscription will cancel at the end of the current billing period'
             ];
 
-        } catch (\Stripe\Exception\ApiErrorException $e) {
+        } catch (Exception $e) {
             error_log('Stripe API Error: ' . $e->getMessage());
             return ['error' => 'Could not cancel subscription. Please try again.'];
         }
@@ -380,14 +367,14 @@ class SubscriptionManager {
             return ['error' => 'Subscription is not scheduled for cancellation'];
         }
 
-        require_once 'stripe-php/init.php';
-        \Stripe\Stripe::setApiKey(STRIPE_SECRET_KEY);
+        if (!$this->stripe_client) {
+            return ['error' => 'Payment system not configured'];
+        }
 
         try {
             // Remove cancellation
-            \Stripe\Subscription::update(
-                $subscription['stripe_subscription_id'],
-                ['cancel_at_period_end' => false]
+            $this->stripe_client->reactivateSubscription(
+                $subscription['stripe_subscription_id']
             );
 
             // Update local database
@@ -401,7 +388,7 @@ class SubscriptionManager {
                 'message' => 'Subscription reactivated successfully'
             ];
 
-        } catch (\Stripe\Exception\ApiErrorException $e) {
+        } catch (Exception $e) {
             error_log('Stripe API Error: ' . $e->getMessage());
             return ['error' => 'Could not reactivate subscription. Please try again.'];
         }
@@ -417,21 +404,22 @@ class SubscriptionManager {
             return ['error' => 'No Stripe customer found'];
         }
 
-        require_once 'stripe-php/init.php';
-        \Stripe\Stripe::setApiKey(STRIPE_SECRET_KEY);
+        if (!$this->stripe_client) {
+            return ['error' => 'Payment system not configured'];
+        }
 
         try {
-            $session = \Stripe\BillingPortal\Session::create([
-                'customer' => $subscription['stripe_customer_id'],
-                'return_url' => $return_url,
-            ]);
+            $session = $this->stripe_client->createBillingPortalSession(
+                $subscription['stripe_customer_id'],
+                $return_url
+            );
 
             return [
                 'success' => true,
-                'portal_url' => $session->url
+                'portal_url' => $session['url']
             ];
 
-        } catch (\Stripe\Exception\ApiErrorException $e) {
+        } catch (Exception $e) {
             error_log('Stripe API Error: ' . $e->getMessage());
             return ['error' => 'Could not create portal session. Please try again.'];
         }

@@ -11,21 +11,9 @@ https://learn.disinfoconsulting.eu/tool_dev_area/check_setup.php
 
 This will tell you exactly what needs to be configured.
 
-## ✅ Step 2: Install Stripe SDK
+## ✅ Step 2: Configure Stripe Keys
 
-SSH into your server and run:
-```bash
-cd /path/to/tool_dev_area
-chmod +x install_stripe.sh
-./install_stripe.sh
-```
-
-**Alternative (if you have Composer):**
-```bash
-composer require stripe/stripe-php
-```
-
-## ✅ Step 3: Configure Stripe Keys
+**No installation required!** The payment system uses PHP's built-in curl to communicate with Stripe - no external dependencies needed.
 
 ### Get Your Stripe Keys
 
@@ -73,7 +61,7 @@ STRIPE_TEST_PREMIUM_MONTHLY_PRICE_ID=price_YOUR_MONTHLY_ID
 STRIPE_TEST_PREMIUM_YEARLY_PRICE_ID=price_YOUR_YEARLY_ID
 ```
 
-## ✅ Step 4: Test It!
+## ✅ Step 3: Test It!
 
 ### Test the Pricing Page
 Visit:
@@ -129,9 +117,6 @@ Use this card number for testing:
 3. Use different keys for test and live mode
 
 ## 🐛 Troubleshooting
-
-### "Payment system not available" error
-**Solution:** Install Stripe SDK (see Step 2)
 
 ### "Payment system not configured" error
 **Solution:** Update `.env` with your Stripe keys (see Step 3)

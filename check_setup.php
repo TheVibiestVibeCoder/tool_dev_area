@@ -145,29 +145,19 @@ if (!$allow_execution) {
             $errors++;
         }
 
-        // Check 2: Stripe PHP SDK
-        $stripe_sdk_status = 'not_found';
-        if (file_exists('stripe-php/init.php')) {
-            $stripe_sdk_status = 'stripe-php directory';
+        // Check 2: Stripe API Client (built-in, no dependencies needed)
+        if (file_exists('stripe_api_client.php')) {
             $checks[] = [
                 'status' => 'success',
-                'title' => 'Stripe PHP SDK',
-                'message' => 'Stripe SDK found in stripe-php/ directory.'
-            ];
-            $successes++;
-        } elseif (file_exists('vendor/autoload.php')) {
-            $stripe_sdk_status = 'composer vendor';
-            $checks[] = [
-                'status' => 'success',
-                'title' => 'Stripe PHP SDK',
-                'message' => 'Stripe SDK found via Composer (vendor/).'
+                'title' => 'Stripe API Client',
+                'message' => 'Lightweight Stripe API client found. No external dependencies required!'
             ];
             $successes++;
         } else {
             $checks[] = [
                 'status' => 'error',
-                'title' => 'Stripe PHP SDK',
-                'message' => 'Stripe SDK not found! Run: chmod +x install_stripe.sh && ./install_stripe.sh'
+                'title' => 'Stripe API Client',
+                'message' => 'stripe_api_client.php is missing!'
             ];
             $errors++;
         }
@@ -385,22 +375,14 @@ if (!$allow_execution) {
             <h2>🔧 How to Fix</h2>
 
             <div class="file-list">
-                <h3>Step 1: Install Stripe SDK</h3>
-                <p>Run this command in your terminal:</p>
-                <div class="code-block">chmod +x install_stripe.sh && ./install_stripe.sh</div>
-                <p>Or use Composer:</p>
-                <div class="code-block">composer require stripe/stripe-php</div>
-            </div>
-
-            <div class="file-list">
-                <h3>Step 2: Configure Stripe Keys</h3>
+                <h3>Step 1: Configure Stripe Keys</h3>
                 <p>Copy the example file and edit it:</p>
                 <div class="code-block">cp .env.example .env<br>nano .env</div>
                 <p>Get your keys from: <a href="https://dashboard.stripe.com/apikeys" target="_blank">Stripe Dashboard → API Keys</a></p>
             </div>
 
             <div class="file-list">
-                <h3>Step 3: Create Stripe Products</h3>
+                <h3>Step 2: Create Stripe Products</h3>
                 <ol>
                     <li>Go to <a href="https://dashboard.stripe.com/products" target="_blank">Stripe Dashboard → Products</a></li>
                     <li>Create "Premium Monthly" - €19.99/month recurring</li>
@@ -410,7 +392,7 @@ if (!$allow_execution) {
             </div>
 
             <div class="file-list">
-                <h3>Step 4: Setup Webhook (Optional but Recommended)</h3>
+                <h3>Step 3: Setup Webhook (Optional but Recommended)</h3>
                 <ol>
                     <li>Go to <a href="https://dashboard.stripe.com/webhooks" target="_blank">Stripe Dashboard → Webhooks</a></li>
                     <li>Add endpoint: <code><?php echo (isset($_SERVER['HTTPS']) ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . '/stripe_webhook.php'; ?></code></li>
