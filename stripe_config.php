@@ -17,20 +17,20 @@ define('STRIPE_ENVIRONMENT', 'test'); // 'test' or 'live'
 // IMPORTANT: Replace these with your actual Stripe keys
 if (STRIPE_ENVIRONMENT === 'live') {
     // Live/Production keys
-    define('STRIPE_PUBLISHABLE_KEY', 'pk_live_REPLACE_WITH_YOUR_LIVE_PUBLISHABLE_KEY');
-    define('STRIPE_SECRET_KEY', 'sk_live_REPLACE_WITH_YOUR_LIVE_SECRET_KEY');
-    define('STRIPE_WEBHOOK_SECRET', 'whsec_REPLACE_WITH_YOUR_LIVE_WEBHOOK_SECRET');
+    define('STRIPE_PUBLISHABLE_KEY', 'pk_live_51SogyRBYVfeYce7i7gzZIJcSb97IZWWZ2iBudy5eVLDIt80QV77VxkUHwMG3tR4jeCLIM8r4IWEB8jsAR5PPkFqy00mGjSa4GZ');
+    define('STRIPE_SECRET_KEY', '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');
+    define('STRIPE_WEBHOOK_SECRET', 'whsec_eOCxECCveYlHUkeriUiMnqA0Jhblrkwq');
 } else {
     // Test keys
-    define('STRIPE_PUBLISHABLE_KEY', 'pk_test_REPLACE_WITH_YOUR_TEST_PUBLISHABLE_KEY');
-    define('STRIPE_SECRET_KEY', 'sk_test_REPLACE_WITH_YOUR_TEST_SECRET_KEY');
-    define('STRIPE_WEBHOOK_SECRET', 'whsec_REPLACE_WITH_YOUR_TEST_WEBHOOK_SECRET');
+    define('STRIPE_PUBLISHABLE_KEY', 'pk_test_51SogyRBYVfeYce7i7gzZIJcSb97IZWWZ2iBudy5eVLDIt80QV77VxkUHwMG3tR4jeCLIM8r4IWEB8jsAR5PPkFqy00mGjSa4GZ');
+    define('STRIPE_SECRET_KEY', 'sk_test_51SogyRBYVfeYce7i64rJjnozoCE9PzvQtpjzxh5M8TrAtJ891cXGyblaZGnoVCPWd77vT0cvS4qLoPyjiQUQqyeE00wedwsFoX');
+    define('STRIPE_WEBHOOK_SECRET', 'whsec_eOCxECCveYlHUkeriUiMnqA0Jhblrkwq');
 }
 
 // Stripe Configuration
 define('STRIPE_CURRENCY', 'eur');
-define('STRIPE_SUCCESS_URL', 'https://yourdomain.com/subscription_success.php');
-define('STRIPE_CANCEL_URL', 'https://yourdomain.com/pricing.php');
+define('STRIPE_SUCCESS_URL', 'https://learn.disinfoconsulting.eu/tool_dev_area/subscription_success.php');
+define('STRIPE_CANCEL_URL', 'https://learn.disinfoconsulting.eu/tool_dev_area/pricing.php');
 
 // Product IDs (These will be created in Stripe Dashboard)
 // You need to create these products in Stripe and get their price IDs

@@ -34,8 +34,8 @@
                 "email_support": true,
                 "priority_support": false
             },
-            "stripe_price_id_monthly": "price_REPLACE_WITH_YOUR_STRIPE_PRICE_ID",
-            "stripe_price_id_yearly": "price_REPLACE_WITH_YOUR_STRIPE_YEARLY_PRICE_ID"
+            "stripe_price_id_monthly": "prod_TmFYNG0BhG3K7D",
+            "stripe_price_id_yearly": "prod_TmG350nRAq41Os"
         },
         "enterprise": {
             "id": "enterprise",
