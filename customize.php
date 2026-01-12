@@ -140,7 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
     <style>
-        /* --- DESIGN SYSTEM (Monochrome + Design Colors) --- */
+        /* --- DESIGN SYSTEM --- */
         * { box-sizing: border-box; }
         
         :root {
@@ -335,11 +335,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         /* GRID LAYOUT FOR FORM ROWS */
+        /* ALIGNMENT FIX APPLIED HERE */
         .form-row {
             display: grid;
             grid-template-columns: 2fr 2fr 1fr 1fr;
             gap: 20px;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
+            align-items: stretch; /* Ensures columns are same height */
+        }
+
+        .form-row .form-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 0; /* Override standard margin */
+            height: 100%; /* Fill the grid cell */
+        }
+
+        .form-row label {
+            /* Label stays at top */
+            margin-bottom: 10px;
+        }
+
+        .form-row input {
+            /* Input pushes to bottom */
+            margin-top: auto; 
         }
 
         /* ADD CATEGORY BTN */
@@ -395,9 +414,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             .header-actions .btn { width: 100%; justify-content: center; }
 
             .form-section { padding: 1.5rem; }
-            .form-row { grid-template-columns: 1fr; gap: 0; }
             
-            /* On mobile, stack inputs inside the card */
+            /* Reset grid on mobile */
+            .form-row { grid-template-columns: 1fr; gap: 20px; }
+            .form-row .form-group { display: block; height: auto; }
+            .form-row input { margin-top: 0; }
+            
             .category-card { padding: 1rem; }
             .category-header { margin-bottom: 1rem; }
         }
