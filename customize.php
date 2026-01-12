@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Validate logo URL is safe (no javascript:, data:, etc.)
     if (!empty($newLogoUrl) && !isUrlSafe($newLogoUrl)) {
-        $message = '⚠️ UNGÜLTIGE LOGO URL. Nur HTTP/HTTPS URLs sind erlaubt.';
+        $message = '⚠️ INVALID LOGO URL. Only HTTP/HTTPS URLs are allowed.';
         $messageType = 'error';
         $newLogoUrl = ''; // Clear invalid URL
     }
@@ -66,13 +66,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $displayName = trim($categoryDisplayNames[$i] ?? '');
 
         if (empty($key) || empty($name) || empty($abbrev)) {
-            $errors[] = "Kategorie $i: Schlüssel, Name und Kürzel sind Pflichtfelder.";
+            $errors[] = "Category $i: Key, Name, and Abbreviation are required.";
             continue;
         }
 
         // Validate key format (lowercase alphanumeric)
         if (!preg_match('/^[a-z0-9_]+$/', $key)) {
-            $errors[] = "Kategorie $i: Schlüssel muss aus Kleinbuchstaben, Zahlen und Unterstrichen bestehen.";
+            $errors[] = "Category $i: Key must use lowercase letters, numbers, and underscores only.";
             continue;
         }
 
@@ -117,11 +117,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $success = saveConfig($configFile, $newConfig);
 
             if ($success) {
-                $message = '✅ KONFIGURATION ERFOLGREICH GESPEICHERT!';
+                $message = '✅ CONFIGURATION SAVED SUCCESSFULLY!';
                 $messageType = 'success';
                 $config = $newConfig;
             } else {
-                $message = '⚠️ FEHLER BEIM SPEICHERN DER KONFIGURATION.';
+                $message = '⚠️ ERROR SAVING CONFIGURATION.';
                 $messageType = 'error';
             }
         }
@@ -283,10 +283,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             display: block;
             font-size: 0.85rem;
             color: var(--text-muted);
-            margin-top: 4px;
+            margin-top: 6px;
             font-family: var(--font-body);
             font-weight: 400;
+            line-height: 1.4;
         }
+        
+        .help-text strong { font-weight: 600; color: #444; }
 
         input[type="text"], textarea {
             width: 100%;
@@ -335,7 +338,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .form-row {
             display: grid;
             grid-template-columns: 2fr 2fr 1fr 1fr;
-            gap: 15px;
+            gap: 20px;
             margin-bottom: 1rem;
         }
 
@@ -426,7 +429,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="form-group">
                 <label for="header_title">
                     Dashboard Title
-                    <span class="help-text">HTML allowed (e.g. &lt;br&gt; for line break)</span>
+                    <span class="help-text">
+                        The main title displayed at the top of the Situation Room screen.<br>
+                        Tip: Type <strong>&lt;br&gt;</strong> to force a line break.
+                    </span>
                 </label>
                 <input type="text" id="header_title" name="header_title" value="<?= htmlspecialchars($config['header_title'] ?? '') ?>" required>
             </div>
@@ -434,7 +440,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="form-group">
                 <label for="logo_url">
                     Logo URL
-                    <span class="help-text">Full URL to image (https://example.com/logo.png)</span>
+                    <span class="help-text">
+                        Paste a direct web link (https://...) to your logo image here. Leave empty to hide.
+                    </span>
                 </label>
                 <input type="text" id="logo_url" name="logo_url" value="<?= htmlspecialchars($config['logo_url'] ?? '') ?>" placeholder="https://example.com/logo.png">
             </div>
@@ -443,7 +451,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="form-section">
             <h2>Categories</h2>
             <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; font-family: var(--font-body);">
-                Define the columns shown on the dashboard and input form. The order here determines the display order.
+                Define the columns shown on the dashboard. The order here determines the order on the screen.
             </p>
 
             <div id="categories-container">
@@ -459,33 +467,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Key <span class="help-text">a-z, 0-9, _ (e.g. "finance")</span></label>
+                                <label>
+                                    Key 
+                                    <span class="help-text">Internal System ID. Use <strong>lowercase letters only</strong>. No spaces. (e.g. <em>finance_team</em>)</span>
+                                </label>
                                 <input type="text" name="category_key[]" value="<?= htmlspecialchars($category['key'] ?? '') ?>" required pattern="[a-z0-9_]+">
                             </div>
 
                             <div class="form-group">
-                                <label>Name <span class="help-text">Dashboard Header</span></label>
+                                <label>
+                                    Name 
+                                    <span class="help-text">The big headline for this column on the main screen.</span>
+                                </label>
                                 <input type="text" name="category_name[]" value="<?= htmlspecialchars($category['name'] ?? '') ?>" required>
                             </div>
 
                             <div class="form-group">
-                                <label>Abbr <span class="help-text">3 Letters</span></label>
+                                <label>
+                                    Abbreviation 
+                                    <span class="help-text">Short 3-letter code for the Admin buttons (e.g. <em>FIN</em>).</span>
+                                </label>
                                 <input type="text" name="category_abbrev[]" value="<?= htmlspecialchars($category['abbreviation'] ?? '') ?>" required maxlength="3">
                             </div>
 
                             <div class="form-group">
-                                <label>Icon <span class="help-text">Emoji</span></label>
+                                <label>
+                                    Icon 
+                                    <span class="help-text">Paste an Emoji here (e.g. 💡).</span>
+                                </label>
                                 <input type="text" name="category_icon[]" value="<?= htmlspecialchars($category['icon'] ?? '') ?>">
                             </div>
                         </div>
 
                         <div class="form-group">
-                            <label>Display Name (Input Form) <span class="help-text">e.g. "📚 Education"</span></label>
+                            <label>
+                                Display Name (Input Form) 
+                                <span class="help-text">The label participants see on their phones. Best combined with an icon (e.g. <em>💰 Finance Team</em>).</span>
+                            </label>
                             <input type="text" name="category_display_name[]" value="<?= htmlspecialchars($category['display_name'] ?? '') ?>">
                         </div>
 
                         <div class="form-group">
-                            <label>Guiding Questions <span class="help-text">One per line</span></label>
+                            <label>
+                                Guiding Questions 
+                                <span class="help-text">Help your participants! Write questions here to guide them. <strong>One question per line.</strong></span>
+                            </label>
                             <textarea name="category_leitfragen_<?= $index ?>"><?= htmlspecialchars(implode("\n", $category['leitfragen'] ?? [])) ?></textarea>
                         </div>
                     </div>
@@ -519,33 +545,51 @@ function addCategory() {
 
         <div class="form-row">
             <div class="form-group">
-                <label>Key <span class="help-text">a-z, 0-9, _</span></label>
+                <label>
+                    Key 
+                    <span class="help-text">Internal System ID. Use <strong>lowercase letters only</strong>. No spaces. (e.g. <em>finance_team</em>)</span>
+                </label>
                 <input type="text" name="category_key[]" value="" required pattern="[a-z0-9_]+">
             </div>
 
             <div class="form-group">
-                <label>Name <span class="help-text">Dashboard Header</span></label>
+                <label>
+                    Name 
+                    <span class="help-text">The big headline for this column on the main screen.</span>
+                </label>
                 <input type="text" name="category_name[]" value="" required>
             </div>
 
             <div class="form-group">
-                <label>Abbr <span class="help-text">3 Letters</span></label>
+                <label>
+                    Abbreviation 
+                    <span class="help-text">Short 3-letter code for the Admin buttons (e.g. <em>FIN</em>).</span>
+                </label>
                 <input type="text" name="category_abbrev[]" value="" required maxlength="3">
             </div>
 
             <div class="form-group">
-                <label>Icon <span class="help-text">Emoji</span></label>
+                <label>
+                    Icon 
+                    <span class="help-text">Paste an Emoji here (e.g. 💡).</span>
+                </label>
                 <input type="text" name="category_icon[]" value="">
             </div>
         </div>
 
         <div class="form-group">
-            <label>Display Name (Input Form)</label>
+            <label>
+                Display Name (Input Form) 
+                <span class="help-text">The label participants see on their phones. Best combined with an icon (e.g. <em>💰 Finance Team</em>).</span>
+            </label>
             <input type="text" name="category_display_name[]" value="">
         </div>
 
         <div class="form-group">
-            <label>Guiding Questions <span class="help-text">One per line</span></label>
+            <label>
+                Guiding Questions 
+                <span class="help-text">Help your participants! Write questions here to guide them. <strong>One question per line.</strong></span>
+            </label>
             <textarea name="category_leitfragen_${categoryIndex}"></textarea>
         </div>
     `;
