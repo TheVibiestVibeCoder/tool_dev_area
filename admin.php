@@ -41,17 +41,12 @@ if ($config && isset($config['categories'])) {
 // --- PDF EXPORT MODE ---
 if (isset($_GET['mode']) && $_GET['mode'] === 'pdf') {
     $data = safeReadJson($data_file);
-
-    // Load user's configuration for categories and title
     $config = loadConfig($config_file);
-
-    // Build PDF labels from user's config
     $pdf_labels = [];
-    $pdf_title = 'Workshop Protocol'; // Default
+    $pdf_title = 'Workshop Protocol'; 
 
     if ($config && isset($config['categories'])) {
         foreach ($config['categories'] as $category) {
-            // Use display_name if available, otherwise use name with icon
             if (isset($category['display_name'])) {
                 $pdf_labels[$category['key']] = $category['display_name'];
             } else {
@@ -60,13 +55,10 @@ if (isset($_GET['mode']) && $_GET['mode'] === 'pdf') {
                 $pdf_labels[$category['key']] = $icon . ' ' . $name;
             }
         }
-
-        // Use custom header title if set
         if (isset($config['header_title'])) {
             $pdf_title = $config['header_title'];
         }
     } else {
-        // Fallback if no config found
         $pdf_labels = ['general' => '💡 General'];
         $pdf_title = 'Live Situation Room';
     }
@@ -77,7 +69,6 @@ if (isset($_GET['mode']) && $_GET['mode'] === 'pdf') {
         <meta charset="UTF-8">
         <title><?= htmlspecialchars($pdf_title) ?> - Workshop Protokoll</title>
         <style>
-            /* PDF Style - Minimalist Black & White */
             body { font-family: 'Helvetica', sans-serif; color: #111; line-height: 1.4; padding: 40px; max-width: 900px; margin: 0 auto; }
             h1 { font-family: 'Helvetica', sans-serif; font-size: 2.5rem; border-bottom: 2px solid #111; padding-bottom: 10px; margin-bottom: 5px; color: #111; text-transform: uppercase; font-weight: 800; letter-spacing: -1px; }
             .meta { color: #666; font-size: 0.8rem; margin-bottom: 4rem; text-transform: uppercase; letter-spacing: 1px; }
@@ -118,14 +109,11 @@ if (isset($_GET['mode']) && $_GET['mode'] === 'pdf') {
     exit;
 }
 
-// --- ACTION HANDLER (ATOMIC) ---
-// All actions now use user-specific data file
-
+// --- ACTION HANDLER ---
 {
     $is_ajax = isset($_REQUEST['ajax']);
     $req = $_REQUEST;
 
-    // 🔒 DELETE SINGLE ENTRY
     if (isset($req['delete'])) {
         $id = $req['delete'];
         atomicUpdate($data_file, function($data) use ($id) {
@@ -134,38 +122,30 @@ if (isset($_GET['mode']) && $_GET['mode'] === 'pdf') {
         if ($is_ajax) { echo "OK"; exit; }
     }
 
-    // 🔒 DELETE ALL
     if (isset($req['deleteall']) && $req['deleteall'] === 'confirm') {
-        atomicUpdate($data_file, function($data) {
-            return [];
-        });
+        atomicUpdate($data_file, function($data) { return []; });
         if ($is_ajax) { echo "OK"; exit; }
     }
 
-    // 🔒 TOGGLE VISIBILITY
     if (isset($req['toggle_id'])) {
         $id = $req['toggle_id'];
         atomicUpdate($data_file, function($data) use ($id) {
             foreach ($data as &$entry) {
-                if ($entry['id'] === $id) {
-                    $entry['visible'] = !($entry['visible'] ?? false);
-                }
+                if ($entry['id'] === $id) { $entry['visible'] = !($entry['visible'] ?? false); }
             }
             return $data;
         });
         if ($is_ajax) { echo "OK"; exit; }
     }
 
-    // 🔒 TOGGLE FOCUS (nur EIN Eintrag kann focused sein)
     if (isset($req['toggle_focus'])) {
         $id = $req['toggle_focus'];
         atomicUpdate($data_file, function($data) use ($id) {
             foreach ($data as &$entry) {
                 if ($entry['id'] === $id) {
-                    $currentFocus = $entry['focus'] ?? false;
-                    $entry['focus'] = !$currentFocus;
+                    $entry['focus'] = !($entry['focus'] ?? false);
                 } else {
-                    $entry['focus'] = false; // Alle anderen ausschalten
+                    $entry['focus'] = false;
                 }
             }
             return $data;
@@ -173,17 +153,13 @@ if (isset($_GET['mode']) && $_GET['mode'] === 'pdf') {
         if ($is_ajax) { echo "OK"; exit; }
     }
 
-    // 🔒 EDIT ENTRY TEXT
     if (isset($req['action']) && $req['action'] === 'edit' && isset($req['id']) && isset($req['new_text'])) {
         $id = $req['id'];
         $new_text = trim($req['new_text']);
-
         if (!empty($new_text)) {
             atomicUpdate($data_file, function($data) use ($id, $new_text) {
                 foreach ($data as &$entry) {
-                    if ($entry['id'] === $id) {
-                        $entry['text'] = $new_text;
-                    }
+                    if ($entry['id'] === $id) { $entry['text'] = $new_text; }
                 }
                 return $data;
             });
@@ -193,73 +169,58 @@ if (isset($_GET['mode']) && $_GET['mode'] === 'pdf') {
         }
     }
 
-    // 🔒 MOVE TO DIFFERENT THEMA
     if (isset($req['action']) && $req['action'] === 'move' && isset($req['id']) && isset($req['new_thema'])) {
         $id = $req['id'];
         $new_thema = $req['new_thema'];
         atomicUpdate($data_file, function($data) use ($id, $new_thema) {
             foreach ($data as &$entry) {
-                if ($entry['id'] === $id) {
-                    $entry['thema'] = $new_thema;
-                }
+                if ($entry['id'] === $id) { $entry['thema'] = $new_thema; }
             }
             return $data;
         });
         if ($is_ajax) { echo "OK"; exit; }
     }
 
-    // 🔒 SHOW ALL IN COLUMN
     if (isset($req['action_col']) && $req['action_col'] === 'show' && isset($req['col'])) {
         $col = $req['col'];
         atomicUpdate($data_file, function($data) use ($col) {
             foreach ($data as &$entry) {
-                if ($entry['thema'] === $col) {
-                    $entry['visible'] = true;
-                }
+                if ($entry['thema'] === $col) { $entry['visible'] = true; }
             }
             return $data;
         });
         if ($is_ajax) { echo "OK"; exit; }
     }
 
-    // 🔒 HIDE ALL IN COLUMN
     if (isset($req['action_col']) && $req['action_col'] === 'hide' && isset($req['col'])) {
         $col = $req['col'];
         atomicUpdate($data_file, function($data) use ($col) {
             foreach ($data as &$entry) {
-                if ($entry['thema'] === $col) {
-                    $entry['visible'] = false;
-                }
+                if ($entry['thema'] === $col) { $entry['visible'] = false; }
             }
             return $data;
         });
         if ($is_ajax) { echo "OK"; exit; }
     }
 
-    // 🔒 SHOW ALL
     if (isset($req['action_all']) && $req['action_all'] === 'show') {
         atomicUpdate($data_file, function($data) {
-            foreach ($data as &$entry) {
-                $entry['visible'] = true;
-            }
+            foreach ($data as &$entry) { $entry['visible'] = true; }
             return $data;
         });
         if ($is_ajax) { echo "OK"; exit; }
     }
 
-    // 🔒 HIDE ALL
     if (isset($req['action_all']) && $req['action_all'] === 'hide') {
         atomicUpdate($data_file, function($data) {
-            foreach ($data as &$entry) {
-                $entry['visible'] = false;
-            }
+            foreach ($data as &$entry) { $entry['visible'] = false; }
             return $data;
         });
         if ($is_ajax) { echo "OK"; exit; }
     }
 }
 
-// Daten für Display laden (Read-Only)
+// Data for Display
 $data = safeReadJson($data_file);
 ?>
 <!DOCTYPE html>
@@ -274,19 +235,19 @@ $data = safeReadJson($data_file);
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     
     <style>
-        /* --- DESIGN SYSTEM (Monochrome / Bebas) --- */
+        /* --- DESIGN SYSTEM (Monochrome + Design Colors) --- */
         :root {
-            /* Colors */
+            /* Neutrals */
             --bg-body: #f5f5f5;
             --bg-card: #ffffff;
             --text-main: #111111;
             --text-muted: #666666;
             --border-color: #e0e0e0;
-            --border-strong: #111111;
             
-            /* Status Colors (Monochrome Mapping) */
-            --danger: #d32f2f;
-            --success: #111111; /* Live is Black */
+            /* Design Colors */
+            --color-green: #27ae60; /* Professional Emerald */
+            --color-red: #e74c3c;   /* Soft Urgent Red */
+            --color-focus: #f1c40f; /* Accent Yellow for Focus */
             
             /* Typography */
             --font-head: 'Bebas Neue', sans-serif;
@@ -294,9 +255,9 @@ $data = safeReadJson($data_file);
             
             /* UI */
             --radius-btn: 2px;
-            --radius-card: 4px;
             --shadow: 0 4px 6px rgba(0,0,0,0.02);
             --shadow-hover: 0 8px 15px rgba(0,0,0,0.05);
+            --trans-speed: 0.2s;
         }
 
         body {
@@ -317,7 +278,7 @@ $data = safeReadJson($data_file);
             padding: 2rem 3rem; 
             margin-bottom: 2rem;
             border: 1px solid var(--border-color);
-            border-bottom: 2px solid var(--border-strong);
+            border-bottom: 2px solid var(--text-main);
         }
         .admin-header h1 { 
             font-family: var(--font-head); font-size: 3.5rem; margin: 0; 
@@ -332,7 +293,7 @@ $data = safeReadJson($data_file);
         }
         .header-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 5px; }
 
-        /* BUTTONS - Rectangle Style */
+        /* --- BUTTONS --- */
         .btn {
             padding: 12px 20px; 
             background: #fff; 
@@ -343,32 +304,35 @@ $data = safeReadJson($data_file);
             font-size: 1.1rem;
             letter-spacing: 1px;
             cursor: pointer; 
-            transition: all 0.2s ease; 
             display: inline-flex; align-items: center; justify-content: center;
             border-radius: var(--radius-btn);
             line-height: 1;
+            transition: all var(--trans-speed) cubic-bezier(0.4, 0, 0.2, 1);
         }
+        
+        /* Base Hover */
         .btn:hover { 
             border-color: var(--text-main); 
             color: var(--text-main); 
-            background: #fafafa;
             transform: translateY(-1px);
         }
         
-        .btn-primary { 
-            background: var(--text-main); color: #fff; border-color: var(--text-main); 
-        }
-        .btn-primary:hover { 
-            background: #333; color: #fff; 
-        }
+        /* Primary (Black) */
+        .btn-primary { background: var(--text-main); color: #fff; border-color: var(--text-main); }
+        .btn-primary:hover { background: #333; color: #fff; }
         
-        .btn-danger { color: var(--danger); border-color: #eee; }
-        .btn-danger:hover { background: var(--danger); color: white; border-color: var(--danger); }
+        /* Red (Delete, Hide, Logout) */
+        .btn-danger { color: var(--color-red); border-color: rgba(231, 76, 60, 0.3); }
+        .btn-danger:hover { background: var(--color-red); color: white; border-color: var(--color-red); }
         
-        .btn-success { color: var(--text-main); font-weight: bold; border-color: var(--text-main); }
-        .btn-success:hover { background: var(--text-main); color: #fff; }
+        /* Green (Success, Go Live, Save) */
+        .btn-success { color: var(--color-green); border-color: rgba(39, 174, 96, 0.3); font-weight: bold; }
+        .btn-success:hover { background: var(--color-green); color: #fff; border-color: var(--color-green); }
 
-        .btn-sm { padding: 8px 16px; font-size: 1rem; }
+        /* Focus Button */
+        .btn-focus { color: #ccc; border-color: #eee; }
+        .btn-focus:hover { color: var(--color-focus); border-color: var(--color-focus); }
+        .btn-focus.is-focused { background: var(--color-focus); color: #fff; border-color: var(--color-focus); }
 
         /* INFO BOX */
         .info-box {
@@ -435,15 +399,22 @@ $data = safeReadJson($data_file);
         
         .st-btn { 
             cursor: pointer; padding: 4px 8px; font-size: 0.75rem; 
-            font-weight: 600; transition: 0.2s; user-select: none; 
-            border: 1px solid transparent; letter-spacing: 1px;
+            font-weight: 600; transition: all 0.2s; user-select: none; 
+            border-radius: 2px; letter-spacing: 1px; color: #ccc;
         }
         
-        .btn-on { color: #ccc; }
-        .btn-on:hover, .btn-on.active-on { color: var(--text-main); font-weight: 900; border-bottom: 2px solid var(--text-main); }
+        /* Active States for Toggles */
+        .btn-on.active-on { 
+            color: var(--color-green); 
+            text-shadow: 0 0 10px rgba(39, 174, 96, 0.4); 
+        }
         
-        .btn-off { color: #ccc; }
-        .btn-off:hover, .btn-off.active-off { color: var(--text-muted); text-decoration: line-through; }
+        .btn-off.active-off { 
+            color: var(--color-red); 
+            text-decoration: line-through; 
+        }
+        
+        .st-btn:hover { color: var(--text-main); }
 
         /* FEED GRID */
         #admin-feed {
@@ -452,7 +423,7 @@ $data = safeReadJson($data_file);
 
         .feed-header { 
             display: flex; justify-content: space-between; align-items: flex-end; 
-            margin-bottom: 20px; border-bottom: 2px solid var(--border-strong); 
+            margin-bottom: 20px; border-bottom: 2px solid var(--text-main); 
             padding-bottom: 10px; 
         }
         .feed-header h2 { 
@@ -476,7 +447,8 @@ $data = safeReadJson($data_file);
         
         /* Status Styles */
         .admin-card.status-live { 
-            border: 1px solid var(--text-main); 
+            border: 1px solid var(--color-green); 
+            box-shadow: 0 0 15px rgba(39, 174, 96, 0.1);
         }
         .admin-card.status-hidden { 
             border: 1px dashed #ccc; 
@@ -518,11 +490,6 @@ $data = safeReadJson($data_file);
         .card-edit-actions { display: flex; gap: 8px; margin-top: 10px; }
         .card-edit-actions .btn { flex: 1; padding: 10px; font-size: 0.9rem; }
 
-        /* Focus Button Special Style */
-        .btn-focus { border-color: #ccc; color: #ccc; }
-        .btn-focus:hover { border-color: var(--text-main); color: var(--text-main); }
-        .btn-focus.is-focused { background: var(--text-main); color: #fff; border-color: var(--text-main); }
-        
         /* =========================================
            MOBILE RESPONSIVENESS
            ========================================= */
@@ -585,7 +552,7 @@ $data = safeReadJson($data_file);
                 <span class="command-label">GLOBAL ACTIONS</span>
                 <div class="global-btns">
                     <button onclick="if(confirm('Go LIVE with ALL cards?')) runCmd('action_all=show')" class="btn btn-success">ALL LIVE</button>
-                    <button onclick="if(confirm('HIDE ALL cards?')) runCmd('action_all=hide')" class="btn">ALL HIDE</button>
+                    <button onclick="if(confirm('HIDE ALL cards?')) runCmd('action_all=hide')" class="btn btn-danger">ALL HIDE</button>
                 </div>
             </div>
             
@@ -623,7 +590,6 @@ $data = safeReadJson($data_file);
 <script>
     const gruppenLabels = <?= json_encode($gruppen_labels) ?>;
 
-    // HTML escape function to prevent XSS
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
@@ -662,8 +628,9 @@ $data = safeReadJson($data_file);
                 optionsHtml += `<option value="${key}" ${selected}>📂 ${label}</option>`;
             }
             
+            // Logic: Button should show ACTION (Go Live), or State (Hide)
             const cardStatusClass = isVisible ? 'status-live' : 'status-hidden';
-            const btnClass = isVisible ? 'btn' : 'btn-success'; // Neutral if visible (to hide), Success if hidden (to show)
+            const btnClass = isVisible ? 'btn-danger' : 'btn-success'; 
             const btnText = isVisible ? 'HIDE' : 'GO LIVE';
             const focusClass = isFocused ? 'is-focused' : '';
 
@@ -729,37 +696,30 @@ $data = safeReadJson($data_file);
 
     async function runCmd(queryParams) {
         document.body.style.cursor = 'wait';
-
-        // Temporarily pause auto-refresh during operation
         stopAutoRefresh();
 
         try {
             const response = await fetch('admin.php?' + queryParams + '&ajax=1');
-
             if (response.ok) {
                 updateAdminBoard();
-                // Resume auto-refresh after operation completes
                 startAutoRefresh();
             } else {
                 console.error("Server Error");
-                startAutoRefresh(); // Resume even on error
+                startAutoRefresh(); 
             }
         } catch (e) {
             console.error(e);
-            startAutoRefresh(); // Resume even on error
+            startAutoRefresh();
         } finally {
             document.body.style.cursor = 'default';
         }
     }
 
-    // Auto-refresh control
     let refreshInterval = null;
     let isEditMode = false;
 
     function startAutoRefresh() {
-        if (refreshInterval) {
-            clearInterval(refreshInterval);
-        }
+        if (refreshInterval) clearInterval(refreshInterval);
         refreshInterval = setInterval(updateAdminBoard, 2000);
     }
 
@@ -778,24 +738,21 @@ $data = safeReadJson($data_file);
         const normalActions = card.querySelector('.card-actions');
         const editActions = card.querySelector('.card-edit-actions');
 
-        // Toggle visibility
         if (display.style.display === 'none') {
-            // Cancel edit mode
             display.style.display = 'block';
             textarea.style.display = 'none';
             normalActions.style.display = 'grid';
             editActions.style.display = 'none';
             isEditMode = false;
-            startAutoRefresh(); // Resume auto-refresh
+            startAutoRefresh();
         } else {
-            // Enter edit mode
             display.style.display = 'none';
             textarea.style.display = 'block';
             normalActions.style.display = 'none';
             editActions.style.display = 'flex';
             textarea.focus();
             isEditMode = true;
-            stopAutoRefresh(); // Pause auto-refresh
+            stopAutoRefresh();
         }
     }
 
@@ -808,23 +765,19 @@ $data = safeReadJson($data_file);
             alert('⚠️ Text cannot be empty!');
             return;
         }
-
         document.body.style.cursor = 'wait';
-
         try {
             const response = await fetch('admin.php?action=edit&id=' + entryId + '&new_text=' + encodeURIComponent(newText) + '&ajax=1');
             const result = await response.text();
-
             if (result === 'OK') {
                 isEditMode = false;
-                startAutoRefresh(); // Resume auto-refresh
+                startAutoRefresh(); 
                 updateAdminBoard();
             } else {
                 alert('❌ Error saving: ' + result);
                 document.body.style.cursor = 'default';
             }
         } catch (e) {
-            console.error(e);
             alert('❌ Network error');
             document.body.style.cursor = 'default';
         }
@@ -837,34 +790,27 @@ $data = safeReadJson($data_file);
         const textarea = cardBody.querySelector('.entry-text-edit');
         const normalActions = card.querySelector('.card-actions');
         const editActions = card.querySelector('.card-edit-actions');
-
-        // Restore original text
         const originalText = card.getAttribute('data-original-text')
             .replace(/&quot;/g, '"')
             .replace(/&#39;/g, "'");
         textarea.value = originalText;
 
-        // Exit edit mode
         display.style.display = 'block';
         textarea.style.display = 'none';
         normalActions.style.display = 'grid';
         editActions.style.display = 'none';
         isEditMode = false;
-        startAutoRefresh(); // Resume auto-refresh
+        startAutoRefresh();
     }
 
     function updateAdminBoard() {
-        // Don't refresh if in edit mode
-        if (isEditMode) {
-            return;
-        }
+        if (isEditMode) return;
         fetch('index.php?api=1&u=<?= urlencode($user_id) ?>')
             .then(response => response.json())
             .then(data => renderAdmin(data))
             .catch(err => console.error(err));
     }
 
-    // Initialize
     updateAdminBoard();
     startAutoRefresh();
 
