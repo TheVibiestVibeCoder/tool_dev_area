@@ -282,7 +282,7 @@ if (isLoggedIn()) {
             <h1>Live Situation Room</h1>
             <p>Collect, moderate, and display ideas instantly. <br>A professional tool for real-time collaborative workshops.</p>
             <div class="hero-buttons">
-                <a href="register.php" class="btn btn-primary">Start Workshop</a>
+                <a href="register.php" class="btn btn-primary">Create Account</a>
                 <a href="login.php" class="btn btn-secondary">Admin Login</a>
             </div>
         </section>
@@ -333,10 +333,6 @@ if (isLoggedIn()) {
                 <div class="stat">
                     <div class="stat-number">50+</div>
                     <div class="stat-label">Active Users</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-number">2s</div>
-                    <div class="stat-label">Latency</div>
                 </div>
                 <div class="stat">
                     <div class="stat-number">0</div>
