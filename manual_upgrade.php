@@ -2,10 +2,20 @@
 /**
  * Manual Account Upgrade Script
  * Use this to manually upgrade a user who paid but didn't get upgraded due to webhook issues
+ *
+ * SECURITY: Requires authentication to access
+ * WARNING: This script should be deleted after use!
  */
 
 require_once 'subscription_manager.php';
 require_once 'user_auth.php';
+require_once 'security_helpers.php';
+
+// Set security headers
+setSecurityHeaders();
+
+// Require authentication - only logged in users can access
+requireAuth();
 
 // Configuration - UPDATE THESE VALUES
 $user_email = 'schiwngi81@gmail.com';  // The email that made the payment

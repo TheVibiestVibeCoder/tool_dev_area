@@ -6,6 +6,10 @@
 
 require_once 'user_auth.php';
 require_once 'subscription_manager.php';
+require_once 'security_helpers.php';
+
+// Set security headers
+setSecurityHeaders();
 
 // Check if user is logged in
 $is_logged_in = isLoggedIn();

@@ -2,6 +2,10 @@
 // index.php - Multi-tenant Workshop Dashboard
 require_once 'file_handling_robust.php';
 require_once 'user_auth.php';
+require_once 'security_helpers.php';
+
+// Set security headers
+setSecurityHeaders();
 
 // ===== DETERMINE VIEWING MODE =====
 // Two modes:

@@ -13,6 +13,12 @@
  * - User data isolation
  */
 
+// Load security helpers
+require_once __DIR__ . '/security_helpers.php';
+
+// Configure secure session before starting
+configureSecureSession();
+
 // Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();

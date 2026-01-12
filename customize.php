@@ -6,6 +6,10 @@
 require_once 'file_handling_robust.php';
 require_once 'user_auth.php';
 require_once 'subscription_manager.php';
+require_once 'security_helpers.php';
+
+// Set security headers
+setSecurityHeaders();
 
 // Require authentication
 requireAuth();
@@ -35,6 +39,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Validate and process logo URL
     $newLogoUrl = trim($_POST['logo_url'] ?? '');
+
+    // Validate logo URL is safe (no javascript:, data:, etc.)
+    if (!empty($newLogoUrl) && !isUrlSafe($newLogoUrl)) {
+        $message = '⚠️ UNGÜLTIGE LOGO URL. Nur HTTP/HTTPS URLs sind erlaubt.';
+        $messageType = 'error';
+        $newLogoUrl = ''; // Clear invalid URL
+    }
 
     // Validate and process categories
     $newCategories = [];

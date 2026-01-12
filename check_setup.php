@@ -4,7 +4,18 @@
  *
  * This script checks your payment system configuration and identifies issues
  * Run this from your browser: https://yourdomain.com/tool_dev_area/check_setup.php
+ *
+ * SECURITY: Requires authentication to access
  */
+
+require_once 'user_auth.php';
+require_once 'security_helpers.php';
+
+// Set security headers
+setSecurityHeaders();
+
+// Require authentication - only logged in users can access
+requireAuth();
 
 // Prevent execution in production (set this to false for testing)
 $allow_execution = true;

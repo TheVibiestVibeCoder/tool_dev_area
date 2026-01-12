@@ -6,6 +6,10 @@
 
 require_once 'file_handling_robust.php';
 require_once 'user_auth.php';
+require_once 'security_helpers.php';
+
+// Set security headers
+setSecurityHeaders();
 
 // ===== DETERMINE WORKSHOP OWNER =====
 // Public submissions via ?u={user_id}
@@ -56,13 +60,18 @@ $message = '';
 ensureFileExists($data_file);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $thema = $_POST['thema'] ?? '';
-    $idee = trim($_POST['idee'] ?? '');
-    
-    // Validierung
-    if (!array_key_exists($thema, $gruppen)) {
-        $message = '<div class="alert alert-error">⚠️ UNGÜLTIGE KATEGORIE.</div>';
-    } elseif (empty($idee)) {
+    // Rate limiting: Max 10 submissions per IP per minute
+    $user_ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    if (!checkPublicRateLimit('public_submit', $user_ip, 10, 60)) {
+        $message = '<div class="alert alert-error">⚠️ ZU VIELE ANFRAGEN. Bitte warten Sie einen Moment.</div>';
+    } else {
+        $thema = $_POST['thema'] ?? '';
+        $idee = trim($_POST['idee'] ?? '');
+
+        // Validierung
+        if (!array_key_exists($thema, $gruppen)) {
+            $message = '<div class="alert alert-error">⚠️ UNGÜLTIGE KATEGORIE.</div>';
+        } elseif (empty($idee)) {
         $message = '<div class="alert alert-error">⚠️ TEXT FEHLT.</div>';
     } elseif (strlen($idee) > 500) {
         $message = '<div class="alert alert-error">⚠️ TEXT ZU LANG (Max 500 Zeichen).</div>';
@@ -88,6 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             logError("Write failed for entry: " . $new_entry['id']);
         }
     }
+    } // End rate limit check
 }
 ?>
 <!DOCTYPE html>
