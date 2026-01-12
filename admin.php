@@ -236,7 +236,7 @@ $data = safeReadJson($data_file);
     
     <style>
         /* --- RESET & VARIABLES --- */
-        * { box-sizing: border-box; } /* Critical for preventing overflow */
+        * { box-sizing: border-box; } 
         
         :root {
             --bg-body: #f5f5f5;
@@ -265,7 +265,7 @@ $data = safeReadJson($data_file);
             margin: 0; padding: 0;
             line-height: 1.5;
             -webkit-font-smoothing: antialiased;
-            overflow-x: hidden; /* Prevent horizontal scroll */
+            overflow-x: hidden;
         }
 
         .container { 
@@ -277,14 +277,20 @@ $data = safeReadJson($data_file);
 
         /* --- HEADER --- */
         .admin-header {
-            display: flex; justify-content: space-between; align-items: flex-end;
+            display: flex; 
+            justify-content: space-between; /* DESKTOP: Pushes Title left, Buttons right */
+            align-items: flex-end;
             background: var(--bg-card);
             padding: 2rem 3rem; 
             margin-bottom: 2rem;
             border: 1px solid var(--border-color);
             border-bottom: 3px solid var(--text-main);
-            flex-wrap: wrap; /* Allow wrapping */
         }
+        
+        .header-title-group {
+            /* Desktop: takes content width */
+        }
+
         .admin-header h1 { 
             font-family: var(--font-head); font-size: 3.5rem; margin: 0; 
             line-height: 0.9; color: var(--text-main); font-weight: 400; 
@@ -296,7 +302,11 @@ $data = safeReadJson($data_file);
             display: block; margin-bottom: 0.5rem; 
             font-family: var(--font-head);
         }
-        .header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        
+        /* Desktop: Buttons aligned normally */
+        .header-actions { 
+            display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 5px; 
+        }
 
         /* --- BUTTONS --- */
         .btn {
@@ -460,7 +470,6 @@ $data = safeReadJson($data_file);
             font-family: var(--font-body); font-weight: 600; cursor: pointer;
         }
         .card-time { font-size: 0.8rem; color: #999; font-family: 'Inter', monospace; white-space: nowrap; }
-        
         .card-body { 
             font-size: 1rem; margin-bottom: 1.5rem; line-height: 1.6; 
             min-height: 60px; word-break: break-word; color: var(--text-main); flex-grow: 1;
@@ -484,24 +493,26 @@ $data = safeReadJson($data_file);
         .card-edit-actions .btn { flex: 1; }
 
         /* =========================================
-           MOBILE OPTIMIZATIONS (Max Width 768px)
+           MOBILE OPTIMIZATIONS (Max Width 900px)
            ========================================= */
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
             .container { padding: 1rem; }
             
-            /* Header stacks cleanly */
+            /* Header Stacking for Mobile */
             .admin-header { 
                 flex-direction: column; align-items: flex-start; 
                 gap: 1.5rem; padding: 1.5rem; 
             }
             .admin-header h1 { font-size: 2.5rem; }
             
+            .header-title-group { width: 100%; margin-bottom: 1rem; }
+
             /* Header buttons: 2x2 Grid */
             .header-actions { 
                 width: 100%; display: grid; 
-                grid-template-columns: 1fr 1fr; gap: 8px; 
+                grid-template-columns: 1fr 1fr; gap: 8px; margin-left: 0;
             }
-            .header-actions .btn { width: 100%; }
+            .header-actions .btn { width: 100%; height: 50px; font-size: 1rem; }
             /* Last button spans full width if odd number */
             .header-actions .btn:last-child:nth-child(odd) { grid-column: span 2; }
 
@@ -510,19 +521,21 @@ $data = safeReadJson($data_file);
             .command-row { flex-direction: column; gap: 2rem; }
             .command-col { width: 100%; }
 
+            .global-btns { gap: 15px; }
+            .global-btns .btn { height: 60px; font-size: 1.4rem; }
+
             /* Sectors: Clean Vertical List for Mobile */
             .sector-container { 
-                grid-template-columns: 1fr; /* 1 column = full width neatness */
+                grid-template-columns: 1fr 1fr; /* 2 columns for thumb reach */
                 gap: 10px;
             }
             .sector-ctrl {
-                height: 60px; /* Taller for easier tap */
-                padding: 0 20px;
+                flex-direction: column; align-items: flex-start; justify-content: center;
+                height: 80px; padding: 10px;
+                gap: 5px;
             }
-            .st-btn {
-                padding: 10px 15px; /* Larger touch target */
-                font-size: 1rem;
-            }
+            .sector-ctrl > div { width: 100%; display: flex; justify-content: space-between; font-size: 1.2rem; }
+            .st-btn { padding: 8px; font-size: 1rem; }
 
             /* Feed goes single column */
             #admin-feed { grid-template-columns: 1fr; }
@@ -532,12 +545,13 @@ $data = safeReadJson($data_file);
                 grid-template-columns: 1fr 1fr; 
                 gap: 10px;
             }
-            /* Make the Delete button fit in the grid logic or span full */
+            /* Make the Delete button fit in the grid logic */
             .card-actions .btn:nth-child(4) { grid-column: auto; } 
+            .card-actions .btn { height: 50px; font-size: 1.1rem; }
 
             .info-box { padding: 1.5rem; }
             .link-row { flex-direction: column; align-items: flex-start; gap: 5px; }
-            .link-label { min-width: auto; }
+            .link-input { width: 100%; }
         }
     </style>
 </head>
@@ -545,11 +559,11 @@ $data = safeReadJson($data_file);
 
 <div class="container">
     <header class="admin-header">
-        <div style="width: 100%; margin-bottom: 1rem;">
+        <div class="header-title-group">
             <span class="subtitle">Dashboard &bull; <?= htmlspecialchars($current_user['email']) ?></span>
             <h1>Workshop Control</h1>
         </div>
-        <div class="header-actions" style="width: 100%;">
+        <div class="header-actions">
             <a href="customize.php" class="btn">Customize</a>
             <a href="subscription_manage.php" class="btn">Subscription</a>
             <a href="admin.php?mode=pdf" target="_blank" class="btn">PDF Export</a>
