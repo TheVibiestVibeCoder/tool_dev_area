@@ -241,10 +241,10 @@ if (isset($_GET['error'])) {
         .price-tag { font-size: 2rem; font-family: var(--font-head); color: var(--text-main); }
         .price-period { font-size: 1rem; color: var(--text-muted); font-family: var(--font-body); }
 
-        /* --- INFO GRID (Layout Fixes) --- */
+        /* --- INFO GRID --- */
         .info-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr); /* 3 Columns on Desktop */
+            grid-template-columns: repeat(3, 1fr);
             gap: 2rem;
             margin-bottom: 2rem;
             width: 100%;
@@ -255,7 +255,7 @@ if (isset($_GET['error'])) {
             border: 1px solid #eee;
             padding: 1.2rem;
             border-radius: var(--radius-card);
-            min-width: 0; /* Prevents flex/grid blowout */
+            min-width: 0;
         }
 
         .info-item label {
@@ -272,7 +272,6 @@ if (isset($_GET['error'])) {
             font-size: 1rem;
             font-weight: 600;
             color: var(--text-main);
-            /* CRITICAL: Wraps text (email) to prevent overflow */
             word-wrap: break-word; 
             overflow-wrap: anywhere; 
             line-height: 1.3;
@@ -311,11 +310,25 @@ if (isset($_GET['error'])) {
         }
         .check { color: var(--color-green); font-weight: bold; }
 
-        /* BUTTONS */
-        .btn-group { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 2rem; width: 100%; }
+        /* --- BUTTONS --- */
+        .btn-group { 
+            display: flex; 
+            gap: 1rem; 
+            flex-wrap: wrap; 
+            margin-top: 2rem; 
+            width: 100%;
+            align-items: stretch; /* KEY FIX: Forces equal height */
+        }
+
+        /* Make Forms flex containers too so their children expand */
+        .btn-group form {
+            display: flex;
+            flex: 1;
+            min-width: 200px;
+        }
 
         .btn {
-            padding: 12px 24px;
+            padding: 0 24px; /* Use flex alignment for vertical */
             border: 1px solid var(--border-color);
             background: #fff;
             color: var(--text-muted);
@@ -325,11 +338,18 @@ if (isset($_GET['error'])) {
             text-decoration: none;
             cursor: pointer;
             transition: all 0.2s;
-            display: inline-flex; align-items: center; justify-content: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             border-radius: var(--radius-btn);
-            min-height: 48px;
+            
+            /* HEIGHT FIX */
+            min-height: 54px;
+            height: 100%; 
+            width: 100%;
             text-align: center;
         }
+        
         .btn:hover { border-color: var(--text-main); color: var(--text-main); transform: translateY(-1px); }
 
         .btn.primary { background: var(--text-main); color: #fff; border-color: var(--text-main); }
@@ -337,6 +357,9 @@ if (isset($_GET['error'])) {
 
         .btn.danger { color: var(--color-red); border-color: rgba(231, 76, 60, 0.3); }
         .btn.danger:hover { background: var(--color-red); color: white; }
+
+        /* Anchor tags need flex-grow if not in a form */
+        a.btn { flex: 1; min-width: 200px; }
 
         /* --- MOBILE OPTIMIZATION --- */
         @media (max-width: 768px) {
@@ -348,7 +371,6 @@ if (isset($_GET['error'])) {
             
             .subscription-header { flex-direction: column; align-items: flex-start; gap: 1.5rem; }
             
-            /* Stack the info grid on mobile so items have full width */
             .info-grid { 
                 grid-template-columns: 1fr; 
                 gap: 1rem; 
@@ -356,13 +378,11 @@ if (isset($_GET['error'])) {
             
             .info-item { 
                 padding: 1rem; 
-                width: 100%; /* Ensures it fits container */
+                width: 100%; 
             }
             
             .btn-group { flex-direction: column; gap: 10px; }
-            .btn { width: 100%; }
-            
-            form { width: 100%; }
+            .btn-group form, a.btn { width: 100%; min-width: 0; }
         }
     </style>
 </head>
@@ -509,21 +529,21 @@ if (isset($_GET['error'])) {
                     <a href="pricing.php" class="btn">CHANGE PLAN</a>
 
                     <?php if ($subscription['stripe_customer_id']): ?>
-                        <form method="POST" style="display: inline; flex: 1;">
+                        <form method="POST">
                             <input type="hidden" name="action" value="portal">
-                            <button type="submit" class="btn" style="width: 100%;">MANAGE BILLING</button>
+                            <button type="submit" class="btn">MANAGE BILLING</button>
                         </form>
                     <?php endif; ?>
 
                     <?php if ($subscription['cancel_at_period_end']): ?>
-                        <form method="POST" style="display: inline; flex: 1;">
+                        <form method="POST">
                             <input type="hidden" name="action" value="reactivate">
-                            <button type="submit" class="btn primary" style="width: 100%;">REACTIVATE</button>
+                            <button type="submit" class="btn primary">REACTIVATE</button>
                         </form>
                     <?php else: ?>
-                        <form method="POST" style="display: inline; flex: 1;" onsubmit="return confirm('Cancel subscription?');">
+                        <form method="POST" onsubmit="return confirm('Cancel subscription?');">
                             <input type="hidden" name="action" value="cancel">
-                            <button type="submit" class="btn danger" style="width: 100%;">CANCEL SUBSCRIPTION</button>
+                            <button type="submit" class="btn danger">CANCEL SUBSCRIPTION</button>
                         </form>
                     <?php endif; ?>
                 <?php endif; ?>
