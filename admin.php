@@ -235,25 +235,23 @@ $data = safeReadJson($data_file);
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     
     <style>
-        /* --- DESIGN SYSTEM --- */
+        /* --- RESET & VARIABLES --- */
+        * { box-sizing: border-box; } /* Critical for preventing overflow */
+        
         :root {
-            /* Neutrals */
             --bg-body: #f5f5f5;
             --bg-card: #ffffff;
             --text-main: #111111;
             --text-muted: #666666;
             --border-color: #e0e0e0;
             
-            /* Design Colors (Design Green/Red) */
             --color-green: #27ae60; 
             --color-red: #e74c3c;   
             --color-focus: #f1c40f; 
             
-            /* Typography */
             --font-head: 'Bebas Neue', sans-serif;
             --font-body: 'Inter', sans-serif;
             
-            /* UI */
             --radius-btn: 4px;
             --shadow: 0 4px 6px rgba(0,0,0,0.03);
             --shadow-hover: 0 8px 20px rgba(0,0,0,0.06);
@@ -267,9 +265,15 @@ $data = safeReadJson($data_file);
             margin: 0; padding: 0;
             line-height: 1.5;
             -webkit-font-smoothing: antialiased;
+            overflow-x: hidden; /* Prevent horizontal scroll */
         }
 
-        .container { max-width: 1600px; margin: 0 auto; padding: 2rem; }
+        .container { 
+            max-width: 1600px; 
+            margin: 0 auto; 
+            padding: 2rem; 
+            width: 100%;
+        }
 
         /* --- HEADER --- */
         .admin-header {
@@ -279,6 +283,7 @@ $data = safeReadJson($data_file);
             margin-bottom: 2rem;
             border: 1px solid var(--border-color);
             border-bottom: 3px solid var(--text-main);
+            flex-wrap: wrap; /* Allow wrapping */
         }
         .admin-header h1 { 
             font-family: var(--font-head); font-size: 3.5rem; margin: 0; 
@@ -291,7 +296,7 @@ $data = safeReadJson($data_file);
             display: block; margin-bottom: 0.5rem; 
             font-family: var(--font-head);
         }
-        .header-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 5px; }
+        .header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
         /* --- BUTTONS --- */
         .btn {
@@ -308,7 +313,8 @@ $data = safeReadJson($data_file);
             border-radius: var(--radius-btn);
             line-height: 1;
             transition: all var(--trans-speed) cubic-bezier(0.4, 0, 0.2, 1);
-            min-height: 44px; /* Touch friendly default */
+            min-height: 44px; 
+            white-space: nowrap;
         }
         
         .btn:hover, .btn:active { 
@@ -317,7 +323,6 @@ $data = safeReadJson($data_file);
             transform: translateY(-1px);
         }
         
-        /* Variants */
         .btn-primary { background: var(--text-main); color: #fff; border-color: var(--text-main); }
         .btn-primary:hover { background: #333; color: #fff; }
         
@@ -336,19 +341,20 @@ $data = safeReadJson($data_file);
             background: #fff; border: 1px solid var(--border-color);
             padding: 20px 30px; margin-bottom: 24px;
             display: flex; flex-direction: column; gap: 15px;
+            width: 100%;
         }
         .info-box h3 { 
             margin: 0; color: var(--text-main); font-family: var(--font-head); 
             font-size: 1.5rem; letter-spacing: 0.5px; font-weight: 400;
         }
-        .link-row { display: flex; align-items: center; gap: 15px; }
+        .link-row { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
         .link-label { font-family: var(--font-head); font-size: 1rem; color: var(--text-muted); min-width: 180px; }
         .link-input { 
-            flex: 1; padding: 12px; font-family: 'Inter', monospace; font-size: 0.9rem; 
+            flex: 1; min-width: 250px; padding: 12px; font-family: 'Inter', monospace; font-size: 0.9rem; 
             border: 1px solid var(--border-color); background: #fafafa; color: #333;
             cursor: pointer; transition: 0.2s; border-radius: var(--radius-btn);
+            width: 100%;
         }
-        .link-input:hover { border-color: #999; background: #fff; }
 
         /* --- COMMAND PANEL --- */
         .command-panel {
@@ -356,6 +362,7 @@ $data = safeReadJson($data_file);
             border: 1px solid var(--border-color);
             padding: 2rem 3rem; margin-bottom: 2rem;
             box-shadow: var(--shadow);
+            width: 100%;
         }
         .command-panel h3 { 
             margin: 0 0 1.5rem 0; font-family: var(--font-head); 
@@ -363,22 +370,23 @@ $data = safeReadJson($data_file);
             border-bottom: 1px solid var(--text-main); padding-bottom: 10px; 
         }
         
-        .command-row { display: flex; gap: 4rem; align-items: flex-start; }
-        .command-col { flex: 1; }
+        .command-row { display: flex; gap: 4rem; align-items: flex-start; flex-wrap: wrap; }
+        .command-col { flex: 1; min-width: 250px; }
         .command-label { 
             display: block; color: var(--text-muted); font-size: 0.9rem; 
             margin-bottom: 15px; font-family: var(--font-head); 
             letter-spacing: 1px;
         }
 
-        .global-btns { display: flex; gap: 10px; }
+        .global-btns { display: flex; gap: 10px; width: 100%; }
         .global-btns .btn { flex: 1; justify-content: center; height: 50px; font-size: 1.2rem; }
 
         /* Sector Grid */
         .sector-container { 
             display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
             gap: 15px; 
+            width: 100%;
         }
 
         .sector-ctrl {
@@ -395,24 +403,26 @@ $data = safeReadJson($data_file);
         }
         
         .st-btn { 
-            cursor: pointer; padding: 6px 10px; font-size: 0.85rem; 
+            cursor: pointer; padding: 6px 12px; font-size: 0.9rem; 
             font-weight: 600; transition: all 0.2s; user-select: none; 
             border-radius: 2px; letter-spacing: 1px; color: #ccc;
         }
         
         .btn-on.active-on { color: var(--color-green); font-weight: 900; }
         .btn-off.active-off { color: var(--color-red); text-decoration: line-through; }
-        .st-btn:hover { color: var(--text-main); }
 
         /* --- FEED GRID --- */
         #admin-feed {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 1.5rem;
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); 
+            gap: 1.5rem;
+            width: 100%;
         }
 
         .feed-header { 
             display: flex; justify-content: space-between; align-items: flex-end; 
             margin-bottom: 20px; border-bottom: 2px solid var(--text-main); 
-            padding-bottom: 10px; 
+            padding-bottom: 10px; flex-wrap: wrap; gap: 10px;
         }
         .feed-header h2 { 
             font-family: var(--font-head); color: var(--text-main); 
@@ -427,11 +437,7 @@ $data = safeReadJson($data_file);
             box-shadow: var(--shadow);
             display: flex; flex-direction: column;
             border-radius: var(--radius-btn);
-        }
-        .admin-card:hover { 
-            box-shadow: var(--shadow-hover); 
-            transform: translateY(-2px);
-            border-color: #999;
+            width: 100%;
         }
         
         .admin-card.status-live { 
@@ -445,17 +451,19 @@ $data = safeReadJson($data_file);
         .card-header { 
             display: flex; justify-content: space-between; align-items: center; 
             margin-bottom: 1rem; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; 
+            flex-wrap: wrap; gap: 5px;
         }
         
         .admin-select { 
             padding: 8px 0; background: transparent; border: none; border-bottom: 1px solid #eee;
-            color: var(--text-muted); font-size: 0.9rem; max-width: 60%; 
+            color: var(--text-muted); font-size: 0.9rem; width: 100%; max-width: 200px;
             font-family: var(--font-body); font-weight: 600; cursor: pointer;
         }
-        .card-time { font-size: 0.8rem; color: #999; font-family: 'Inter', monospace; }
+        .card-time { font-size: 0.8rem; color: #999; font-family: 'Inter', monospace; white-space: nowrap; }
+        
         .card-body { 
             font-size: 1rem; margin-bottom: 1.5rem; line-height: 1.6; 
-            min-height: 60px; word-wrap: break-word; color: var(--text-main); flex-grow: 1;
+            min-height: 60px; word-break: break-word; color: var(--text-main); flex-grow: 1;
         }
 
         .entry-text-edit {
@@ -470,62 +478,66 @@ $data = safeReadJson($data_file);
             grid-template-columns: 1fr 1fr 2fr auto; 
             gap: 10px; margin-top: auto; 
         }
-        .card-actions .btn { padding: 10px; font-size: 0.9rem; }
+        .card-actions .btn { padding: 10px; font-size: 0.9rem; width: 100%; }
 
         .card-edit-actions { display: flex; gap: 10px; margin-top: 10px; }
         .card-edit-actions .btn { flex: 1; }
 
         /* =========================================
-           MOBILE OPTIMIZATIONS (The Remote Feel)
+           MOBILE OPTIMIZATIONS (Max Width 768px)
            ========================================= */
-        @media (max-width: 900px) {
-            .container { padding: 1rem 1rem 4rem 1rem; }
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
             
-            /* Header Stacking */
-            .admin-header { flex-direction: column; align-items: flex-start; gap: 1.5rem; padding: 1.5rem; }
+            /* Header stacks cleanly */
+            .admin-header { 
+                flex-direction: column; align-items: flex-start; 
+                gap: 1.5rem; padding: 1.5rem; 
+            }
             .admin-header h1 { font-size: 2.5rem; }
             
-            .header-actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-            .header-actions .btn { width: 100%; height: 50px; font-size: 1rem; }
-            /* Make "Open Live" and "Logout" full width for easy exit */
-            .header-actions .btn:nth-child(4), .header-actions .btn:nth-child(5) { grid-column: span 2; }
+            /* Header buttons: 2x2 Grid */
+            .header-actions { 
+                width: 100%; display: grid; 
+                grid-template-columns: 1fr 1fr; gap: 8px; 
+            }
+            .header-actions .btn { width: 100%; }
+            /* Last button spans full width if odd number */
+            .header-actions .btn:last-child:nth-child(odd) { grid-column: span 2; }
 
-            /* Command Panel - Remote Layout */
+            /* Command Panel vertical stack */
             .command-panel { padding: 1.5rem; }
             .command-row { flex-direction: column; gap: 2rem; }
-            .command-col { width: 100%; flex: 1; }
-            
-            .global-btns { gap: 15px; }
-            .global-btns .btn { height: 60px; font-size: 1.4rem; }
+            .command-col { width: 100%; }
 
-            /* 2-Column Sector Grid for Thumbs */
-            .sector-container { grid-template-columns: 1fr 1fr; gap: 12px; }
-            .sector-ctrl { 
-                flex-direction: column; align-items: flex-start; 
-                justify-content: center; gap: 5px; height: 80px; 
-                padding: 10px 15px;
+            /* Sectors: Clean Vertical List for Mobile */
+            .sector-container { 
+                grid-template-columns: 1fr; /* 1 column = full width neatness */
+                gap: 10px;
             }
-            .sector-ctrl > div { 
-                width: 100%; display: flex; justify-content: space-between; 
-                font-size: 1.2rem;
+            .sector-ctrl {
+                height: 60px; /* Taller for easier tap */
+                padding: 0 20px;
             }
-            .st-btn { font-size: 1rem; padding: 8px; } /* Bigger touch targets */
+            .st-btn {
+                padding: 10px 15px; /* Larger touch target */
+                font-size: 1rem;
+            }
 
-            /* Feed & Cards */
-            #admin-feed { grid-template-columns: 1fr; } 
-            .feed-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+            /* Feed goes single column */
+            #admin-feed { grid-template-columns: 1fr; }
             
+            /* Card Buttons: 2x2 Grid to prevent squishing */
             .card-actions { 
-                grid-template-columns: 1fr 1fr; /* 2x2 Grid */
-                gap: 12px;
+                grid-template-columns: 1fr 1fr; 
+                gap: 10px;
             }
-            /* Make Delete button fit nicely */
-            .card-actions .btn:last-child { grid-column: auto; }
-            .card-actions .btn { height: 50px; font-size: 1.1rem; }
+            /* Make the Delete button fit in the grid logic or span full */
+            .card-actions .btn:nth-child(4) { grid-column: auto; } 
 
-            .info-box { padding: 15px; }
-            .link-row { flex-direction: column; align-items: flex-start; gap: 8px; margin-bottom: 20px; }
-            .link-input { width: 100%; height: 50px; font-size: 1rem; }
+            .info-box { padding: 1.5rem; }
+            .link-row { flex-direction: column; align-items: flex-start; gap: 5px; }
+            .link-label { min-width: auto; }
         }
     </style>
 </head>
@@ -533,16 +545,16 @@ $data = safeReadJson($data_file);
 
 <div class="container">
     <header class="admin-header">
-        <div>
+        <div style="width: 100%; margin-bottom: 1rem;">
             <span class="subtitle">Dashboard &bull; <?= htmlspecialchars($current_user['email']) ?></span>
             <h1>Workshop Control</h1>
         </div>
-        <div class="header-actions">
+        <div class="header-actions" style="width: 100%;">
             <a href="customize.php" class="btn">Customize</a>
             <a href="subscription_manage.php" class="btn">Subscription</a>
             <a href="admin.php?mode=pdf" target="_blank" class="btn">PDF Export</a>
             <a href="index.php?u=<?= urlencode($user_id) ?>" target="_blank" class="btn btn-primary">Open Live View</a>
-            <a href="logout.php" class="btn btn-danger" style="margin-left: 0;">Logout</a>
+            <a href="logout.php" class="btn btn-danger">Logout</a>
         </div>
     </header>
 
@@ -562,7 +574,7 @@ $data = safeReadJson($data_file);
         <h3>Session Controls</h3>
         
         <div class="command-row">
-            <div class="command-col" style="flex: 0 0 250px;">
+            <div class="command-col">
                 <span class="command-label">GLOBAL ACTIONS</span>
                 <div class="global-btns">
                     <button onclick="if(confirm('Go LIVE with ALL cards?')) runCmd('action_all=show')" class="btn btn-success">ALL LIVE</button>
