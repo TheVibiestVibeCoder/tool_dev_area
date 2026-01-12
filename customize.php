@@ -132,124 +132,140 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anpassen | Live Situation Room</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Customize | Live Situation Room</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
     <style>
-        /* --- DESIGN SYSTEM --- */
+        /* --- DESIGN SYSTEM (Monochrome + Design Colors) --- */
+        * { box-sizing: border-box; }
+        
         :root {
-            /* Colors */
-            --ip-blue: #00658b;
-            --ip-dark: #32373c;
-            --ip-light: #ffffff;
-            --ip-grey-bg: #f4f4f4;
-            --ip-border: #e0e0e0;
-
-            /* Action Colors */
-            --accent-success: #00d084;
-            --accent-danger: #cf2e2e;
-            --accent-warning: #ff6900;
-
-            /* Typography */
-            --font-heading: 'Montserrat', sans-serif;
-            --font-body: 'Roboto', sans-serif;
-
-            /* Radius */
-            --radius-pill: 9999px;
+            --bg-body: #f5f5f5;
+            --bg-card: #ffffff;
+            --text-main: #111111;
+            --text-muted: #666666;
+            --border-color: #e0e0e0;
+            
+            --color-green: #27ae60; 
+            --color-red: #e74c3c;   
+            
+            --font-head: 'Bebas Neue', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            
+            --radius-btn: 4px;
             --radius-card: 4px;
+            --shadow: 0 4px 6px rgba(0,0,0,0.03);
         }
 
         body {
-            background-color: var(--ip-grey-bg);
-            color: var(--ip-dark);
+            background-color: var(--bg-body);
+            color: var(--text-main);
             font-family: var(--font-body);
             margin: 0; padding: 0;
-            line-height: 1.6;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
         }
 
-        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 2rem 2rem 100px 2rem; }
 
         /* HEADER */
         .admin-header {
-            display: flex; justify-content: space-between; align-items: center;
-            background: var(--ip-light);
-            padding: 1.5rem 2rem;
+            display: flex; justify-content: space-between; align-items: flex-end;
+            background: var(--bg-card);
+            padding: 2rem 3rem; 
             margin-bottom: 2rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
-            border-radius: var(--radius-card);
-            flex-wrap: wrap; gap: 1rem;
+            border: 1px solid var(--border-color);
+            border-bottom: 3px solid var(--text-main);
         }
-        .admin-header h1 { font-family: var(--font-heading); font-size: 2rem; margin: 0; line-height: 1; color: var(--ip-blue); font-weight: 700; }
-        .subtitle { color: var(--ip-dark); text-transform: uppercase; letter-spacing: 1px; font-size: 0.75rem; font-weight: 600; display: block; margin-bottom: 0.2rem; opacity: 0.6; }
-        .header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        .admin-header h1 { 
+            font-family: var(--font-head); font-size: 3.5rem; margin: 0; 
+            line-height: 0.9; color: var(--text-main); font-weight: 400; 
+            text-transform: uppercase;
+        }
+        .subtitle { 
+            color: var(--text-muted); text-transform: uppercase; 
+            letter-spacing: 2px; font-size: 0.85rem; font-weight: 600; 
+            display: block; margin-bottom: 0.5rem; 
+            font-family: var(--font-head);
+        }
 
         /* BUTTONS */
         .btn {
-            padding: 10px 24px;
-            background: var(--ip-dark);
-            border: none;
-            color: #fff;
+            padding: 12px 24px;
+            background: #fff;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
             text-decoration: none;
-            font-weight: 600;
-            font-family: var(--font-heading);
-            letter-spacing: 0.5px;
+            font-family: var(--font-head);
+            font-size: 1.1rem;
+            letter-spacing: 1px;
             cursor: pointer;
-            transition: 0.3s;
-            font-size: 0.85rem;
-            display: inline-block;
-            text-align: center;
-            border-radius: var(--radius-pill);
+            display: inline-flex; align-items: center; justify-content: center;
+            border-radius: var(--radius-btn);
+            transition: 0.2s;
+            line-height: 1;
         }
-        .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn:hover { border-color: var(--text-main); color: var(--text-main); transform: translateY(-1px); }
 
-        .btn-danger { background: var(--accent-danger); color: white; }
-        .btn-success { background: var(--accent-success); color: white; }
-        .btn-neutral { background: #e0e0e0; color: #555; }
-        .btn-neutral:hover { background: #d0d0d0; }
-        .btn-primary { background: var(--ip-blue); color: white; }
+        .btn-neutral { color: var(--text-muted); }
+        
+        .btn-primary { 
+            background: var(--color-green); 
+            color: white; 
+            border-color: var(--color-green); 
+        }
+        .btn-primary:hover { 
+            background: #219150; 
+            color: white; 
+            border-color: #219150; 
+        }
 
-        /* MESSAGES */
+        .btn-danger { 
+            color: var(--color-red); 
+            border-color: rgba(231, 76, 60, 0.3); 
+            font-size: 0.9rem; padding: 8px 16px;
+        }
+        .btn-danger:hover { 
+            background: var(--color-red); 
+            color: white; 
+            border-color: var(--color-red); 
+        }
+
+        /* ALERTS */
         .alert {
             padding: 1rem 1.5rem;
             margin-bottom: 2rem;
             border-left: 4px solid;
             background: #fff;
-            font-size: 0.9rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            font-weight: 500;
-            border-radius: 4px;
+            font-size: 1rem;
+            box-shadow: var(--shadow);
+            font-family: var(--font-body);
         }
-        .alert-success { border-color: var(--accent-success); color: #2e5c46; background-color: #f0fff9; }
-        .alert-error { border-color: var(--accent-danger); color: #8a1f1f; background-color: #fff5f5; }
+        .alert-success { border-color: var(--color-green); color: var(--color-green); }
+        .alert-error { border-color: var(--color-red); color: var(--color-red); }
 
-        /* FORM SECTION */
+        /* FORM SECTIONS */
         .form-section {
-            background: var(--ip-light);
-            border: 1px solid var(--ip-border);
-            padding: 2rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 2.5rem;
             margin-bottom: 2rem;
             border-radius: var(--radius-card);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            box-shadow: var(--shadow);
         }
+        
         .form-section h2 {
-            margin: 0 0 1.5rem 0;
-            font-family: var(--font-heading);
-            font-weight: 600;
-            color: var(--ip-blue);
-            font-size: 1.3rem;
-            border-bottom: 2px solid var(--ip-border);
+            margin: 0 0 2rem 0;
+            font-family: var(--font-head);
+            font-weight: 400;
+            color: var(--text-main);
+            font-size: 2rem;
+            border-bottom: 1px solid var(--text-main);
             padding-bottom: 10px;
-        }
-        .form-section h3 {
-            margin: 2rem 0 1rem 0;
-            font-family: var(--font-heading);
-            font-weight: 600;
-            color: var(--ip-dark);
-            font-size: 1.1rem;
         }
 
         .form-group { margin-bottom: 1.5rem; }
@@ -257,153 +273,130 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         label {
             display: block;
             margin-bottom: 8px;
-            color: var(--ip-dark);
-            font-weight: 700;
+            color: var(--text-main);
+            font-size: 1.1rem;
+            font-family: var(--font-head);
             letter-spacing: 0.5px;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            font-family: var(--font-heading);
         }
 
         .help-text {
             display: block;
-            font-size: 0.75rem;
-            color: #767676;
-            margin-top: 5px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            font-family: var(--font-body);
             font-weight: 400;
-            text-transform: none;
         }
 
         input[type="text"], textarea {
             width: 100%;
-            padding: 12px 16px;
+            padding: 14px 16px;
             background: #fff;
-            border: 1px solid var(--ip-border);
-            color: var(--ip-dark);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
             font-family: var(--font-body);
             font-size: 1rem;
-            transition: 0.3s;
-            border-radius: var(--radius-card);
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.03);
-            box-sizing: border-box;
+            transition: 0.2s;
+            border-radius: var(--radius-btn);
         }
 
         input[type="text"]:focus, textarea:focus {
             outline: none;
-            border-color: var(--ip-blue);
-            box-shadow: 0 0 0 2px rgba(0, 101, 139, 0.1);
+            border-color: var(--text-main);
+            background: #fafafa;
         }
 
-        textarea { resize: vertical; min-height: 100px; }
+        textarea { resize: vertical; min-height: 120px; }
 
         /* CATEGORY CARD */
         .category-card {
-            background: #f9f9f9;
-            border: 1px solid var(--ip-border);
+            background: #fafafa;
+            border: 1px solid var(--border-color);
             padding: 1.5rem;
             margin-bottom: 1.5rem;
             border-radius: var(--radius-card);
-            position: relative;
+            transition: 0.2s;
         }
+        .category-card:hover { border-color: #999; }
 
         .category-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1.5rem; padding-bottom: 0.5rem;
             border-bottom: 1px solid #ddd;
         }
 
         .category-number {
-            font-family: var(--font-heading);
-            font-weight: 700;
-            color: var(--ip-blue);
-            font-size: 1.1rem;
+            font-family: var(--font-head);
+            color: var(--text-main);
+            font-size: 1.4rem;
         }
 
-        .remove-category-btn {
-            background: var(--accent-danger);
-            color: white;
-            border: none;
-            padding: 6px 16px;
-            border-radius: var(--radius-pill);
-            cursor: pointer;
-            font-family: var(--font-heading);
-            font-size: 0.75rem;
-            font-weight: 600;
-            transition: 0.2s;
-        }
-
-        .remove-category-btn:hover {
-            background: #a82424;
-        }
-
+        /* GRID LAYOUT FOR FORM ROWS */
         .form-row {
             display: grid;
             grid-template-columns: 2fr 2fr 1fr 1fr;
-            gap: 1rem;
+            gap: 15px;
             margin-bottom: 1rem;
         }
 
-        .form-col-full {
-            grid-column: 1 / -1;
-        }
-
-        /* ADD CATEGORY BUTTON */
+        /* ADD CATEGORY BTN */
         .add-category-btn {
             background: white;
-            border: 2px dashed var(--ip-border);
-            color: var(--ip-blue);
-            padding: 1rem;
+            border: 2px dashed var(--border-color);
+            color: var(--text-muted);
+            padding: 1.5rem;
             width: 100%;
             border-radius: var(--radius-card);
             cursor: pointer;
-            font-family: var(--font-heading);
-            font-size: 0.9rem;
-            font-weight: 600;
-            transition: 0.3s;
+            font-family: var(--font-head);
+            font-size: 1.2rem;
+            transition: 0.2s;
             text-align: center;
         }
-
         .add-category-btn:hover {
-            border-color: var(--ip-blue);
-            background: #f0f7fb;
+            border-color: var(--text-main);
+            color: var(--text-main);
+            background: #fff;
         }
 
-        /* SAVE BUTTON AREA */
+        /* STICKY SAVE BAR */
         .save-area {
-            position: sticky;
-            bottom: 0;
-            background: var(--ip-light);
-            padding: 1.5rem 2rem;
-            border-top: 2px solid var(--ip-border);
-            margin: 0 -2rem -2rem -2rem;
-            border-radius: 0 0 var(--radius-card) var(--radius-card);
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem;
+            border-top: 1px solid var(--border-color);
             display: flex;
-            justify-content: flex-end;
-            gap: 10px;
+            justify-content: center;
+            z-index: 100;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+        }
+        
+        .save-area .btn {
+            width: 100%;
+            max-width: 600px;
+            font-size: 1.4rem;
+            padding: 16px;
         }
 
-        /* MOBILE */
+        /* MOBILE OPTIMIZATION */
         @media (max-width: 768px) {
-            .container { padding: 1rem; }
-            .admin-header { flex-direction: column; align-items: flex-start; gap: 1.5rem; padding: 1.5rem; }
-            .admin-header h1 { font-size: 1.8rem; }
+            .container { padding: 1rem 1rem 120px 1rem; }
+            
+            .admin-header { 
+                flex-direction: column; align-items: flex-start; gap: 1rem; padding: 1.5rem; 
+            }
+            .admin-header h1 { font-size: 2.5rem; }
             .header-actions { width: 100%; }
-            .header-actions .btn { flex: 1; }
+            .header-actions .btn { width: 100%; justify-content: center; }
 
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-
-            .save-area {
-                flex-direction: column;
-            }
-
-            .save-area .btn {
-                width: 100%;
-            }
+            .form-section { padding: 1.5rem; }
+            .form-row { grid-template-columns: 1fr; gap: 0; }
+            
+            /* On mobile, stack inputs inside the card */
+            .category-card { padding: 1rem; }
+            .category-header { margin-bottom: 1rem; }
         }
     </style>
 </head>
@@ -412,11 +405,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="container">
     <header class="admin-header">
         <div>
-            <span class="subtitle">Live Situation Room</span>
-            <h1>Anpassung</h1>
+            <span class="subtitle">Dashboard Configuration</span>
+            <h1>Customize</h1>
         </div>
         <div class="header-actions">
-            <a href="admin.php" class="btn btn-neutral">← Zurück zum Admin</a>
+            <a href="admin.php" class="btn btn-neutral">← Back to Admin</a>
         </div>
     </header>
 
@@ -428,13 +421,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <form method="POST" id="customizeForm">
 
-        <!-- HEADER SECTION -->
         <div class="form-section">
-            <h2>Dashboard Konfiguration</h2>
+            <h2>Header Settings</h2>
             <div class="form-group">
                 <label for="header_title">
-                    Titel auf dem Dashboard
-                    <span class="help-text">HTML erlaubt (z.B. &lt;br&gt; für Zeilenumbruch)</span>
+                    Dashboard Title
+                    <span class="help-text">HTML allowed (e.g. &lt;br&gt; for line break)</span>
                 </label>
                 <input type="text" id="header_title" name="header_title" value="<?= htmlspecialchars($config['header_title'] ?? '') ?>" required>
             </div>
@@ -442,18 +434,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="form-group">
                 <label for="logo_url">
                     Logo URL
-                    <span class="help-text">Vollständige URL zu Ihrem Logo (z.B. https://example.com/logo.png)</span>
+                    <span class="help-text">Full URL to image (https://example.com/logo.png)</span>
                 </label>
                 <input type="text" id="logo_url" name="logo_url" value="<?= htmlspecialchars($config['logo_url'] ?? '') ?>" placeholder="https://example.com/logo.png">
             </div>
         </div>
 
-        <!-- CATEGORIES SECTION -->
         <div class="form-section">
-            <h2>Kategorien</h2>
-            <p style="color: #767676; font-size: 0.9rem; margin-bottom: 2rem;">
-                Definiere die Kategorien, die auf dem Dashboard und im Eingabeformular angezeigt werden.
-                Die Reihenfolge hier bestimmt die Anzeigereihenfolge.
+            <h2>Categories</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; font-family: var(--font-body);">
+                Define the columns shown on the dashboard and input form. The order here determines the display order.
             </p>
 
             <div id="categories-container">
@@ -463,68 +453,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ?>
                     <div class="category-card" data-index="<?= $index ?>">
                         <div class="category-header">
-                            <span class="category-number">Kategorie <?= $index + 1 ?></span>
-                            <button type="button" class="remove-category-btn" onclick="removeCategory(this)">✕ Entfernen</button>
+                            <span class="category-number">Category <?= $index + 1 ?></span>
+                            <button type="button" class="btn btn-danger" onclick="removeCategory(this)">Remove</button>
                         </div>
 
                         <div class="form-row">
                             <div class="form-group">
-                                <label>
-                                    Schlüssel
-                                    <span class="help-text">Kleinbuchstaben, keine Leerzeichen (z.B. "bildung")</span>
-                                </label>
+                                <label>Key <span class="help-text">a-z, 0-9, _ (e.g. "finance")</span></label>
                                 <input type="text" name="category_key[]" value="<?= htmlspecialchars($category['key'] ?? '') ?>" required pattern="[a-z0-9_]+">
                             </div>
 
                             <div class="form-group">
-                                <label>
-                                    Name
-                                    <span class="help-text">Anzeigename für Dashboard</span>
-                                </label>
+                                <label>Name <span class="help-text">Dashboard Header</span></label>
                                 <input type="text" name="category_name[]" value="<?= htmlspecialchars($category['name'] ?? '') ?>" required>
                             </div>
 
                             <div class="form-group">
-                                <label>
-                                    Kürzel
-                                    <span class="help-text">3 Buchstaben</span>
-                                </label>
+                                <label>Abbr <span class="help-text">3 Letters</span></label>
                                 <input type="text" name="category_abbrev[]" value="<?= htmlspecialchars($category['abbreviation'] ?? '') ?>" required maxlength="3">
                             </div>
 
                             <div class="form-group">
-                                <label>
-                                    Icon
-                                    <span class="help-text">Emoji</span>
-                                </label>
+                                <label>Icon <span class="help-text">Emoji</span></label>
                                 <input type="text" name="category_icon[]" value="<?= htmlspecialchars($category['icon'] ?? '') ?>">
                             </div>
                         </div>
 
                         <div class="form-group">
-                            <label>
-                                Anzeigename (Eingabeformular)
-                                <span class="help-text">Mit Icon, z.B. "📚 Bildung & Schule"</span>
-                            </label>
+                            <label>Display Name (Input Form) <span class="help-text">e.g. "📚 Education"</span></label>
                             <input type="text" name="category_display_name[]" value="<?= htmlspecialchars($category['display_name'] ?? '') ?>">
                         </div>
 
                         <div class="form-group">
-                            <label>
-                                Leitfragen
-                                <span class="help-text">Eine Frage pro Zeile</span>
-                            </label>
-                            <textarea name="category_leitfragen_<?= $index ?>" rows="5"><?= htmlspecialchars(implode("\n", $category['leitfragen'] ?? [])) ?></textarea>
+                            <label>Guiding Questions <span class="help-text">One per line</span></label>
+                            <textarea name="category_leitfragen_<?= $index ?>"><?= htmlspecialchars(implode("\n", $category['leitfragen'] ?? [])) ?></textarea>
                         </div>
                     </div>
                 <?php endforeach; ?>
             </div>
 
-            <button type="button" class="add-category-btn" onclick="addCategory()">+ Neue Kategorie hinzufügen</button>
+            <button type="button" class="add-category-btn" onclick="addCategory()">+ Add New Category</button>
+        </div>
 
-            <div class="save-area">
-                <button type="submit" class="btn btn-primary">💾 Änderungen speichern</button>
-            </div>
+        <div class="save-area">
+            <button type="submit" class="btn btn-primary">SAVE CONFIGURATION</button>
         </div>
 
     </form>
@@ -541,58 +513,40 @@ function addCategory() {
 
     newCard.innerHTML = `
         <div class="category-header">
-            <span class="category-number">Kategorie ${categoryIndex + 1}</span>
-            <button type="button" class="remove-category-btn" onclick="removeCategory(this)">✕ Entfernen</button>
+            <span class="category-number">Category ${categoryIndex + 1}</span>
+            <button type="button" class="btn btn-danger" onclick="removeCategory(this)">Remove</button>
         </div>
 
         <div class="form-row">
             <div class="form-group">
-                <label>
-                    Schlüssel
-                    <span class="help-text">Kleinbuchstaben, keine Leerzeichen (z.B. "bildung")</span>
-                </label>
+                <label>Key <span class="help-text">a-z, 0-9, _</span></label>
                 <input type="text" name="category_key[]" value="" required pattern="[a-z0-9_]+">
             </div>
 
             <div class="form-group">
-                <label>
-                    Name
-                    <span class="help-text">Anzeigename für Dashboard</span>
-                </label>
+                <label>Name <span class="help-text">Dashboard Header</span></label>
                 <input type="text" name="category_name[]" value="" required>
             </div>
 
             <div class="form-group">
-                <label>
-                    Kürzel
-                    <span class="help-text">3 Buchstaben</span>
-                </label>
+                <label>Abbr <span class="help-text">3 Letters</span></label>
                 <input type="text" name="category_abbrev[]" value="" required maxlength="3">
             </div>
 
             <div class="form-group">
-                <label>
-                    Icon
-                    <span class="help-text">Emoji</span>
-                </label>
+                <label>Icon <span class="help-text">Emoji</span></label>
                 <input type="text" name="category_icon[]" value="">
             </div>
         </div>
 
         <div class="form-group">
-            <label>
-                Anzeigename (Eingabeformular)
-                <span class="help-text">Mit Icon, z.B. "📚 Bildung & Schule"</span>
-            </label>
+            <label>Display Name (Input Form)</label>
             <input type="text" name="category_display_name[]" value="">
         </div>
 
         <div class="form-group">
-            <label>
-                Leitfragen
-                <span class="help-text">Eine Frage pro Zeile</span>
-            </label>
-            <textarea name="category_leitfragen_${categoryIndex}" rows="5"></textarea>
+            <label>Guiding Questions <span class="help-text">One per line</span></label>
+            <textarea name="category_leitfragen_${categoryIndex}"></textarea>
         </div>
     `;
 
@@ -602,7 +556,7 @@ function addCategory() {
 }
 
 function removeCategory(btn) {
-    if (!confirm('Diese Kategorie wirklich entfernen?')) {
+    if (!confirm('Remove this category?')) {
         return;
     }
 
@@ -614,7 +568,7 @@ function removeCategory(btn) {
 function updateCategoryNumbers() {
     const cards = document.querySelectorAll('.category-card');
     cards.forEach((card, index) => {
-        card.querySelector('.category-number').textContent = `Kategorie ${index + 1}`;
+        card.querySelector('.category-number').textContent = `Category ${index + 1}`;
     });
 }
 
@@ -623,7 +577,7 @@ document.getElementById('customizeForm').addEventListener('submit', function(e) 
     const categories = document.querySelectorAll('.category-card');
     if (categories.length === 0) {
         e.preventDefault();
-        alert('⚠️ Mindestens eine Kategorie muss definiert sein.');
+        alert('⚠️ At least one category is required.');
         return false;
     }
 
