@@ -85,22 +85,24 @@ $isAdmin = $is_own_workshop;
             
             --text-primary: #111111;
             --text-secondary: #666666;
-            --text-accent: #000000;
             
             --border-subtle: #e0e0e0;
             --border-strong: #111111;
             
             --shadow-sm: 0 2px 4px rgba(0,0,0,0.03);
-            --shadow-hover: 0 8px 16px rgba(0,0,0,0.06);
+            --shadow-hover: 0 15px 30px rgba(0,0,0,0.08);
             
-            --radius-card: 4px; /* Sharper corners for B&W look */
+            --radius-card: 4px; 
             --radius-btn: 2px;
             
             --font-head: 'Bebas Neue', sans-serif;
             --font-body: 'Inter', sans-serif;
             
-            --overlay-bg: rgba(255, 255, 255, 0.98); /* White overlay instead of dark */
+            --overlay-bg: rgba(255, 255, 255, 0.98);
             --focus-text-color: #000000;
+            
+            /* Hidden State Variables */
+            --blur-shadow: rgba(0,0,0,0.2);
         }
 
         /* Dark Mode Override */
@@ -111,16 +113,17 @@ $isAdmin = $is_own_workshop;
             
             --text-primary: #ffffff;
             --text-secondary: #888888;
-            --text-accent: #ffffff;
             
             --border-subtle: #333333;
             --border-strong: #ffffff;
             
             --shadow-sm: 0 2px 4px rgba(0,0,0,0.5);
-            --shadow-hover: 0 8px 16px rgba(0,0,0,0.8);
+            --shadow-hover: 0 15px 30px rgba(0,0,0,0.8);
             
             --overlay-bg: rgba(0, 0, 0, 0.95);
             --focus-text-color: #ffffff;
+            
+            --blur-shadow: rgba(255,255,255,0.3);
         }
 
         * { box-sizing: border-box; }
@@ -131,7 +134,7 @@ $isAdmin = $is_own_workshop;
             font-family: var(--font-body);
             margin: 0; padding: 0;
             overflow-x: hidden;
-            transition: background 0.3s ease, color 0.3s ease;
+            transition: background 0.5s ease, color 0.5s ease;
             -webkit-font-smoothing: antialiased;
         }
 
@@ -176,7 +179,7 @@ $isAdmin = $is_own_workshop;
         .ep-logo {
             height: 32px;
             width: auto;
-            filter: grayscale(100%); /* Force B&W */
+            filter: grayscale(100%);
         }
 
         .subtitle {
@@ -190,7 +193,7 @@ $isAdmin = $is_own_workshop;
         h1 {
             font-family: var(--font-head);
             font-size: 3rem;
-            font-weight: 400; /* Bebas is bold by default */
+            font-weight: 400;
             margin: 0;
             color: var(--text-primary);
             line-height: 0.9;
@@ -231,7 +234,7 @@ $isAdmin = $is_own_workshop;
         }
 
         .qr-wrapper {
-            background: white; /* QR strictly white bg */
+            background: white;
             padding: 2px;
             display: block;
         }
@@ -302,9 +305,7 @@ $isAdmin = $is_own_workshop;
             width: 100%;
         }
 
-        .column {
-            min-width: 0; /* Prevents grid blowout */
-        }
+        .column { min-width: 0; }
 
         .column h2 {
             font-family: var(--font-head);
@@ -320,7 +321,7 @@ $isAdmin = $is_own_workshop;
             font-weight: 400;
         }
 
-        /* --- CARDS --- */
+        /* --- CARDS & TRANSITIONS --- */
         .card-container {
             display: flex;
             flex-direction: column;
@@ -336,15 +337,31 @@ $isAdmin = $is_own_workshop;
             background: var(--bg-card);
             border-radius: var(--radius-card);
             padding: 1.5rem;
-            color: var(--text-primary);
             font-size: 0.95rem;
             line-height: 1.5;
             border: 1px solid var(--border-subtle);
             box-shadow: var(--shadow-sm);
             cursor: pointer;
-            transition: all 0.2s ease;
             position: relative;
             overflow: hidden;
+            
+            /* === SMOOTH TRANSITION MAGIC === */
+            /* Physics-based cubic-bezier for a luxury feel */
+            transition: 
+                opacity 0.6s cubic-bezier(0.25, 0.8, 0.25, 1),
+                transform 0.6s cubic-bezier(0.25, 0.8, 0.25, 1),
+                filter 0.6s cubic-bezier(0.25, 0.8, 0.25, 1),
+                color 0.6s ease,
+                text-shadow 0.6s ease,
+                border-color 0.3s ease,
+                box-shadow 0.3s ease;
+            
+            /* Default Visible State */
+            color: var(--text-primary);
+            text-shadow: 0 0 0 transparent; /* Sharp text */
+            opacity: 1;
+            transform: scale(1);
+            filter: blur(0);
         }
 
         .idea-card:hover:not(.blurred) {
@@ -353,69 +370,68 @@ $isAdmin = $is_own_workshop;
             border-color: var(--text-primary);
         }
 
-        /* Entry Animation */
+        /* Entry Animation (Page Load) */
         .idea-card.animate-in {
-            animation: cardEnter 0.4s ease-out forwards;
+            animation: cardEnter 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
         }
 
         @keyframes cardEnter {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* BLURRED STATE - Clean architectural hatch pattern */
+        /* === BLURRED / HIDDEN STATE === */
+        /* The "Dissolve" Effect */
         .idea-card.blurred {
-            color: transparent;
+            /* Text Dissolves */
+            color: transparent; 
+            text-shadow: 0 0 12px var(--blur-shadow); /* Creates a smoky blob where text was */
+            
+            /* Card Recedes */
+            background: var(--bg-card); /* Keep background solid */
+            opacity: 0.5; /* Fade out slightly */
+            transform: scale(0.98); /* Recess slightly */
+            
+            /* No interaction */
             cursor: default;
-            background: var(--bg-card);
-            opacity: 0.6;
-            background-image: repeating-linear-gradient(
-                45deg,
-                var(--border-subtle),
-                var(--border-subtle) 1px,
-                transparent 1px,
-                transparent 6px
-            );
-            border-style: dashed;
+            box-shadow: none;
+            border-color: var(--border-subtle);
         }
 
         /* --- OVERLAYS --- */
         .overlay {
             position: fixed; inset: 0;
-            background: var(--overlay-bg); /* Opaque white/black */
+            background: var(--overlay-bg);
             z-index: 9999;
             display: flex; align-items: center; justify-content: center;
             opacity: 0; pointer-events: none;
-            transition: opacity 0.2s ease;
+            transition: opacity 0.3s ease;
             cursor: pointer;
         }
         .overlay.active { opacity: 1; pointer-events: all; }
 
         .qr-overlay-content {
-            background: white; /* QR always on white */
+            background: white;
             padding: 20px;
-            /* No border radius for stark look */
             box-shadow: 0 0 50px rgba(0,0,0,0.1);
             transform: scale(0.95);
-            transition: transform 0.2s ease;
+            transition: transform 0.3s ease;
         }
         .overlay.active .qr-overlay-content { transform: scale(1); }
 
-        /* Focused Text Style - Massive & Clean */
         .focus-text {
             color: var(--focus-text-color);
             font-family: var(--font-head);
-            font-size: clamp(3rem, 8vw, 8rem); /* Very large responsive type */
+            font-size: clamp(3rem, 8vw, 8rem);
             line-height: 0.9;
             text-align: center;
             max-width: 90%;
-            text-transform: uppercase; /* Bebas is uppercase usually */
+            text-transform: uppercase;
             transform: translateY(20px);
             transition: transform 0.4s ease;
         }
         .overlay.active .focus-text { transform: translateY(0); }
         
-        /* Hiding helper text as requested */
         .overlay-instruction { display: none; }
 
         /* --- CONTEXT MENU (ADMIN) --- */
@@ -463,7 +479,6 @@ $isAdmin = $is_own_workshop;
             .qr-section, .qr-link, .toolbar-buttons { display: none !important; }
             .mobile-join-btn { display: inline-block; width: 100%; text-align: center; }
             
-            /* Mobile Toolbar */
             .toolbar { display: flex !important; position: absolute; top: 1.5rem; right: 1.5rem; gap: 8px; z-index: 100; }
         }
         
@@ -578,14 +593,13 @@ $isAdmin = $is_own_workshop;
     const body = document.body;
 
     function updateIcon(isLight) {
-        // Icon logic
         const icon = isLight ? '◐' : '◑';
         if (themeBtn) themeBtn.innerText = icon;
         if (themeBtnMobile) themeBtnMobile.innerText = icon;
     }
 
     if (localStorage.getItem('theme') === 'dark') {
-        body.classList.add('light-mode'); // Triggers dark vars in new CSS structure
+        body.classList.add('light-mode');
         updateIcon(true);
     } else {
         updateIcon(false);
@@ -632,7 +646,7 @@ $isAdmin = $is_own_workshop;
         });
     }
 
-    // --- FOCUS MODE LOGIC (Local + Remote) ---
+    // --- FOCUS MODE LOGIC ---
     const focusOverlay = document.getElementById('focusOverlay');
     const focusContent = document.getElementById('focusContent');
     const board = document.getElementById('board');
@@ -656,7 +670,7 @@ $isAdmin = $is_own_workshop;
         focusOverlay.classList.remove('active');
     });
 
-    // --- CONTEXT MENU LOGIC (ADMIN ONLY) ---
+    // --- CONTEXT MENU LOGIC ---
     <?php if ($isAdmin): ?>
     (function() {
         const ctxMenu = document.getElementById('customContextMenu');
