@@ -227,7 +227,7 @@ $data = safeReadJson($data_file);
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Admin Panel | Live Situation Room</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -235,7 +235,7 @@ $data = safeReadJson($data_file);
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     
     <style>
-        /* --- DESIGN SYSTEM (Monochrome + Design Colors) --- */
+        /* --- DESIGN SYSTEM --- */
         :root {
             /* Neutrals */
             --bg-body: #f5f5f5;
@@ -244,19 +244,19 @@ $data = safeReadJson($data_file);
             --text-muted: #666666;
             --border-color: #e0e0e0;
             
-            /* Design Colors */
-            --color-green: #27ae60; /* Professional Emerald */
-            --color-red: #e74c3c;   /* Soft Urgent Red */
-            --color-focus: #f1c40f; /* Accent Yellow for Focus */
+            /* Design Colors (Design Green/Red) */
+            --color-green: #27ae60; 
+            --color-red: #e74c3c;   
+            --color-focus: #f1c40f; 
             
             /* Typography */
             --font-head: 'Bebas Neue', sans-serif;
             --font-body: 'Inter', sans-serif;
             
             /* UI */
-            --radius-btn: 2px;
-            --shadow: 0 4px 6px rgba(0,0,0,0.02);
-            --shadow-hover: 0 8px 15px rgba(0,0,0,0.05);
+            --radius-btn: 4px;
+            --shadow: 0 4px 6px rgba(0,0,0,0.03);
+            --shadow-hover: 0 8px 20px rgba(0,0,0,0.06);
             --trans-speed: 0.2s;
         }
 
@@ -271,14 +271,14 @@ $data = safeReadJson($data_file);
 
         .container { max-width: 1600px; margin: 0 auto; padding: 2rem; }
 
-        /* HEADER */
+        /* --- HEADER --- */
         .admin-header {
             display: flex; justify-content: space-between; align-items: flex-end;
             background: var(--bg-card);
             padding: 2rem 3rem; 
             margin-bottom: 2rem;
             border: 1px solid var(--border-color);
-            border-bottom: 2px solid var(--text-main);
+            border-bottom: 3px solid var(--text-main);
         }
         .admin-header h1 { 
             font-family: var(--font-head); font-size: 3.5rem; margin: 0; 
@@ -308,33 +308,30 @@ $data = safeReadJson($data_file);
             border-radius: var(--radius-btn);
             line-height: 1;
             transition: all var(--trans-speed) cubic-bezier(0.4, 0, 0.2, 1);
+            min-height: 44px; /* Touch friendly default */
         }
         
-        /* Base Hover */
-        .btn:hover { 
+        .btn:hover, .btn:active { 
             border-color: var(--text-main); 
             color: var(--text-main); 
             transform: translateY(-1px);
         }
         
-        /* Primary (Black) */
+        /* Variants */
         .btn-primary { background: var(--text-main); color: #fff; border-color: var(--text-main); }
         .btn-primary:hover { background: #333; color: #fff; }
         
-        /* Red (Delete, Hide, Logout) */
         .btn-danger { color: var(--color-red); border-color: rgba(231, 76, 60, 0.3); }
         .btn-danger:hover { background: var(--color-red); color: white; border-color: var(--color-red); }
         
-        /* Green (Success, Go Live, Save) */
         .btn-success { color: var(--color-green); border-color: rgba(39, 174, 96, 0.3); font-weight: bold; }
         .btn-success:hover { background: var(--color-green); color: #fff; border-color: var(--color-green); }
 
-        /* Focus Button */
         .btn-focus { color: #ccc; border-color: #eee; }
         .btn-focus:hover { color: var(--color-focus); border-color: var(--color-focus); }
         .btn-focus.is-focused { background: var(--color-focus); color: #fff; border-color: var(--color-focus); }
 
-        /* INFO BOX */
+        /* --- INFO BOX --- */
         .info-box {
             background: #fff; border: 1px solid var(--border-color);
             padding: 20px 30px; margin-bottom: 24px;
@@ -347,13 +344,13 @@ $data = safeReadJson($data_file);
         .link-row { display: flex; align-items: center; gap: 15px; }
         .link-label { font-family: var(--font-head); font-size: 1rem; color: var(--text-muted); min-width: 180px; }
         .link-input { 
-            flex: 1; padding: 10px; font-family: 'Inter', monospace; font-size: 0.9rem; 
+            flex: 1; padding: 12px; font-family: 'Inter', monospace; font-size: 0.9rem; 
             border: 1px solid var(--border-color); background: #fafafa; color: #333;
-            cursor: pointer; transition: 0.2s;
+            cursor: pointer; transition: 0.2s; border-radius: var(--radius-btn);
         }
         .link-input:hover { border-color: #999; background: #fff; }
 
-        /* COMMAND PANEL */
+        /* --- COMMAND PANEL --- */
         .command-panel {
             background: var(--bg-card); 
             border: 1px solid var(--border-color);
@@ -374,11 +371,10 @@ $data = safeReadJson($data_file);
             letter-spacing: 1px;
         }
 
-        /* Global Buttons Layout */
         .global-btns { display: flex; gap: 10px; }
-        .global-btns .btn { flex: 1; justify-content: center; }
+        .global-btns .btn { flex: 1; justify-content: center; height: 50px; font-size: 1.2rem; }
 
-        /* Sector Layout */
+        /* Sector Grid */
         .sector-container { 
             display: grid; 
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
@@ -387,36 +383,28 @@ $data = safeReadJson($data_file);
 
         .sector-ctrl {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 8px 15px; background: #fff; border: 1px solid var(--border-color);
-            transition: 0.2s;
+            padding: 12px 15px; background: #fff; border: 1px solid var(--border-color);
+            transition: 0.2s; border-radius: var(--radius-btn);
+            min-height: 50px;
         }
-        .sector-ctrl:hover { border-color: #999; }
+        .sector-ctrl:hover { border-color: #999; transform: translateY(-1px); }
         
         .sector-label { 
-            font-size: 1.2rem; color: var(--text-main); 
+            font-size: 1.3rem; color: var(--text-main); 
             font-family: var(--font-head); line-height: 1;
         }
         
         .st-btn { 
-            cursor: pointer; padding: 4px 8px; font-size: 0.75rem; 
+            cursor: pointer; padding: 6px 10px; font-size: 0.85rem; 
             font-weight: 600; transition: all 0.2s; user-select: none; 
             border-radius: 2px; letter-spacing: 1px; color: #ccc;
         }
         
-        /* Active States for Toggles */
-        .btn-on.active-on { 
-            color: var(--color-green); 
-            text-shadow: 0 0 10px rgba(39, 174, 96, 0.4); 
-        }
-        
-        .btn-off.active-off { 
-            color: var(--color-red); 
-            text-decoration: line-through; 
-        }
-        
+        .btn-on.active-on { color: var(--color-green); font-weight: 900; }
+        .btn-off.active-off { color: var(--color-red); text-decoration: line-through; }
         .st-btn:hover { color: var(--text-main); }
 
-        /* FEED GRID */
+        /* --- FEED GRID --- */
         #admin-feed {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 1.5rem;
         }
@@ -431,13 +419,14 @@ $data = safeReadJson($data_file);
             margin: 0; font-size: 2.5rem; line-height: 1; font-weight: 400; 
         }
 
-        /* CARDS */
+        /* --- CARDS --- */
         .admin-card {
             background: var(--bg-card); 
             border: 1px solid var(--border-color);
             padding: 1.5rem; transition: 0.3s ease; position: relative;
             box-shadow: var(--shadow);
             display: flex; flex-direction: column;
+            border-radius: var(--radius-btn);
         }
         .admin-card:hover { 
             box-shadow: var(--shadow-hover); 
@@ -445,15 +434,12 @@ $data = safeReadJson($data_file);
             border-color: #999;
         }
         
-        /* Status Styles */
         .admin-card.status-live { 
             border: 1px solid var(--color-green); 
             box-shadow: 0 0 15px rgba(39, 174, 96, 0.1);
         }
         .admin-card.status-hidden { 
-            border: 1px dashed #ccc; 
-            opacity: 0.75; 
-            background: #fafafa;
+            border: 1px dashed #ccc; opacity: 0.75; background: #fafafa;
         }
 
         .card-header { 
@@ -462,56 +448,84 @@ $data = safeReadJson($data_file);
         }
         
         .admin-select { 
-            padding: 5px; background: transparent; border: none; border-bottom: 1px solid #eee;
-            color: var(--text-muted); font-size: 0.85rem; max-width: 60%; 
+            padding: 8px 0; background: transparent; border: none; border-bottom: 1px solid #eee;
+            color: var(--text-muted); font-size: 0.9rem; max-width: 60%; 
             font-family: var(--font-body); font-weight: 600; cursor: pointer;
         }
-        .admin-select:hover { color: var(--text-main); border-color: #999; }
-        
-        .card-time { font-size: 0.75rem; color: #999; font-family: 'Inter', monospace; }
-        
+        .card-time { font-size: 0.8rem; color: #999; font-family: 'Inter', monospace; }
         .card-body { 
             font-size: 1rem; margin-bottom: 1.5rem; line-height: 1.6; 
             min-height: 60px; word-wrap: break-word; color: var(--text-main); flex-grow: 1;
         }
 
-        /* Edit Mode Styles */
         .entry-text-edit {
             width: 100%; min-height: 120px; padding: 12px;
             border: 1px solid var(--text-main); background: #fff;
             font-family: var(--font-body); font-size: 1rem; line-height: 1.6;
             color: var(--text-main); resize: vertical; box-sizing: border-box;
         }
-        .entry-text-edit:focus { outline: none; background: #fafafa; }
 
-        .card-actions { display: grid; grid-template-columns: 1fr 1fr 2fr auto; gap: 8px; margin-top: auto; }
-        .card-actions .btn { padding: 8px; font-size: 0.9rem; }
+        .card-actions { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr 2fr auto; 
+            gap: 10px; margin-top: auto; 
+        }
+        .card-actions .btn { padding: 10px; font-size: 0.9rem; }
 
-        .card-edit-actions { display: flex; gap: 8px; margin-top: 10px; }
-        .card-edit-actions .btn { flex: 1; padding: 10px; font-size: 0.9rem; }
+        .card-edit-actions { display: flex; gap: 10px; margin-top: 10px; }
+        .card-edit-actions .btn { flex: 1; }
 
         /* =========================================
-           MOBILE RESPONSIVENESS
+           MOBILE OPTIMIZATIONS (The Remote Feel)
            ========================================= */
         @media (max-width: 900px) {
-            .container { padding: 1rem; }
+            .container { padding: 1rem 1rem 4rem 1rem; }
+            
+            /* Header Stacking */
             .admin-header { flex-direction: column; align-items: flex-start; gap: 1.5rem; padding: 1.5rem; }
             .admin-header h1 { font-size: 2.5rem; }
-            .header-actions { width: 100%; flex-direction: column; }
-            .header-actions .btn { width: 100%; }
+            
+            .header-actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+            .header-actions .btn { width: 100%; height: 50px; font-size: 1rem; }
+            /* Make "Open Live" and "Logout" full width for easy exit */
+            .header-actions .btn:nth-child(4), .header-actions .btn:nth-child(5) { grid-column: span 2; }
 
+            /* Command Panel - Remote Layout */
+            .command-panel { padding: 1.5rem; }
             .command-row { flex-direction: column; gap: 2rem; }
-            .sector-container { grid-template-columns: 1fr; }
+            .command-col { width: 100%; flex: 1; }
             
+            .global-btns { gap: 15px; }
+            .global-btns .btn { height: 60px; font-size: 1.4rem; }
+
+            /* 2-Column Sector Grid for Thumbs */
+            .sector-container { grid-template-columns: 1fr 1fr; gap: 12px; }
+            .sector-ctrl { 
+                flex-direction: column; align-items: flex-start; 
+                justify-content: center; gap: 5px; height: 80px; 
+                padding: 10px 15px;
+            }
+            .sector-ctrl > div { 
+                width: 100%; display: flex; justify-content: space-between; 
+                font-size: 1.2rem;
+            }
+            .st-btn { font-size: 1rem; padding: 8px; } /* Bigger touch targets */
+
+            /* Feed & Cards */
             #admin-feed { grid-template-columns: 1fr; } 
-            .feed-header { flex-direction: column; align-items: flex-start; }
+            .feed-header { flex-direction: column; align-items: flex-start; gap: 10px; }
             
-            .card-actions { grid-template-columns: 1fr 1fr; }
-            .card-actions .btn:last-child { grid-column: span 2; }
-            
+            .card-actions { 
+                grid-template-columns: 1fr 1fr; /* 2x2 Grid */
+                gap: 12px;
+            }
+            /* Make Delete button fit nicely */
+            .card-actions .btn:last-child { grid-column: auto; }
+            .card-actions .btn { height: 50px; font-size: 1.1rem; }
+
             .info-box { padding: 15px; }
-            .link-row { flex-direction: column; align-items: flex-start; gap: 5px; margin-bottom: 15px; }
-            .link-input { width: 100%; }
+            .link-row { flex-direction: column; align-items: flex-start; gap: 8px; margin-bottom: 20px; }
+            .link-input { width: 100%; height: 50px; font-size: 1rem; }
         }
     </style>
 </head>
@@ -528,7 +542,7 @@ $data = safeReadJson($data_file);
             <a href="subscription_manage.php" class="btn">Subscription</a>
             <a href="admin.php?mode=pdf" target="_blank" class="btn">PDF Export</a>
             <a href="index.php?u=<?= urlencode($user_id) ?>" target="_blank" class="btn btn-primary">Open Live View</a>
-            <a href="logout.php" class="btn btn-danger" style="margin-left: 10px;">Logout</a>
+            <a href="logout.php" class="btn btn-danger" style="margin-left: 0;">Logout</a>
         </div>
     </header>
 
@@ -628,7 +642,6 @@ $data = safeReadJson($data_file);
                 optionsHtml += `<option value="${key}" ${selected}>📂 ${label}</option>`;
             }
             
-            // Logic: Button should show ACTION (Go Live), or State (Hide)
             const cardStatusClass = isVisible ? 'status-live' : 'status-hidden';
             const btnClass = isVisible ? 'btn-danger' : 'btn-success'; 
             const btnText = isVisible ? 'HIDE' : 'GO LIVE';
