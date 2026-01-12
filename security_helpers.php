@@ -24,7 +24,7 @@ function setSecurityHeaders() {
     }
 
     // Content Security Policy - basic policy, can be tightened
-    header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; frame-src https://js.stripe.com https://checkout.stripe.com; connect-src 'self' https://api.stripe.com;");
+    header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; frame-src https://js.stripe.com https://checkout.stripe.com; connect-src 'self' https://api.stripe.com;");
 
     // Referrer policy
     header('Referrer-Policy: strict-origin-when-cross-origin');
