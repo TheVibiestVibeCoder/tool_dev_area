@@ -509,6 +509,7 @@ $data = safeReadJson($data_file);
         </div>
         <div class="header-actions">
             <a href="customize.php" class="btn btn-primary">Customize</a>
+            <a href="subscription_manage.php" class="btn btn-neutral">Subscription</a>
             <a href="admin.php?mode=pdf" target="_blank" class="btn btn-neutral">PDF Export</a>
             <a href="index.php?u=<?= urlencode($user_id) ?>" target="_blank" class="btn btn-neutral">View Live</a>
             <a href="logout.php" class="btn btn-danger">Logout</a>

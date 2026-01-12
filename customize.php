@@ -5,6 +5,7 @@
 
 require_once 'file_handling_robust.php';
 require_once 'user_auth.php';
+require_once 'subscription_manager.php';
 
 // Require authentication
 requireAuth();
@@ -85,22 +86,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $message = implode('<br>', $errors);
         $messageType = 'error';
     } else {
-        // Save new config
-        $newConfig = [
-            'header_title' => $newHeaderTitle,
-            'logo_url' => $newLogoUrl,
-            'categories' => $newCategories
-        ];
+        // Check subscription limits
+        $sub_manager = new SubscriptionManager();
+        $limits = $sub_manager->getPlanLimits($user_id);
+        $max_columns = $limits['max_columns'];
 
-        $success = saveConfig($configFile, $newConfig);
-
-        if ($success) {
-            $message = '✅ KONFIGURATION ERFOLGREICH GESPEICHERT!';
-            $messageType = 'success';
-            $config = $newConfig;
-        } else {
-            $message = '⚠️ FEHLER BEIM SPEICHERN DER KONFIGURATION.';
+        // Check if exceeding column limit
+        if ($max_columns !== -1 && count($newCategories) > $max_columns) {
+            $message = "⚠️ Your plan allows a maximum of {$max_columns} columns. You currently have " . count($newCategories) . " columns. <a href='pricing.php' style='color: inherit; text-decoration: underline;'>Please upgrade your plan</a> to add more columns.";
             $messageType = 'error';
+        } else {
+            // Save new config
+            $newConfig = [
+                'header_title' => $newHeaderTitle,
+                'logo_url' => $newLogoUrl,
+                'categories' => $newCategories
+            ];
+
+            $success = saveConfig($configFile, $newConfig);
+
+            if ($success) {
+                $message = '✅ KONFIGURATION ERFOLGREICH GESPEICHERT!';
+                $messageType = 'success';
+                $config = $newConfig;
+            } else {
+                $message = '⚠️ FEHLER BEIM SPEICHERN DER KONFIGURATION.';
+                $messageType = 'error';
+            }
         }
     }
 }

@@ -1,0 +1,75 @@
+{
+    "plans": {
+        "free": {
+            "id": "free",
+            "name": "Free",
+            "price_monthly": 0,
+            "price_yearly": 0,
+            "currency": "EUR",
+            "features": {
+                "max_participants": 10,
+                "max_columns": 3,
+                "max_workshops": 1,
+                "custom_branding": false,
+                "export_pdf": true,
+                "email_support": false,
+                "priority_support": false
+            },
+            "stripe_price_id_monthly": null,
+            "stripe_price_id_yearly": null
+        },
+        "premium": {
+            "id": "premium",
+            "name": "Premium",
+            "price_monthly": 19.99,
+            "price_yearly": 203.89,
+            "yearly_discount_percent": 15,
+            "currency": "EUR",
+            "features": {
+                "max_participants": -1,
+                "max_columns": -1,
+                "max_workshops": -1,
+                "custom_branding": true,
+                "export_pdf": true,
+                "email_support": true,
+                "priority_support": false
+            },
+            "stripe_price_id_monthly": "price_REPLACE_WITH_YOUR_STRIPE_PRICE_ID",
+            "stripe_price_id_yearly": "price_REPLACE_WITH_YOUR_STRIPE_YEARLY_PRICE_ID"
+        },
+        "enterprise": {
+            "id": "enterprise",
+            "name": "Enterprise",
+            "price_monthly": null,
+            "price_yearly": null,
+            "currency": "EUR",
+            "features": {
+                "max_participants": -1,
+                "max_columns": -1,
+                "max_workshops": -1,
+                "custom_branding": true,
+                "export_pdf": true,
+                "email_support": true,
+                "priority_support": true,
+                "multiple_accounts": true,
+                "custom_integrations": true,
+                "dedicated_account_manager": true
+            },
+            "stripe_price_id_monthly": null,
+            "stripe_price_id_yearly": null,
+            "contact_for_pricing": true
+        }
+    },
+    "feature_descriptions": {
+        "max_participants": "Maximum participants per workshop (-1 = unlimited)",
+        "max_columns": "Maximum columns/categories (-1 = unlimited)",
+        "max_workshops": "Maximum workshops per account (-1 = unlimited)",
+        "custom_branding": "Custom logo and branding",
+        "export_pdf": "PDF export functionality",
+        "email_support": "Email support",
+        "priority_support": "Priority support with dedicated account manager",
+        "multiple_accounts": "Multiple team accounts",
+        "custom_integrations": "Custom integrations and API access",
+        "dedicated_account_manager": "Dedicated account manager"
+    }
+}
