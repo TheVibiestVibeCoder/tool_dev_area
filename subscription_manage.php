@@ -109,6 +109,7 @@ if (isset($_GET['error'])) {
             color: var(--text-main);
             line-height: 1.5;
             -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
         }
 
         /* --- HEADER --- */
@@ -119,6 +120,8 @@ if (isset($_GET['error'])) {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
 
         .navbar h1 {
@@ -129,7 +132,7 @@ if (isset($_GET['error'])) {
             line-height: 1;
         }
 
-        .nav-links { display: flex; gap: 20px; }
+        .nav-links { display: flex; gap: 20px; flex-wrap: wrap; }
 
         .navbar a {
             color: var(--text-muted);
@@ -144,9 +147,10 @@ if (isset($_GET['error'])) {
         .navbar a:hover { color: var(--text-main); }
 
         .container {
-            max-width: 900px;
+            max-width: 1000px;
             margin: 3rem auto;
             padding: 0 2rem;
+            width: 100%;
         }
 
         /* --- ALERTS --- */
@@ -157,6 +161,7 @@ if (isset($_GET['error'])) {
             background: #fff;
             font-size: 0.95rem;
             box-shadow: var(--shadow);
+            word-wrap: break-word;
         }
         .alert.success { border-color: var(--color-green); color: var(--color-green); }
         .alert.error { border-color: var(--color-red); color: var(--color-red); }
@@ -171,6 +176,7 @@ if (isset($_GET['error'])) {
             box-shadow: var(--shadow);
             margin-bottom: 2rem;
             border-radius: var(--radius-card);
+            width: 100%;
         }
 
         .card h2 {
@@ -199,14 +205,14 @@ if (isset($_GET['error'])) {
             padding-bottom: 1.5rem;
             border-bottom: 1px solid var(--border-color);
             flex-wrap: wrap;
-            gap: 1rem;
+            gap: 1.5rem;
         }
 
-        .plan-info-group { display: flex; flex-direction: column; gap: 5px; }
+        .plan-info-group { display: flex; flex-direction: column; gap: 8px; }
 
         .plan-badge {
             display: inline-block;
-            padding: 4px 12px;
+            padding: 6px 12px;
             border: 1px solid var(--text-main);
             font-family: var(--font-head);
             font-size: 1.1rem;
@@ -218,14 +224,15 @@ if (isset($_GET['error'])) {
 
         .status-badge {
             display: inline-block;
-            padding: 4px 10px;
+            padding: 6px 12px;
             font-size: 0.75rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1px;
             color: #fff;
             vertical-align: middle;
-            margin-left: 10px;
+            margin-left: 8px;
+            border-radius: 2px;
         }
         .status-badge.active { background: var(--color-green); }
         .status-badge.canceled { background: var(--color-red); }
@@ -234,12 +241,21 @@ if (isset($_GET['error'])) {
         .price-tag { font-size: 2rem; font-family: var(--font-head); color: var(--text-main); }
         .price-period { font-size: 1rem; color: var(--text-muted); font-family: var(--font-body); }
 
-        /* INFO GRID */
+        /* --- INFO GRID (Layout Fixes) --- */
         .info-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(3, 1fr); /* 3 Columns on Desktop */
             gap: 2rem;
             margin-bottom: 2rem;
+            width: 100%;
+        }
+
+        .info-item {
+            background: #fafafa;
+            border: 1px solid #eee;
+            padding: 1.2rem;
+            border-radius: var(--radius-card);
+            min-width: 0; /* Prevents flex/grid blowout */
         }
 
         .info-item label {
@@ -253,9 +269,13 @@ if (isset($_GET['error'])) {
         }
 
         .info-item .value {
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 600;
             color: var(--text-main);
+            /* CRITICAL: Wraps text (email) to prevent overflow */
+            word-wrap: break-word; 
+            overflow-wrap: anywhere; 
+            line-height: 1.3;
         }
 
         /* USAGE BARS */
@@ -270,7 +290,7 @@ if (isset($_GET['error'])) {
             height: 8px;
             background: #eee;
             overflow: hidden;
-            border-radius: 4px; /* Slight roundness for bar */
+            border-radius: 4px; 
         }
 
         .usage-bar-fill {
@@ -292,7 +312,7 @@ if (isset($_GET['error'])) {
         .check { color: var(--color-green); font-weight: bold; }
 
         /* BUTTONS */
-        .btn-group { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 2rem; }
+        .btn-group { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 2rem; width: 100%; }
 
         .btn {
             padding: 12px 24px;
@@ -308,6 +328,7 @@ if (isset($_GET['error'])) {
             display: inline-flex; align-items: center; justify-content: center;
             border-radius: var(--radius-btn);
             min-height: 48px;
+            text-align: center;
         }
         .btn:hover { border-color: var(--text-main); color: var(--text-main); transform: translateY(-1px); }
 
@@ -317,19 +338,31 @@ if (isset($_GET['error'])) {
         .btn.danger { color: var(--color-red); border-color: rgba(231, 76, 60, 0.3); }
         .btn.danger:hover { background: var(--color-red); color: white; }
 
-        /* MOBILE */
+        /* --- MOBILE OPTIMIZATION --- */
         @media (max-width: 768px) {
-            .navbar { flex-direction: column; align-items: flex-start; gap: 1rem; padding: 1.5rem; }
+            .navbar { flex-direction: column; align-items: flex-start; gap: 1.5rem; padding: 1.5rem; }
             .nav-links { width: 100%; justify-content: space-between; }
             
-            .container { padding: 1rem; margin: 1rem auto; }
+            .container { padding: 1rem; margin: 1rem auto; width: 100%; }
             .card { padding: 1.5rem; }
             
-            .subscription-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
-            .info-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+            .subscription-header { flex-direction: column; align-items: flex-start; gap: 1.5rem; }
+            
+            /* Stack the info grid on mobile so items have full width */
+            .info-grid { 
+                grid-template-columns: 1fr; 
+                gap: 1rem; 
+            }
+            
+            .info-item { 
+                padding: 1rem; 
+                width: 100%; /* Ensures it fits container */
+            }
             
             .btn-group { flex-direction: column; gap: 10px; }
             .btn { width: 100%; }
+            
+            form { width: 100%; }
         }
     </style>
 </head>
@@ -404,7 +437,7 @@ if (isset($_GET['error'])) {
 
                 <div class="info-item">
                     <label>Account Email</label>
-                    <div class="value" style="font-size: 1rem; font-weight: 400;">
+                    <div class="value">
                         <?php echo htmlspecialchars($user_email); ?>
                     </div>
                 </div>
