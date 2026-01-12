@@ -6,15 +6,48 @@
  */
 
 require_once 'file_handling_robust.php';
-require_once 'stripe_config.php';
+
+// Try to load secure config first, fallback to regular config
+if (file_exists('stripe_config_secure.php')) {
+    require_once 'stripe_config_secure.php';
+} elseif (file_exists('stripe_config.php')) {
+    require_once 'stripe_config.php';
+} else {
+    // Define minimal constants to prevent errors
+    if (!defined('STRIPE_PREMIUM_MONTHLY_PRICE_ID')) {
+        define('STRIPE_PREMIUM_MONTHLY_PRICE_ID', 'price_NOT_CONFIGURED');
+    }
+    if (!defined('STRIPE_PREMIUM_YEARLY_PRICE_ID')) {
+        define('STRIPE_PREMIUM_YEARLY_PRICE_ID', 'price_NOT_CONFIGURED');
+    }
+    error_log('WARNING: Stripe configuration file not found');
+}
 
 class SubscriptionManager {
 
     private $pricing_config;
     private $users_file = 'users.json';
+    private $stripe_available = false;
 
     public function __construct() {
         $this->loadPricingConfig();
+        $this->checkStripeAvailability();
+    }
+
+    /**
+     * Check if Stripe SDK is available
+     */
+    private function checkStripeAvailability() {
+        // Check if Stripe SDK is installed
+        if (file_exists(__DIR__ . '/stripe-php/init.php')) {
+            $this->stripe_available = true;
+        } elseif (file_exists(__DIR__ . '/vendor/autoload.php')) {
+            // Check for Composer installation
+            $this->stripe_available = true;
+        } else {
+            error_log('WARNING: Stripe PHP SDK not found. Please run install_stripe.sh or use Composer.');
+            $this->stripe_available = false;
+        }
     }
 
     /**
@@ -25,6 +58,15 @@ class SubscriptionManager {
         if ($config === false) {
             die('Error: Could not load pricing configuration');
         }
+
+        // Override price IDs from stripe_config if available
+        if (defined('STRIPE_PREMIUM_MONTHLY_PRICE_ID') && defined('STRIPE_PREMIUM_YEARLY_PRICE_ID')) {
+            if (isset($config['plans']['premium'])) {
+                $config['plans']['premium']['stripe_price_id_monthly'] = STRIPE_PREMIUM_MONTHLY_PRICE_ID;
+                $config['plans']['premium']['stripe_price_id_yearly'] = STRIPE_PREMIUM_YEARLY_PRICE_ID;
+            }
+        }
+
         $this->pricing_config = $config;
     }
 
@@ -221,6 +263,11 @@ class SubscriptionManager {
      * Create Stripe Checkout Session
      */
     public function createCheckoutSession($user_id, $user_email, $plan_id, $billing_period = 'monthly') {
+        // Check if Stripe is available
+        if (!$this->stripe_available) {
+            return ['error' => 'Payment system not available. Please contact administrator. (Stripe SDK not installed)'];
+        }
+
         $plan = $this->getPlan($plan_id);
 
         if (!$plan || $plan['id'] === 'free') {
@@ -236,12 +283,19 @@ class SubscriptionManager {
             ? $plan['stripe_price_id_yearly']
             : $plan['stripe_price_id_monthly'];
 
-        if (!$price_id || strpos($price_id, 'REPLACE') !== false) {
+        if (!$price_id || strpos($price_id, 'REPLACE') !== false || strpos($price_id, 'NOT_CONFIGURED') !== false) {
             return ['error' => 'Payment system not configured. Please contact administrator.'];
         }
 
         // Initialize Stripe
-        require_once 'stripe-php/init.php';
+        if (file_exists(__DIR__ . '/stripe-php/init.php')) {
+            require_once __DIR__ . '/stripe-php/init.php';
+        } elseif (file_exists(__DIR__ . '/vendor/autoload.php')) {
+            require_once __DIR__ . '/vendor/autoload.php';
+        } else {
+            return ['error' => 'Payment system unavailable. Stripe SDK not found.'];
+        }
+
         \Stripe\Stripe::setApiKey(STRIPE_SECRET_KEY);
 
         try {

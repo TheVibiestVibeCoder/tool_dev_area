@@ -1,0 +1,39 @@
+# Stripe Configuration
+.env
+stripe_config.php
+
+# Stripe PHP SDK (should be installed via script, not committed)
+stripe-php/
+vendor/
+
+# User Data
+data/
+users.json
+password_reset_tokens.json
+rate_limits.json
+
+# Backups
+backups/
+*.backup
+*.bak
+
+# Logs
+*.log
+error.log
+stripe_webhook.log
+php_errors.log
+
+# System files
+.DS_Store
+Thumbs.db
+.htaccess_backup
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Composer (if used)
+composer.lock
