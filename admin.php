@@ -286,10 +286,6 @@ $data = safeReadJson($data_file);
             border: 1px solid var(--border-color);
             border-bottom: 3px solid var(--text-main);
         }
-        
-        .header-title-group {
-            /* Desktop: takes content width */
-        }
 
         .admin-header h1 { 
             font-family: var(--font-head); font-size: 3.5rem; margin: 0; 
