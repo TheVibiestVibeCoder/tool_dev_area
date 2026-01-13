@@ -384,18 +384,25 @@ $isAdmin = $is_own_workshop;
         /* The "Dissolve" Effect */
         .idea-card.blurred {
             /* Text Dissolves */
-            color: transparent; 
+            color: transparent;
             text-shadow: 0 0 12px var(--blur-shadow); /* Creates a smoky blob where text was */
-            
+
             /* Card Recedes */
             background: var(--bg-card); /* Keep background solid */
             opacity: 0.5; /* Fade out slightly */
             transform: scale(0.98); /* Recess slightly */
-            
+
             /* No interaction */
             cursor: default;
             box-shadow: none;
             border-color: var(--border-subtle);
+
+            /* Prevent text selection and copying */
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            pointer-events: none;
         }
 
         /* --- OVERLAYS --- */
@@ -422,7 +429,7 @@ $isAdmin = $is_own_workshop;
         .focus-text {
             color: var(--focus-text-color);
             font-family: var(--font-head);
-            font-size: clamp(3rem, 8vw, 8rem);
+            font-size: clamp(2.1rem, 5.6vw, 5.6rem);
             line-height: 0.9;
             text-align: center;
             max-width: 90%;
