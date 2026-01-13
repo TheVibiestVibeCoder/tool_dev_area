@@ -109,7 +109,8 @@ function isUrlSafe($url) {
 }
 
 /**
- * Simple rate limiting function
+ * Simple rate limiting function - ATOMIC VERSION
+ * 🔒 SECURITY: Uses flock() to prevent race conditions
  *
  * @param string $action Action identifier (e.g., 'public_submit')
  * @param string $identifier User identifier (e.g., IP address)
@@ -120,10 +121,34 @@ function isUrlSafe($url) {
 function checkPublicRateLimit($action, $identifier, $max_attempts = 10, $time_window = 60) {
     $rate_limit_file = 'public_rate_limits.json';
 
-    // Load existing rate limits
+    // Ensure file exists
+    if (!file_exists($rate_limit_file)) {
+        file_put_contents($rate_limit_file, json_encode([]));
+        @chmod($rate_limit_file, 0666);
+    }
+
+    // Open file for reading/writing
+    $fp = fopen($rate_limit_file, 'c+');
+    if (!$fp) {
+        // If we can't open file, fail open (allow request)
+        error_log("Rate limit: Failed to open file");
+        return true;
+    }
+
+    // 🔒 Acquire exclusive lock
+    if (!flock($fp, LOCK_EX)) {
+        fclose($fp);
+        // If we can't get lock, fail open (allow request)
+        error_log("Rate limit: Failed to acquire lock");
+        return true;
+    }
+
+    // Read current rate limits
+    $filesize = filesize($rate_limit_file);
     $rate_limits = [];
-    if (file_exists($rate_limit_file)) {
-        $rate_limits = json_decode(file_get_contents($rate_limit_file), true) ?: [];
+    if ($filesize > 0) {
+        $content = fread($fp, $filesize);
+        $rate_limits = json_decode($content, true) ?: [];
     }
 
     $key = $action . '_' . $identifier;
@@ -140,14 +165,24 @@ function checkPublicRateLimit($action, $identifier, $max_attempts = 10, $time_wi
 
     // Check if rate limit exceeded
     if (count($rate_limits[$key]) >= $max_attempts) {
+        // Rate limit exceeded - don't add this attempt
+        flock($fp, LOCK_UN);
+        fclose($fp);
         return false;
     }
 
     // Add current attempt
     $rate_limits[$key][] = $current_time;
 
-    // Save rate limits
-    file_put_contents($rate_limit_file, json_encode($rate_limits));
+    // Write atomically
+    ftruncate($fp, 0);
+    rewind($fp);
+    fwrite($fp, json_encode($rate_limits));
+    fflush($fp);
+
+    // 🔓 Release lock and close
+    flock($fp, LOCK_UN);
+    fclose($fp);
 
     return true;
 }
