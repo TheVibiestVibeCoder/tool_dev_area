@@ -152,11 +152,6 @@ $isAdmin = $is_own_workshop;
 
         /* --- HEADER --- */
         .header-split {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 50;
             background: var(--bg-header);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
@@ -306,7 +301,6 @@ $isAdmin = $is_own_workshop;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 2rem;
             padding: 2rem 3rem 4rem 3rem;
-            padding-top: 8rem; /* Space for fixed header */
             width: 100%;
         }
 
@@ -319,19 +313,11 @@ $isAdmin = $is_own_workshop;
             letter-spacing: 1px;
             margin-bottom: 1.5rem;
             padding-bottom: 0.5rem;
-            padding-top: 1rem;
             border-bottom: 1px solid var(--border-strong);
             display: flex;
             align-items: center;
             gap: 10px;
             font-weight: 400;
-
-            /* Sticky column titles that stay below fixed header */
-            position: sticky;
-            top: 6rem; /* Stays below the fixed header */
-            background: var(--bg-body);
-            z-index: 40;
-            margin-top: -1rem;
         }
 
         /* --- CARDS & TRANSITIONS --- */
@@ -481,7 +467,7 @@ $isAdmin = $is_own_workshop;
 
         /* --- RESPONSIVE --- */
         @media (max-width: 1600px) {
-            .dashboard-grid { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); padding: 2rem; padding-top: 8rem; gap: 1.5rem; }
+            .dashboard-grid { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); padding: 2rem; gap: 1.5rem; }
             h1 { font-size: 2.5rem; }
         }
 
@@ -493,17 +479,13 @@ $isAdmin = $is_own_workshop;
         @media (max-width: 900px) {
             .header-split {
                 flex-direction: column; align-items: flex-start; gap: 1.5rem;
-                padding: 1.5rem; position: fixed; /* Keep fixed on mobile */
+                padding: 1.5rem;
             }
-            .dashboard-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); padding: 1rem; padding-top: 11rem; gap: 1rem; }
+            .dashboard-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); padding: 1rem; gap: 1rem; }
             .qr-section, .qr-link, .toolbar-buttons { display: none !important; }
             .mobile-join-btn { display: inline-block; width: 100%; text-align: center; }
 
             .toolbar { display: flex !important; position: absolute; top: 1.5rem; right: 1.5rem; gap: 8px; z-index: 100; }
-
-            .column h2 {
-                top: 8rem; /* Adjust for taller mobile header */
-            }
         }
 
         @media (max-width: 600px) {
