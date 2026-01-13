@@ -67,42 +67,264 @@ if (isset($_GET['mode']) && $_GET['mode'] === 'pdf') {
     <html lang="de">
     <head>
         <meta charset="UTF-8">
+        <meta name="author" content="Live Situation Room">
+        <meta name="description" content="Workshop Protocol - <?= htmlspecialchars($pdf_title) ?>">
         <title><?= htmlspecialchars($pdf_title) ?> - Workshop Protokoll</title>
         <style>
-            body { font-family: 'Helvetica', sans-serif; color: #111; line-height: 1.4; padding: 40px; max-width: 900px; margin: 0 auto; }
-            h1 { font-family: 'Helvetica', sans-serif; font-size: 2.5rem; border-bottom: 2px solid #111; padding-bottom: 10px; margin-bottom: 5px; color: #111; text-transform: uppercase; font-weight: 800; letter-spacing: -1px; }
-            .meta { color: #666; font-size: 0.8rem; margin-bottom: 4rem; text-transform: uppercase; letter-spacing: 1px; }
-            .section { margin-bottom: 3rem; page-break-inside: avoid; }
-            .section-title { font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; border-left: 4px solid #111; padding-left: 15px; margin-bottom: 1.5rem; color: #111; }
-            .entry { margin-bottom: 1.5rem; padding: 0 0 15px 0; border-bottom: 1px solid #eee; }
-            .entry-text { font-size: 1rem; margin-bottom: 5px; color: #000; }
-            .entry-meta { font-size: 0.7rem; color: #999; text-transform: uppercase; letter-spacing: 0.5px; }
-            .no-data { color: #999; font-style: italic; font-size: 0.8rem; }
+            /* Print-optimized styles for machine readability */
+            @media print {
+                body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+                .section { page-break-inside: avoid; }
+                .entry { page-break-inside: avoid; }
+            }
+
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+
+            body {
+                font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                color: #111111;
+                line-height: 1.6;
+                padding: 50px 60px;
+                max-width: 950px;
+                margin: 0 auto;
+                background: #ffffff;
+            }
+
+            /* Header Section */
+            header {
+                margin-bottom: 50px;
+                padding-bottom: 30px;
+                border-bottom: 3px solid #111111;
+            }
+
+            h1 {
+                font-family: 'Helvetica Neue', sans-serif;
+                font-size: 2.8rem;
+                color: #111111;
+                text-transform: uppercase;
+                font-weight: 700;
+                letter-spacing: -0.5px;
+                margin-bottom: 10px;
+                line-height: 1.1;
+            }
+
+            .meta {
+                color: #666666;
+                font-size: 0.85rem;
+                text-transform: uppercase;
+                letter-spacing: 1.5px;
+                font-weight: 600;
+                margin-top: 15px;
+            }
+
+            .meta-item {
+                display: inline-block;
+                margin-right: 20px;
+            }
+
+            /* Summary Statistics */
+            .summary {
+                background: #f8f8f8;
+                padding: 25px 30px;
+                margin-bottom: 40px;
+                border-left: 4px solid #111111;
+            }
+
+            .summary h2 {
+                font-size: 1.1rem;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                margin-bottom: 15px;
+                color: #111111;
+                font-weight: 700;
+            }
+
+            .summary-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 15px;
+            }
+
+            .summary-item {
+                font-size: 0.9rem;
+                line-height: 1.4;
+            }
+
+            .summary-item strong {
+                display: block;
+                font-size: 1.4rem;
+                color: #111111;
+                margin-bottom: 3px;
+            }
+
+            /* Section Styling */
+            .section {
+                margin-bottom: 45px;
+                page-break-inside: avoid;
+            }
+
+            .section-title {
+                font-size: 1.3rem;
+                text-transform: uppercase;
+                letter-spacing: 1.2px;
+                font-weight: 700;
+                border-left: 5px solid #111111;
+                padding-left: 20px;
+                padding-bottom: 5px;
+                margin-bottom: 25px;
+                color: #111111;
+                line-height: 1.3;
+            }
+
+            /* Entry Cards */
+            .entry {
+                margin-bottom: 20px;
+                padding: 18px 20px;
+                background: #fafafa;
+                border-left: 3px solid #e0e0e0;
+                page-break-inside: avoid;
+                position: relative;
+            }
+
+            .entry-text {
+                font-size: 1rem;
+                line-height: 1.7;
+                margin-bottom: 12px;
+                color: #222222;
+                white-space: pre-wrap;
+                word-wrap: break-word;
+            }
+
+            .entry-meta {
+                font-size: 0.75rem;
+                color: #888888;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                font-weight: 600;
+                display: flex;
+                gap: 15px;
+                align-items: center;
+            }
+
+            .entry-meta .status {
+                padding: 3px 8px;
+                border-radius: 3px;
+                font-size: 0.7rem;
+                font-weight: 700;
+            }
+
+            .entry-meta .status.live {
+                background: #27ae60;
+                color: #ffffff;
+            }
+
+            .entry-meta .status.draft {
+                background: #cccccc;
+                color: #666666;
+            }
+
+            .no-data {
+                color: #999999;
+                font-style: italic;
+                font-size: 0.9rem;
+                padding: 30px 20px;
+                text-align: center;
+                background: #f5f5f5;
+            }
+
+            /* Footer */
+            footer {
+                margin-top: 60px;
+                padding-top: 30px;
+                border-top: 2px solid #e0e0e0;
+                text-align: center;
+                font-size: 0.75rem;
+                color: #999999;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }
         </style>
     </head>
     <body onload="window.print()">
-        <h1><?= htmlspecialchars($pdf_title) ?></h1>
-        <div class="meta">PROTOCOL • Generated: <?= date('d.m.Y H:i') ?></div>
-
-        <?php foreach ($pdf_labels as $key => $label): ?>
-            <div class="section">
-                <div class="section-title"><?= htmlspecialchars($label) ?></div>
-                <?php
-                $hasEntries = false;
-                foreach ($data as $entry) {
-                    if (($entry['thema'] ?? '') === $key) {
-                        $hasEntries = true;
-                        $status = ($entry['visible'] ?? false) ? "LIVE" : "DRAFT";
-                        echo '<div class="entry">';
-                        echo '<div class="entry-text">' . nl2br(htmlspecialchars($entry['text'])) . '</div>';
-                        echo '<div class="entry-meta">' . date('H:i', $entry['zeit']) . ' • ' . $status . '</div>';
-                        echo '</div>';
-                    }
-                }
-                if (!$hasEntries) echo '<div class="no-data">No entries found.</div>';
-                ?>
+        <header role="banner">
+            <h1><?= htmlspecialchars($pdf_title) ?></h1>
+            <div class="meta">
+                <span class="meta-item">Workshop Protokoll</span>
+                <span class="meta-item">Generiert: <?= date('d.m.Y H:i') ?> Uhr</span>
             </div>
-        <?php endforeach; ?>
+        </header>
+
+        <?php
+        // Calculate summary statistics
+        $totalEntries = count($data);
+        $liveEntries = count(array_filter($data, fn($e) => ($e['visible'] ?? false)));
+        $draftEntries = $totalEntries - $liveEntries;
+        $categoryCounts = [];
+        foreach ($pdf_labels as $key => $label) {
+            $categoryCounts[$key] = count(array_filter($data, fn($e) => ($e['thema'] ?? '') === $key));
+        }
+        ?>
+
+        <section class="summary" role="contentinfo">
+            <h2>Zusammenfassung</h2>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <strong><?= $totalEntries ?></strong>
+                    Gesamte Einträge
+                </div>
+                <div class="summary-item">
+                    <strong><?= $liveEntries ?></strong>
+                    Live Einträge
+                </div>
+                <div class="summary-item">
+                    <strong><?= $draftEntries ?></strong>
+                    Entwürfe
+                </div>
+                <div class="summary-item">
+                    <strong><?= count($pdf_labels) ?></strong>
+                    Kategorien
+                </div>
+            </div>
+        </section>
+
+        <main role="main">
+            <?php foreach ($pdf_labels as $key => $label): ?>
+                <section class="section" aria-labelledby="section-<?= $key ?>">
+                    <h2 class="section-title" id="section-<?= $key ?>"><?= htmlspecialchars($label) ?></h2>
+                    <?php
+                    $hasEntries = false;
+                    $entryCount = 0;
+                    foreach ($data as $entry) {
+                        if (($entry['thema'] ?? '') === $key) {
+                            $hasEntries = true;
+                            $entryCount++;
+                            $isVisible = ($entry['visible'] ?? false);
+                            $status = $isVisible ? "LIVE" : "DRAFT";
+                            $statusClass = $isVisible ? "live" : "draft";
+                            $timestamp = date('H:i', $entry['zeit']);
+                            $date = date('d.m.Y', $entry['zeit']);
+
+                            echo '<article class="entry" id="entry-' . htmlspecialchars($entry['id']) . '" role="article">';
+                            echo '<div class="entry-text">' . nl2br(htmlspecialchars($entry['text'])) . '</div>';
+                            echo '<div class="entry-meta">';
+                            echo '<span class="time">' . $timestamp . ' Uhr</span>';
+                            echo '<span class="date">' . $date . '</span>';
+                            echo '<span class="status ' . $statusClass . '">' . $status . '</span>';
+                            echo '</div>';
+                            echo '</article>';
+                        }
+                    }
+                    if (!$hasEntries) {
+                        echo '<div class="no-data" role="note">Keine Einträge in dieser Kategorie vorhanden.</div>';
+                    }
+                    ?>
+                </section>
+            <?php endforeach; ?>
+        </main>
+
+        <footer role="contentinfo">
+            <p>Erstellt mit Live Situation Room • <?= htmlspecialchars($pdf_title) ?></p>
+        </footer>
     </body>
     </html>
     <?php
@@ -349,9 +571,26 @@ $data = safeReadJson($data_file);
             display: flex; flex-direction: column; gap: 15px;
             width: 100%;
         }
-        .info-box h3 { 
-            margin: 0; color: var(--text-main); font-family: var(--font-head); 
+        .info-box h3 {
+            margin: 0; color: var(--text-main); font-family: var(--font-head);
             font-size: 1.5rem; letter-spacing: 0.5px; font-weight: 400;
+            cursor: pointer; user-select: none;
+            display: flex; align-items: center; justify-content: space-between;
+            padding-bottom: 10px; border-bottom: 1px solid var(--border-color);
+        }
+        .info-box h3:hover { color: #333; }
+        .collapse-icon {
+            font-size: 1.2rem; transition: transform 0.3s ease;
+            font-family: monospace; font-weight: bold;
+        }
+        .collapse-icon.collapsed { transform: rotate(-90deg); }
+        .info-box-content {
+            display: flex; flex-direction: column; gap: 15px;
+            overflow: hidden; transition: max-height 0.3s ease, opacity 0.3s ease;
+            max-height: 500px; opacity: 1;
+        }
+        .info-box-content.collapsed {
+            max-height: 0; opacity: 0; margin: 0;
         }
         .link-row { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
         .link-label { font-family: var(--font-head); font-size: 1rem; color: var(--text-muted); min-width: 180px; }
@@ -569,14 +808,19 @@ $data = safeReadJson($data_file);
     </header>
 
     <div class="info-box">
-        <h3>🔗 Connection Links</h3>
-        <div class="link-row">
-            <span class="link-label">VISITOR VIEW (READ ONLY):</span>
-            <input type="text" class="link-input" readonly value="<?= getPublicWorkshopURL($user_id) ?>" onclick="this.select(); document.execCommand('copy');" title="Click to copy">
-        </div>
-        <div class="link-row">
-            <span class="link-label">PARTICIPANT FORM (INPUT):</span>
-            <input type="text" class="link-input" readonly value="<?= getPublicInputURL($user_id) ?>" onclick="this.select(); document.execCommand('copy');" title="Click to copy">
+        <h3 id="linksToggle">
+            <span>🔗 Connection Links</span>
+            <span class="collapse-icon" id="collapseIcon">▼</span>
+        </h3>
+        <div class="info-box-content" id="linksContent">
+            <div class="link-row">
+                <span class="link-label">VISITOR VIEW (READ ONLY):</span>
+                <input type="text" class="link-input" readonly value="<?= getPublicWorkshopURL($user_id) ?>" onclick="this.select(); document.execCommand('copy');" title="Click to copy">
+            </div>
+            <div class="link-row">
+                <span class="link-label">PARTICIPANT FORM (INPUT):</span>
+                <input type="text" class="link-input" readonly value="<?= getPublicInputURL($user_id) ?>" onclick="this.select(); document.execCommand('copy');" title="Click to copy">
+            </div>
         </div>
     </div>
 
@@ -625,6 +869,26 @@ $data = safeReadJson($data_file);
 
 <script>
     const gruppenLabels = <?= json_encode($gruppen_labels) ?>;
+
+    // --- COLLAPSIBLE LINKS BOX ---
+    (function() {
+        const toggle = document.getElementById('linksToggle');
+        const content = document.getElementById('linksContent');
+        const icon = document.getElementById('collapseIcon');
+        const storageKey = 'admin_links_collapsed';
+
+        // Restore state from localStorage
+        if (localStorage.getItem(storageKey) === 'true') {
+            content.classList.add('collapsed');
+            icon.classList.add('collapsed');
+        }
+
+        toggle.addEventListener('click', function() {
+            const isCollapsed = content.classList.toggle('collapsed');
+            icon.classList.toggle('collapsed');
+            localStorage.setItem(storageKey, isCollapsed);
+        });
+    })();
 
     function escapeHtml(text) {
         const div = document.createElement('div');
@@ -675,7 +939,10 @@ $data = safeReadJson($data_file);
             html += `
             <div class="admin-card ${cardStatusClass}" id="card-${escapedId}" data-original-text="${escapedText}">
                 <div class="card-header">
-                    <select class="admin-select" onchange="runCmd('action=move&id=${escapedId}&new_thema='+this.value)">
+                    <select class="admin-select" data-entry-id="${escapedId}"
+                        onfocus="isDropdownActive=true;"
+                        onblur="isDropdownActive=false;"
+                        onchange="runCmd('action=move&id=${escapedId}&new_thema='+this.value); isDropdownActive=false;">
                         ${optionsHtml}
                     </select>
                     <span class="card-time">${new Date(entry.zeit * 1000).toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'})}</span>
@@ -752,6 +1019,7 @@ $data = safeReadJson($data_file);
 
     let refreshInterval = null;
     let isEditMode = false;
+    let isDropdownActive = false;
 
     function startAutoRefresh() {
         if (refreshInterval) clearInterval(refreshInterval);
@@ -839,7 +1107,7 @@ $data = safeReadJson($data_file);
     }
 
     function updateAdminBoard() {
-        if (isEditMode) return;
+        if (isEditMode || isDropdownActive) return;
         fetch('index.php?api=1&u=<?= urlencode($user_id) ?>')
             .then(response => response.json())
             .then(data => renderAdmin(data))
