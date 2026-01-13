@@ -34,8 +34,15 @@ if ($config === null) {
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    // Validate and process header title
-    $newHeaderTitle = trim($_POST['header_title'] ?? '');
+    // 🔒 SECURITY: Validate CSRF token
+    if (!isset($_POST['csrf_token']) || !validateCSRFToken($_POST['csrf_token'])) {
+        $message = '⚠️ Invalid security token. Please refresh the page and try again.';
+        $messageType = 'error';
+    } else {
+        // Validate and process header title
+        $newHeaderTitle = trim($_POST['header_title'] ?? '');
+        // 🔒 SECURITY: Only allow <br> tags to prevent XSS
+        $newHeaderTitle = strip_tags($newHeaderTitle, '<br>');
 
     // Validate and process logo URL
     $newLogoUrl = trim($_POST['logo_url'] ?? '');
@@ -126,6 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
+    } // End CSRF validation
 }
 ?>
 <!DOCTYPE html>
@@ -445,6 +453,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php endif; ?>
 
     <form method="POST" id="customizeForm">
+        <?= getCSRFField() ?>
 
         <div class="form-section">
             <h2>Header Settings</h2>

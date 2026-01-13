@@ -94,8 +94,12 @@ function registerUser($email, $password) {
     }
 
     // Validate password
+    // 🔒 SECURITY: Check both min and max length (prevent DoS via very long passwords)
     if (strlen($password) < PASSWORD_MIN_LENGTH) {
         return ['success' => false, 'message' => 'Password must be at least ' . PASSWORD_MIN_LENGTH . ' characters.', 'user_id' => null];
+    }
+    if (strlen($password) > 128) {
+        return ['success' => false, 'message' => 'Password must be less than 128 characters.', 'user_id' => null];
     }
 
     // Check rate limiting
@@ -107,9 +111,10 @@ function registerUser($email, $password) {
     $users_data = json_decode(file_get_contents(USERS_FILE), true);
 
     // Check if email already exists
+    // 🔒 SECURITY: Use generic error message to prevent user enumeration
     foreach ($users_data['users'] as $user) {
         if ($user['email'] === $email) {
-            return ['success' => false, 'message' => 'An account with this email already exists.', 'user_id' => null];
+            return ['success' => false, 'message' => 'Registration failed. Please try a different email or contact support.', 'user_id' => null];
         }
     }
 
@@ -562,7 +567,8 @@ function cleanupExpiredTokens() {
  */
 
 /**
- * Check rate limit for an action
+ * Check rate limit for an action - ATOMIC VERSION
+ * 🔒 SECURITY: Uses flock() to prevent race conditions
  *
  * @param string $action Action name (e.g., 'login', 'register')
  * @param string $identifier Identifier (e.g., IP address)
@@ -572,10 +578,34 @@ function cleanupExpiredTokens() {
  */
 function checkRateLimit($action, $identifier, $max_attempts, $window_seconds) {
     if (!file_exists(RATE_LIMIT_FILE)) {
+        file_put_contents(RATE_LIMIT_FILE, json_encode(['limits' => []]));
+        @chmod(RATE_LIMIT_FILE, 0666);
+    }
+
+    // Open file for reading/writing
+    $fp = fopen(RATE_LIMIT_FILE, 'c+');
+    if (!$fp) {
+        // If we can't open file, fail open (allow request)
+        error_log("Rate limit: Failed to open file");
         return true;
     }
 
-    $limits_data = json_decode(file_get_contents(RATE_LIMIT_FILE), true);
+    // 🔒 Acquire exclusive lock
+    if (!flock($fp, LOCK_EX)) {
+        fclose($fp);
+        // If we can't get lock, fail open (allow request)
+        error_log("Rate limit: Failed to acquire lock");
+        return true;
+    }
+
+    // Read current limits
+    $filesize = filesize(RATE_LIMIT_FILE);
+    $limits_data = ['limits' => []];
+    if ($filesize > 0) {
+        $content = fread($fp, $filesize);
+        $limits_data = json_decode($content, true) ?: ['limits' => []];
+    }
+
     $key = $action . '_' . $identifier;
     $current_time = time();
 
@@ -597,7 +627,15 @@ function checkRateLimit($action, $identifier, $max_attempts, $window_seconds) {
             'attempts' => 1,
             'window_start' => $current_time
         ];
-        file_put_contents(RATE_LIMIT_FILE, json_encode($limits_data, JSON_PRETTY_PRINT));
+
+        // Write atomically
+        ftruncate($fp, 0);
+        rewind($fp);
+        fwrite($fp, json_encode($limits_data, JSON_PRETTY_PRINT));
+        fflush($fp);
+
+        flock($fp, LOCK_UN);
+        fclose($fp);
         return true;
     }
 
@@ -609,18 +647,38 @@ function checkRateLimit($action, $identifier, $max_attempts, $window_seconds) {
             'attempts' => 1,
             'window_start' => $current_time
         ];
-        file_put_contents(RATE_LIMIT_FILE, json_encode($limits_data, JSON_PRETTY_PRINT));
+
+        // Write atomically
+        ftruncate($fp, 0);
+        rewind($fp);
+        fwrite($fp, json_encode($limits_data, JSON_PRETTY_PRINT));
+        fflush($fp);
+
+        flock($fp, LOCK_UN);
+        fclose($fp);
         return true;
     }
 
     // Check if max attempts exceeded
     if ($limit_record['attempts'] >= $max_attempts) {
+        // Rate limit exceeded
+        flock($fp, LOCK_UN);
+        fclose($fp);
         return false;
     }
 
     // Increment attempts
     $limits_data['limits'][$limit_index]['attempts']++;
-    file_put_contents(RATE_LIMIT_FILE, json_encode($limits_data, JSON_PRETTY_PRINT));
+
+    // Write atomically
+    ftruncate($fp, 0);
+    rewind($fp);
+    fwrite($fp, json_encode($limits_data, JSON_PRETTY_PRINT));
+    fflush($fp);
+
+    // 🔓 Release lock and close
+    flock($fp, LOCK_UN);
+    fclose($fp);
 
     return true;
 }
