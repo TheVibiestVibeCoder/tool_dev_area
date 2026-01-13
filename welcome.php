@@ -15,7 +15,7 @@ if (isLoggedIn()) {
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     
     <script type="importmap">
         {
@@ -26,45 +26,42 @@ if (isLoggedIn()) {
     </script>
 
     <style>
-        /* --- DASHBOARD THEME VARIABLES --- */
+        /* --- DESIGN SYSTEM (Monochrome / Bebas) --- */
         :root {
-            /* Corporate Colors */
-            --ip-blue: #00658b;
-            --ip-dark: #32373c;
-            --ip-grey-bg: #f4f4f4;
-            --ip-card-bg: #ffffff;
-            --ip-border: #e0e0e0;
+            /* Neutrals */
+            --bg-body: #f5f5f5;
+            --bg-card: #ffffff;
+            --text-main: #111111;
+            --text-muted: #666666;
+            --border-color: #e0e0e0;
             
-            /* Text Colors */
-            --text-main: #32373c;
-            --text-muted: #767676;
-            --text-light: #ffffff;
-            
-            /* Shadows & Effects */
-            --card-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            --card-shadow-hover: 0 10px 20px rgba(0,0,0,0.1);
+            /* Accents */
+            --color-green: #27ae60; 
             
             /* Typography */
-            --font-heading: 'Montserrat', sans-serif;
-            --font-body: 'Roboto', sans-serif;
+            --font-head: 'Bebas Neue', sans-serif;
+            --font-body: 'Inter', sans-serif;
             
-            /* Dimensions */
-            --radius-pill: 9999px;
+            /* UI */
+            --radius-btn: 4px;
             --radius-card: 4px;
+            --shadow: 0 4px 6px rgba(0,0,0,0.03);
+            --shadow-hover: 0 12px 24px rgba(0,0,0,0.08);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            background-color: var(--ip-grey-bg);
+            background-color: var(--bg-body);
             color: var(--text-main);
             font-family: var(--font-body);
             overflow-x: hidden;
             line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
         }
 
-        h1, h2, h3 { font-family: var(--font-heading); color: var(--ip-dark); font-weight: 700; }
-        p { color: var(--text-muted); font-weight: 400; }
+        h1, h2, h3 { font-family: var(--font-head); color: var(--text-main); font-weight: 400; line-height: 1; }
+        p { color: var(--text-muted); font-weight: 400; font-size: 1.1rem; }
 
         /* --- LAYOUT --- */
         #canvas-container {
@@ -88,99 +85,108 @@ if (isLoggedIn()) {
             padding: 2rem;
         }
 
-        .hero h1 {
-            font-size: clamp(2.5rem, 6vw, 4.5rem);
-            margin-bottom: 1.5rem;
-            line-height: 1.1;
-            color: var(--ip-blue);
+        .hero-label {
+            font-family: var(--font-body);
+            font-weight: 600;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
             text-transform: uppercase;
-            letter-spacing: -1px;
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 50px;
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .hero h1 {
+            font-size: clamp(4rem, 10vw, 8rem);
+            margin-bottom: 1.5rem;
+            color: var(--text-main);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .hero p {
-            font-size: 1.1rem;
             max-width: 600px;
-            margin-bottom: 2.5rem;
+            margin-bottom: 3rem;
             color: var(--text-main);
         }
 
         .hero-buttons {
             display: flex;
-            gap: 15px;
+            gap: 20px;
             flex-wrap: wrap;
             justify-content: center;
         }
 
-        /* Reusing the Dashboard Button Style */
+        /* --- BUTTONS --- */
         .btn {
-            font-family: var(--font-heading);
-            font-size: 0.9rem;
-            text-transform: uppercase;
+            font-family: var(--font-head);
+            font-size: 1.2rem;
             letter-spacing: 1px;
             text-decoration: none;
             padding: 14px 32px;
-            border-radius: var(--radius-pill);
-            transition: all 0.3s ease;
-            font-weight: 600;
+            border-radius: var(--radius-btn);
+            transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            border: 1px solid transparent;
         }
 
         .btn-primary {
-            background-color: var(--ip-blue);
+            background-color: var(--text-main);
             color: #fff;
-            box-shadow: 0 4px 15px rgba(0, 101, 139, 0.3);
+            border-color: var(--text-main);
         }
 
         .btn-primary:hover {
-            background-color: #004e6d;
+            background-color: #333;
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 101, 139, 0.4);
+            box-shadow: var(--shadow-hover);
         }
 
         .btn-secondary {
-            background-color: var(--ip-card-bg);
-            color: var(--ip-blue);
-            border: 1px solid var(--ip-border);
+            background-color: rgba(255,255,255,0.8);
+            color: var(--text-main);
+            border-color: var(--text-main);
+            backdrop-filter: blur(5px);
         }
 
         .btn-secondary:hover {
-            border-color: var(--ip-blue);
-            background-color: #fff;
+            background-color: var(--text-main);
+            color: #fff;
             transform: translateY(-2px);
-            box-shadow: var(--card-shadow);
         }
 
-        /* --- FEATURES (Card Style from Dashboard) --- */
+        /* --- FEATURES --- */
         .features {
-            padding: 80px 20px;
+            padding: 100px 20px;
             max-width: 1400px;
             margin: 0 auto;
         }
 
         .features h2 {
             text-align: center;
-            font-size: 2rem;
-            margin-bottom: 3rem;
-            color: var(--ip-dark);
+            font-size: 3rem;
+            margin-bottom: 4rem;
             text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
         .features-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
+            gap: 2rem;
         }
 
-        /* Exact Dashboard Card Style */
         .feature-card {
-            background: var(--ip-card-bg);
-            border: 1px solid var(--ip-border);
-            padding: 2rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 2.5rem;
             border-radius: var(--radius-card);
-            box-shadow: var(--card-shadow);
+            box-shadow: var(--shadow);
             transition: all 0.3s ease;
             display: flex;
             flex-direction: column;
@@ -188,39 +194,39 @@ if (isLoggedIn()) {
         }
 
         .feature-card:hover {
-            border-color: var(--ip-blue);
+            border-color: var(--text-main);
             transform: translateY(-5px);
-            box-shadow: var(--card-shadow-hover);
+            box-shadow: var(--shadow-hover);
         }
 
         .feature-icon {
-            font-size: 2rem;
+            font-size: 1.5rem;
             margin-bottom: 1.5rem;
-            background: var(--ip-grey-bg);
+            background: var(--bg-body);
             width: 60px; height: 60px;
             display: flex; align-items: center; justify-content: center;
             border-radius: 50%;
-            color: var(--ip-blue);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
         }
 
         .feature-card h3 {
-            font-size: 1.1rem;
+            font-size: 1.5rem;
             margin-bottom: 0.8rem;
-            color: var(--ip-blue);
+            letter-spacing: 0.5px;
         }
 
         .feature-card p {
-            font-size: 0.95rem;
+            font-size: 1rem;
             line-height: 1.6;
             color: var(--text-muted);
         }
 
         /* --- STATS --- */
         .stats {
-            background: var(--ip-card-bg);
+            background: var(--text-main);
             padding: 80px 20px;
-            border-top: 1px solid var(--ip-border);
-            border-bottom: 1px solid var(--ip-border);
+            color: #fff;
         }
 
         .stats-grid {
@@ -233,41 +239,56 @@ if (isLoggedIn()) {
         }
 
         .stat-number {
-            font-family: var(--font-heading);
-            font-size: 3.5rem;
-            font-weight: 700;
-            color: var(--ip-blue);
-            margin-bottom: 5px;
+            font-family: var(--font-head);
+            font-size: 5rem;
+            color: #fff;
+            margin-bottom: 0;
+            line-height: 1;
         }
 
         .stat-label {
-            font-size: 0.8rem;
+            font-family: var(--font-body);
+            font-size: 0.9rem;
             text-transform: uppercase;
             letter-spacing: 2px;
-            color: var(--text-muted);
+            color: #888;
             font-weight: 600;
+            margin-top: 10px;
         }
 
-        /* --- FOOTER --- */
+        /* --- CTA --- */
         .cta {
             text-align: center;
-            padding: 100px 20px;
+            padding: 120px 20px;
+            background: var(--bg-body);
         }
-        .cta h2 { margin-bottom: 1rem; }
-        .cta p { margin-bottom: 2rem; }
+        .cta h2 { font-size: 4rem; margin-bottom: 1rem; }
+        .cta p { margin-bottom: 3rem; }
 
+        /* --- FOOTER --- */
         footer {
             text-align: center;
-            padding: 2rem;
+            padding: 3rem;
             color: var(--text-muted);
             font-size: 0.8rem;
-            border-top: 1px solid var(--ip-border);
+            border-top: 1px solid var(--border-color);
             background: #fff;
+            font-family: var(--font-body);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         /* Animation Utils */
-        .fade-in { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
+        .fade-in { opacity: 0; transform: translateY(20px); transition: opacity 0.8s ease, transform 0.8s ease; }
         .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 3.5rem; }
+            .features h2 { font-size: 2.5rem; }
+            .cta h2 { font-size: 3rem; }
+            .hero-buttons { flex-direction: column; width: 100%; max-width: 300px; }
+            .btn { width: 100%; }
+        }
 
     </style>
 </head>
@@ -278,11 +299,11 @@ if (isLoggedIn()) {
     <div class="content-wrapper">
         
         <section class="hero fade-in">
-            <span style="font-family: var(--font-heading); font-weight: 700; letter-spacing: 2px; color: var(--ip-blue); font-size: 0.9rem; margin-bottom: 1rem;">INTERACTIVE WORKSHOP SYSTEM</span>
+            <div class="hero-label">Enterprise Workshop System</div>
             <h1>Live Situation Room</h1>
-            <p>Collect, moderate, and display ideas instantly. <br>A professional tool for real-time collaborative workshops.</p>
+            <p>Real-time collaboration. Instant visual feedback. Zero friction.</p>
             <div class="hero-buttons">
-                <a href="register.php" class="btn btn-primary">Create Account</a>
+                <a href="register.php" class="btn btn-primary">Get Started</a>
                 <a href="login.php" class="btn btn-secondary">Admin Login</a>
             </div>
         </section>
@@ -293,19 +314,19 @@ if (isLoggedIn()) {
                 <div class="feature-card">
                     <div class="feature-icon">👥</div>
                     <h3>High Concurrency</h3>
-                    <p>Optimized for large-scale workshops. Tested with 50+ simultaneous participants submitting ideas in real-time.</p>
+                    <p>Optimized for large-scale workshops. Handle 50+ simultaneous participants submitting ideas in real-time without lag.</p>
                 </div>
 
                 <div class="feature-card">
                     <div class="feature-icon">⚡</div>
                     <h3>Real-Time Sync</h3>
-                    <p>Submissions appear instantly on the dashboard. 2-second polling ensures the main screen is always up to date.</p>
+                    <p>Submissions appear instantly on the dashboard. Live polling ensures the main screen is always up to date.</p>
                 </div>
 
                 <div class="feature-card">
                     <div class="feature-icon">🎯</div>
                     <h3>Focus Mode</h3>
-                    <p>Admins can spotlight specific cards, dimming the rest of the interface to guide the room's attention.</p>
+                    <p>Admins can spotlight specific cards, dimming the rest of the interface to guide the room's attention instantly.</p>
                 </div>
 
                 <div class="feature-card">
@@ -323,7 +344,7 @@ if (isLoggedIn()) {
                 <div class="feature-card">
                     <div class="feature-icon">📊</div>
                     <h3>Instant Visuals</h3>
-                    <p>Data is automatically organized into a clean, masonry-style grid that adapts to any screen size.</p>
+                    <p>Data is automatically organized into a clean, masonry-style grid that adapts perfectly to any screen size.</p>
                 </div>
             </div>
         </section>
@@ -335,7 +356,7 @@ if (isLoggedIn()) {
                     <div class="stat-label">Active Users</div>
                 </div>
                 <div class="stat">
-                    <div class="stat-number">0</div>
+                    <div class="stat-number">0s</div>
                     <div class="stat-label">Setup Time</div>
                 </div>
                 <div class="stat">
@@ -359,12 +380,12 @@ if (isLoggedIn()) {
     <script type="module">
         import * as THREE from 'three';
         
-        // --- CONFIG FOR CLEAN CORPORATE LOOK ---
+        // --- CONFIG FOR CLEAN MONOCHROME LOOK ---
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
         
-        // FOG: Matches the CSS background (--ip-grey-bg: #f4f4f4)
-        scene.fog = new THREE.FogExp2(0xf4f4f4, 0.030); 
+        // FOG: Matches the CSS background (#f5f5f5)
+        scene.fog = new THREE.FogExp2(0xf5f5f5, 0.035); 
         
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
         camera.position.z = 10;
@@ -372,26 +393,25 @@ if (isLoggedIn()) {
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        // Set background to transparent so CSS background shows, but Fog handles depth
-        renderer.setClearColor(0xf4f4f4, 1); 
+        renderer.setClearColor(0xf5f5f5, 1); 
         container.appendChild(renderer.domElement);
 
-        // --- PARTICLES (ADAPTED COLORS) ---
+        // --- PARTICLES (BLACK & GREY) ---
         const geometry = new THREE.BufferGeometry();
-        const count = 400; // slightly denser
+        const count = 450; 
         const pos = new Float32Array(count * 3);
         const colors = new Float32Array(count * 3);
         
-        const colorPrimary = new THREE.Color(0x00658b); // IP Blue
-        const colorSecondary = new THREE.Color(0x32373c); // IP Dark
+        const colorPrimary = new THREE.Color(0x111111); // Black
+        const colorSecondary = new THREE.Color(0xaaaaaa); // Grey
         
         for(let i = 0; i < count; i++) {
             pos[i * 3] = (Math.random() - 0.5) * 40; 
             pos[i * 3 + 1] = (Math.random() - 0.5) * 40; 
             pos[i * 3 + 2] = (Math.random() - 0.5) * 30; 
             
-            // Randomly mix Blue and Dark Grey particles
-            const mixedColor = Math.random() > 0.5 ? colorPrimary : colorSecondary;
+            // Randomly mix Black and Grey
+            const mixedColor = Math.random() > 0.6 ? colorPrimary : colorSecondary;
             
             colors[i * 3] = mixedColor.r; 
             colors[i * 3 + 1] = mixedColor.g; 
@@ -402,16 +422,16 @@ if (isLoggedIn()) {
         geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
         
         const material = new THREE.PointsMaterial({
-            size: 0.12, // slightly larger dots for clean look
+            size: 0.12, 
             vertexColors: true,
             transparent: true,
-            opacity: 0.8
+            opacity: 0.6
         });
         
         const particles = new THREE.Points(geometry, material);
         scene.add(particles);
 
-        // --- FLOATING LABELS (Styled for Light Mode) ---
+        // --- FLOATING LABELS (Monochrome) ---
         const terms = ["VOTING", "IDEAS", "LIVE", "DATA", "SYNC", "TEAM", "CLOUD"];
         const labels = [];
         
@@ -420,14 +440,15 @@ if (isLoggedIn()) {
                 const div = document.createElement('div');
                 div.textContent = term;
                 div.style.position = 'absolute';
-                div.style.color = '#00658b'; // Blue text
-                div.style.fontFamily = "'Montserrat', sans-serif";
-                div.style.fontWeight = "700";
-                div.style.fontSize = '10px';
-                div.style.padding = '4px 10px';
-                div.style.background = '#ffffff'; // White Card
-                div.style.borderRadius = '20px'; // Pill shape
-                div.style.boxShadow = '0 2px 5px rgba(0,0,0,0.1)'; // Soft shadow
+                div.style.color = '#111111'; 
+                div.style.fontFamily = "'Bebas Neue', sans-serif";
+                div.style.fontSize = '14px';
+                div.style.letterSpacing = '1px';
+                div.style.padding = '4px 12px';
+                div.style.background = '#ffffff'; 
+                div.style.border = '1px solid #e0e0e0';
+                div.style.borderRadius = '4px'; 
+                div.style.boxShadow = '0 2px 10px rgba(0,0,0,0.05)'; 
                 div.style.pointerEvents = 'none';
                 container.appendChild(div);
                 
@@ -441,7 +462,7 @@ if (isLoggedIn()) {
         // --- ANIMATION ---
         let mouseX = 0, mouseY = 0;
         document.addEventListener('mousemove', (e) => {
-            mouseX = (e.clientX - window.innerWidth/2) * 0.0005; // Reduced sensitivity
+            mouseX = (e.clientX - window.innerWidth/2) * 0.0005; 
             mouseY = (e.clientY - window.innerHeight/2) * 0.0005;
         });
 
@@ -451,7 +472,7 @@ if (isLoggedIn()) {
             requestAnimationFrame(animate);
             const time = clock.getElapsedTime();
 
-            particles.rotation.y = time * 0.03; // Slower rotation
+            particles.rotation.y = time * 0.03; 
             camera.rotation.x += (mouseY - camera.rotation.x) * 0.05;
             camera.rotation.y += (mouseX - camera.rotation.y) * 0.05;
 

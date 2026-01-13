@@ -63,40 +63,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Rate limiting: Max 10 submissions per IP per minute
     $user_ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
     if (!checkPublicRateLimit('public_submit', $user_ip, 10, 60)) {
-        $message = '<div class="alert alert-error">⚠️ ZU VIELE ANFRAGEN. Bitte warten Sie einen Moment.</div>';
+        $message = '<div class="alert alert-error">⚠️ TOO MANY REQUESTS. Please wait a moment.</div>';
     } else {
         $thema = $_POST['thema'] ?? '';
         $idee = trim($_POST['idee'] ?? '');
 
         // Validierung
         if (!array_key_exists($thema, $gruppen)) {
-            $message = '<div class="alert alert-error">⚠️ UNGÜLTIGE KATEGORIE.</div>';
+            $message = '<div class="alert alert-error">⚠️ INVALID CATEGORY.</div>';
         } elseif (empty($idee)) {
-        $message = '<div class="alert alert-error">⚠️ TEXT FEHLT.</div>';
-    } elseif (strlen($idee) > 500) {
-        $message = '<div class="alert alert-error">⚠️ TEXT ZU LANG (Max 500 Zeichen).</div>';
-    } else {
-        // Neuer Eintrag
-        $new_entry = [
-            'id' => uniqid(random_int(1000, 9999) . '_', true), // Bessere ID-Generierung
-            'thema' => $thema,
-            'text' => htmlspecialchars($idee, ENT_QUOTES, 'UTF-8'),
-            'zeit' => time(),
-            'visible' => false,
-            'focus' => false
-        ];
-        
-        // 🔒 ATOMIC WRITE - Keine Race Condition möglich!
-        $writeSuccess = atomicAddEntry($data_file, $new_entry);
-
-        if ($writeSuccess) {
-            $message = '<div class="alert alert-success">✅ ANTWORT ERFOLGREICH ÜBERMITTELT. (KEEP GOING!)</div>';
-            $_POST = [];
+            $message = '<div class="alert alert-error">⚠️ TEXT MISSING.</div>';
+        } elseif (strlen($idee) > 500) {
+            $message = '<div class="alert alert-error">⚠️ TEXT TOO LONG (Max 500 chars).</div>';
         } else {
-            $message = '<div class="alert alert-error">⚠️ TECHNISCHER FEHLER. Bitte erneut versuchen.</div>';
-            logError("Write failed for entry: " . $new_entry['id']);
+            // Neuer Eintrag
+            $new_entry = [
+                'id' => uniqid(random_int(1000, 9999) . '_', true), // Bessere ID-Generierung
+                'thema' => $thema,
+                'text' => htmlspecialchars($idee, ENT_QUOTES, 'UTF-8'),
+                'zeit' => time(),
+                'visible' => false,
+                'focus' => false
+            ];
+            
+            // 🔒 ATOMIC WRITE - Keine Race Condition möglich!
+            $writeSuccess = atomicAddEntry($data_file, $new_entry);
+
+            if ($writeSuccess) {
+                $message = '<div class="alert alert-success">✅ SUBMISSION SUCCESSFUL. (KEEP GOING!)</div>';
+                $_POST = [];
+            } else {
+                $message = '<div class="alert alert-error">⚠️ TECHNICAL ERROR. Please try again.</div>';
+                logError("Write failed for entry: " . $new_entry['id']);
+            }
         }
-    }
     } // End rate limit check
 }
 ?>
@@ -105,230 +105,220 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Eingabe | Live Situation Room</title>
+    <title>Submit | Live Situation Room</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     
     <style>
-        /* --- DESIGN SYSTEM --- */
+        /* --- DESIGN SYSTEM (Monochrome / Bebas) --- */
         :root {
             /* Colors */
-            --ip-blue: #00658b;
-            --ip-dark: #32373c;
-            --ip-light: #ffffff;
-            --ip-grey-bg: #f4f4f4;
-            --ip-border: #cccccc;
+            --bg-body: #f5f5f5;
+            --bg-card: #ffffff;
+            --text-main: #111111;
+            --text-muted: #666666;
+            --border-color: #e0e0e0;
             
-            /* Action Colors */
-            --accent-success: #00d084;
-            --accent-error: #cf2e2e;
+            /* Status Colors */
+            --color-green: #27ae60; 
+            --color-red: #e74c3c;   
             
             /* Typography */
-            --font-heading: 'Montserrat', sans-serif;
-            --font-body: 'Roboto', sans-serif;
+            --font-head: 'Bebas Neue', sans-serif;
+            --font-body: 'Inter', sans-serif;
             
-            /* Radius */
-            --radius-pill: 9999px;
-            --radius-card: 4px;
+            /* UI */
             --radius-input: 4px;
+            --radius-btn: 4px;
+            --shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
-        /* --- GLOBAL RESET & BOX SIZING --- */
-        *, *::before, *::after {
-            box-sizing: border-box;
-        }
+        /* --- GLOBAL RESET --- */
+        *, *::before, *::after { box-sizing: border-box; }
 
         body {
-            background-color: var(--ip-grey-bg);
-            color: var(--ip-dark);
+            background-color: var(--bg-body);
+            color: var(--text-main);
             font-family: var(--font-body);
-            margin: 0; 
-            padding: 0;
-            line-height: 1.6;
+            margin: 0; padding: 0;
+            line-height: 1.5;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* Removed noise/spotlight for clean look */
-        .mono-noise, .spotlight { display: none; }
-
-        /* --- RESPONSIVE WRAPPER --- */
+        /* --- WRAPPER --- */
         .form-wrapper {
             width: 100%;
-            max-width: 700px; 
-            margin: 2rem auto; 
+            max-width: 600px; 
+            margin: 3rem auto; 
             padding: 3rem;
-            background: var(--ip-light);
-            border-radius: var(--radius-card);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
             flex-grow: 1;
             display: flex;
             flex-direction: column;
-            justify-content: flex-start;
-            border-top: 5px solid var(--ip-blue);
+            border-top: 4px solid var(--text-main); /* Black top border accent */
         }
 
+        /* --- HEADER --- */
         header {
             text-align: center;
-            margin-bottom: 2rem;
-            border-bottom: 1px solid #eee;
+            margin-bottom: 2.5rem;
+            border-bottom: 1px solid #f0f0f0;
             padding-bottom: 1.5rem;
         }
         
         .header-logo {
-            max-width: 250px;
+            max-width: 180px;
             height: auto;
             margin-bottom: 1.5rem;
+            filter: grayscale(100%); /* Force B&W logo */
         }
 
         h1 { 
-            font-family: var(--font-heading); 
-            font-size: 1.8rem; 
-            margin: 0 0 10px 0; 
-            line-height: 1.2; 
-            color: var(--ip-blue); 
-            font-weight: 700;
+            font-family: var(--font-head); 
+            font-size: 3rem; 
+            margin: 0 0 5px 0; 
+            line-height: 0.9; 
+            color: var(--text-main); 
+            font-weight: 400;
             text-transform: uppercase;
         }
         
         .subtitle { 
-            color: var(--ip-dark); 
+            color: var(--text-muted); 
             text-transform: uppercase; 
             letter-spacing: 2px; 
-            font-size: 0.8rem; 
+            font-size: 0.85rem; 
             font-weight: 600; 
             display: block; 
             margin-bottom: 0.5rem;
-            opacity: 0.6;
+            font-family: var(--font-head);
         }
 
-        /* FORM ELEMENTS */
+        .instruction {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-top: 10px;
+        }
+
+        /* --- FORM ELEMENTS --- */
         .form-group { margin-bottom: 2rem; }
         
         label { 
             display: block; 
             margin-bottom: 8px; 
-            color: var(--ip-dark); 
-            font-weight: 700; 
-            letter-spacing: 0.5px; 
-            font-size: 0.85rem; 
-            text-transform: uppercase; 
-            font-family: var(--font-heading);
+            color: var(--text-main); 
+            font-size: 1.2rem; 
+            font-family: var(--font-head);
+            letter-spacing: 0.5px;
         }
 
         select, textarea {
             width: 100%; 
             padding: 14px 16px; 
             background: #fff; 
-            border: 1px solid var(--ip-border);
-            color: var(--ip-dark); 
+            border: 1px solid var(--border-color);
+            color: var(--text-main); 
             font-family: var(--font-body); 
             font-size: 1rem;
-            transition: 0.3s;
+            transition: all 0.2s;
             border-radius: var(--radius-input);
             -webkit-appearance: none;
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.03);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
         }
         
         select:focus, textarea:focus { 
             outline: none; 
-            border-color: var(--ip-blue); 
-            box-shadow: 0 0 0 2px rgba(0, 101, 139, 0.1);
+            border-color: var(--text-main); 
+            background: #fafafa;
         }
         
-        textarea { resize: vertical; min-height: 150px; }
+        textarea { resize: vertical; min-height: 160px; line-height: 1.6; }
         
-        /* Custom Select Arrow */
+        /* Custom Select Arrow (Black SVG) */
         select { 
             cursor: pointer; 
-            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2300658b%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23111111%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
             background-repeat: no-repeat;
             background-position: right 1rem center;
             background-size: 0.65em auto;
         }
-        select option { background: #fff; color: #333; }
+        select option { background: #fff; color: #111; }
 
-        /* INFO BOX */
+        /* --- INFO BOX (Questions) --- */
         .info-box {
             display: none; 
             padding: 1.5rem; 
-            background: #eef7fb; /* Very light blue */
-            border-left: 4px solid var(--ip-blue); 
+            background: #fafafa; 
+            border-left: 3px solid var(--text-main); 
             margin-bottom: 2rem; 
-            animation: fadeIn 0.4s ease;
-            border-radius: 0 4px 4px 0;
+            animation: slideIn 0.3s ease-out;
         }
+        
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
         .info-label {
             text-transform: uppercase; 
             letter-spacing: 1px; 
-            font-size: 0.75rem; 
-            font-weight: 700;
-            color: var(--ip-blue); 
+            font-size: 1rem; 
+            color: var(--text-main); 
             display: block; 
             margin-bottom: 0.75rem;
-            font-family: var(--font-heading);
+            font-family: var(--font-head);
         }
         .info-content {
             font-family: var(--font-body); 
             font-size: 0.95rem; 
             line-height: 1.6; 
-            color: var(--ip-dark);
-            font-weight: 400;
+            color: var(--text-muted);
         }
         .info-content ul { padding-left: 20px; margin: 0; }
         .info-content li { margin-bottom: 8px; }
-        .info-content li:last-child { margin-bottom: 0; }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* BUTTONS */
+        /* --- BUTTONS --- */
         .btn-submit {
             width: 100%; 
             padding: 16px; 
-            background: var(--ip-blue); 
-            border: none;
+            background: var(--text-main); 
+            border: 1px solid var(--text-main);
             color: #fff; 
-            font-weight: 600; 
-            font-family: var(--font-heading);
+            font-family: var(--font-head);
+            font-size: 1.2rem;
             letter-spacing: 1px; 
             cursor: pointer; 
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             text-transform: uppercase; 
-            font-size: 0.95rem;
-            border-radius: var(--radius-pill);
+            border-radius: var(--radius-btn);
             -webkit-tap-highlight-color: transparent;
-            box-shadow: 0 4px 10px rgba(0, 101, 139, 0.2);
         }
         .btn-submit:hover { 
-            background: #004e6d; 
+            background: #333; 
             transform: translateY(-2px);
-            box-shadow: 0 6px 14px rgba(0, 101, 139, 0.3);
         }
         .btn-submit:disabled {
-            opacity: 0.7;
-            background: #999;
+            opacity: 0.5;
             cursor: not-allowed;
             transform: none;
-            box-shadow: none;
         }
 
-        /* MESSAGES */
+        /* --- MESSAGES --- */
         .alert { 
             padding: 1rem 1.5rem; 
             margin-bottom: 2rem; 
             border-left: 4px solid; 
             background: #fff; 
-            font-size: 0.9rem; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            font-size: 0.95rem; 
+            box-shadow: var(--shadow);
             font-weight: 500;
-            border-radius: 4px;
         }
-        .alert-success { border-color: var(--accent-success); color: #2e5c46; background-color: #f0fff9; }
-        .alert-error { border-color: var(--accent-error); color: #8a1f1f; background-color: #fff5f5; }
+        .alert-success { border-color: var(--color-green); color: var(--color-green); }
+        .alert-error { border-color: var(--color-red); color: var(--color-red); }
         
         .link-subtle { 
             color: var(--text-muted); 
@@ -336,25 +326,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border-bottom: 1px solid transparent; 
             transition: 0.2s; 
             padding-bottom: 2px; 
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             font-weight: 500;
         }
-        .link-subtle:hover { color: var(--ip-blue); border-color: var(--ip-blue); }
+        .link-subtle:hover { color: var(--text-main); border-color: var(--text-main); }
 
-        /* --- MOBILE TWEAKS --- */
-        @media (max-width: 600px) {
+        /* --- MOBILE ADAPTABILITY --- */
+        @media (max-width: 650px) {
             .form-wrapper {
                 padding: 1.5rem;
                 margin: 0;
                 max-width: 100%;
-                box-shadow: none;
+                border: none;
                 border-top: none;
-                border-radius: 0;
+                box-shadow: none;
+                min-height: 100vh;
             }
             body { background: #fff; } 
-            h1 { font-size: 1.5rem; }
-            .header-logo { max-width: 200px; }
-            textarea { min-height: 120px; }
+            
+            h1 { font-size: 2.5rem; }
+            .header-logo { max-width: 150px; }
+            
+            /* Inputs need to be easily tappable */
+            select, textarea { font-size: 16px; /* Prevents zoom on iOS */ }
+            
+            .btn-submit { padding: 18px; /* Taller touch target */ }
         }
     </style>
 </head>
@@ -367,17 +363,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
         <span class="subtitle">Live Workshop</span>
         <h1><?= $headerTitle ?></h1>
-        <p style="color: #767676; margin-top: 10px; font-size: 0.9rem; font-weight: 400;">Wähle einen Bereich, um die Leitfragen zu laden.</p>
+        <p class="instruction">Select a topic below to see guiding questions.</p>
     </header>
 
     <?= $message ?>
 
     <form method="POST" action="" id="ideaForm">
         <div class="form-group">
-            <label for="thema">1. Bereich wählen</label>
+            <label for="thema">1. Choose Topic</label>
             <div style="position: relative;">
                 <select name="thema" id="thema" required>
-                    <option value="" disabled selected>-- Bitte auswählen --</option>
+                    <option value="" disabled selected>-- Select --</option>
                     <?php foreach ($gruppen as $key => $label): ?>
                         <option value="<?= $key ?>"><?= $label ?></option>
                     <?php endforeach; ?>
@@ -386,30 +382,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <div id="infoBox" class="info-box">
-            <span class="info-label">Leitfragen</span>
+            <span class="info-label">Guiding Questions</span>
             <div id="infoContent" class="info-content">
             </div>
         </div>
 
         <div class="form-group">
-            <label for="idee">2. Maßnahme definieren</label>
+            <label for="idee">2. Your Input</label>
             <textarea 
                 name="idee" 
                 id="idee" 
                 rows="6" 
-                placeholder="Wähle zuerst eine Gruppe..."
+                placeholder="Type your idea or measure here..."
                 required 
                 maxlength="500"></textarea>
-            <div style="text-align: right; font-size: 0.75rem; color: #999; margin-top: 5px;">
-                <span id="charCount">0</span> / 500 Zeichen
+            <div style="text-align: right; font-size: 0.8rem; color: #999; margin-top: 5px; font-family: var(--font-body);">
+                <span id="charCount">0</span> / 500
             </div>
         </div>
 
-        <button type="submit" class="btn-submit" id="submitBtn">Beitrag absenden</button>
+        <button type="submit" class="btn-submit" id="submitBtn">Submit Entry</button>
     </form>
 
     <div style="text-align: center; margin-top: 3rem; margin-bottom: 1rem;">
-        <a href="index.php?u=<?= urlencode($workshop_user_id) ?>" class="link-subtle">← Zurück zum Live-Dashboard</a>
+        <a href="index.php?u=<?= urlencode($workshop_user_id) ?>" class="link-subtle">← Back to Live Dashboard</a>
     </div>
 </div>
 
@@ -429,43 +425,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 echo "        </ul>\n    `,\n";
             }
         } else {
-            // Fallback leitfragen
+            // Fallback leitfragen (kept purely for safety, though config usually loads)
             ?>
-            'bildung': `
-        <ul>
-            <li>Was können Schulen tun, um beim Kampf gegen Desinformation zu helfen?</li>
-            <li>Was bräuchtet ihr im Unterricht, um besser damit umgehen zu können?</li>
-            <li>Was würdet ihr gern lernen?</li>
-        </ul>
-    `,
-    'social': `
-        <ul>
-            <li>Was würde euch auf Social Media helfen, Desinformation besser zu erkennen?</li>
-            <li>Wie sollten Plattformen mit Desinformation umgehen? Was könnten sie besser machen?</li>
-            <li>Wie könnten Plattformen gestaltet sein, damit Fakten mehr Chancen haben als Desinformation?</li>
-        </ul>
-    `,
-    'individuell': `
-        <ul>
-            <li>Was braucht es, damit Menschen besser mit Desinformation umgehen können?</li>
-            <li>Was sollten wir als Gesellschaft tun, um Menschen aufzuklären?</li>
-            <li>Wenn ihr an eure Oma denkt: Wie wird sie resilient gegen Desinformation?</li>
-        </ul>
-    `,
-    'politik': `
-        <ul>
-            <li>Welche Regeln oder Gesetze braucht es, damit wir Desinformation eindämmen können?</li>
-            <li>Was sollte es geben, das es noch nicht gibt?</li>
-            <li>Was könnten Politiker:innen tun, um beim Kampf gegen Desinformation zu helfen?</li>
-        </ul>
-    `,
-    'kreativ': `
-        <ul>
-            <li>Welche Out-Of-The-Box-Ideen fallen dir ein, wie man das Thema besser angehen könnte?</li>
-            <li>Such dir eine Maßnahme aus, mit der du Desinformation bekämpfen würdest – wer müsste was tun und wieso?</li>
-            <li>Du hast unlimitiert viel Geld: Was würdest du bauen / tun, um Desinformation zu bekämpfen?</li>
-        </ul>
-    `
+            'general': `
+                <ul>
+                    <li>What is your main idea?</li>
+                    <li>How can we improve the situation?</li>
+                </ul>
+            `
         <?php } ?>
     }
 
@@ -484,8 +451,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             infoBox.style.display = 'none';
             infoBox.offsetHeight; // Trigger Reflow
             infoBox.style.display = 'block';
-            infoBox.style.borderColor = '#00658b'; 
-            textarea.placeholder = "Antworte auf die Fragen oder beschreibe deine eigene Maßnahme...";
+            textarea.placeholder = "Answer the questions above or describe your measure...";
         }
     });
     
@@ -493,9 +459,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     textarea.addEventListener('input', function() {
         charCount.textContent = this.value.length;
         if (this.value.length > 450) {
-            charCount.style.color = '#cf2e2e';
+            charCount.style.color = '#e74c3c';
         } else {
-            charCount.style.color = '#767676';
+            charCount.style.color = '#999';
         }
     });
 
@@ -506,7 +472,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     form.addEventListener('submit', function(e) {
         if (!document.getElementById('thema').value || !document.getElementById('idee').value.trim()) {
             e.preventDefault();
-            alert('⚠️ Bitte alle Felder ausfüllen.');
+            alert('⚠️ Please fill out all fields.');
             return;
         }
         
@@ -518,14 +484,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         isSubmitting = true;
         submitBtn.disabled = true;
         submitBtn.style.opacity = '0.6';
-        submitBtn.innerHTML = 'WIRD GESENDET...';
+        submitBtn.innerHTML = 'SENDING...';
         
         // Timeout protection logic kept from original
         setTimeout(function() {
             if (isSubmitting) {
                 submitBtn.style.opacity = '1';
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Beitrag absenden';
+                submitBtn.innerHTML = 'Submit Entry';
                 isSubmitting = false;
             }
         }, 3000);
@@ -539,7 +505,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             submitBtn.style.opacity = '1';
             submitBtn.disabled = false;
-            submitBtn.innerHTML = 'Beitrag absenden';
+            submitBtn.innerHTML = 'Submit Entry';
             isSubmitting = false;
             
             if (alert.classList.contains('alert-success')) {
@@ -547,7 +513,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     form.reset();
                     charCount.textContent = '0';
                     infoBox.style.display = 'none';
-                    textarea.placeholder = "Bitte zuerst Gruppe wählen...";
+                    textarea.placeholder = "Please select a topic first...";
                 }, 2000);
             }
         }

@@ -8,34 +8,24 @@ require_once 'security_helpers.php';
 setSecurityHeaders();
 
 // ===== DETERMINE VIEWING MODE =====
-// Two modes:
-// 1. Public view: ?u={user_id} - Anyone can view this user's workshop
-// 2. Authenticated view: User viewing their own workshop
-
 $viewing_user_id = null;
 $is_own_workshop = false;
 $current_user = getCurrentUser();
 
 if (isset($_GET['u'])) {
-    // Public view mode - viewing someone else's workshop
     $viewing_user_id = $_GET['u'];
     $is_own_workshop = false;
-
-    // Validate that this user exists
     if (!is_dir(getUserDataPath($viewing_user_id))) {
         die('Workshop not found.');
     }
 } elseif ($current_user) {
-    // Authenticated view - viewing own workshop
     $viewing_user_id = $current_user['id'];
     $is_own_workshop = true;
 } else {
-    // Not authenticated and no public workshop specified - redirect to welcome
     redirect('welcome.php');
 }
 
 // ===== LOAD USER-SPECIFIC DATA =====
-
 $config_file = getUserFile($viewing_user_id, 'config.json');
 $data_file = getUserFile($viewing_user_id, 'daten.json');
 
@@ -44,8 +34,8 @@ $data = safeReadJson($data_file);
 
 // Build gruppen from config
 $gruppen = [];
-$headerTitle = 'Live Situation Room'; // Default
-$logoUrl = ''; // Default (no logo)
+$headerTitle = 'Live Situation Room'; 
+$logoUrl = ''; 
 
 if ($config && isset($config['categories'])) {
     foreach ($config['categories'] as $category) {
@@ -57,14 +47,12 @@ if ($config && isset($config['categories'])) {
     $headerTitle = $config['header_title'] ?? $headerTitle;
     $logoUrl = $config['logo_url'] ?? $logoUrl;
 } else {
-    // Fallback if config cannot be loaded
     $gruppen = [
         'general' => ['title' => 'GENERAL', 'icon' => '💡']
     ];
 }
 
 // ===== API MODE =====
-
 if (isset($_GET['api']) && $_GET['api'] == '1') {
     header('Content-Type: application/json');
     echo json_encode($data);
@@ -72,7 +60,6 @@ if (isset($_GET['api']) && $_GET['api'] == '1') {
 }
 
 // ===== ADMIN/CONTEXT MENU PERMISSIONS =====
-// Only allow context menu if viewing own workshop
 $isAdmin = $is_own_workshop;
 ?>
 
@@ -85,430 +72,449 @@ $isAdmin = $is_own_workshop;
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <style>
-        /* --- THEME ENGINE --- */
+        /* --- MONOCHROME DESIGN SYSTEM --- */
         :root {
-            /* Corporate Colors */
-            --ip-blue: #00658b;
-            --ip-dark: #32373c;
-            --ip-grey-bg: #f4f4f4;
-            --ip-card-bg: #ffffff;
-            --ip-border: #e0e0e0;
+            /* Light Theme */
+            --bg-body: #f5f5f5;
+            --bg-card: #ffffff;
+            --bg-header: rgba(255, 255, 255, 0.95);
             
-            /* Text Colors */
-            --text-main: #32373c;
-            --text-muted: #767676;
-            --text-light: #ffffff;
+            --text-primary: #111111;
+            --text-secondary: #666666;
             
-            /* Shadows & Effects */
-            --card-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            --card-shadow-hover: 0 10px 20px rgba(0,0,0,0.1);
+            --border-subtle: #e0e0e0;
+            --border-strong: #111111;
             
-            /* Typography */
-            --font-heading: 'Montserrat', sans-serif;
-            --font-body: 'Roboto', sans-serif;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.03);
+            --shadow-hover: 0 15px 30px rgba(0,0,0,0.08);
             
-            /* Dimensions */
-            --radius-pill: 9999px;
-            --radius-card: 4px;
-
-            /* Filter for Logo (None needed for original color) */
-            --logo-filter: none;
+            --radius-card: 4px; 
+            --radius-btn: 2px;
             
-            --blur-color: rgba(0,0,0,0.1); 
-            --spotlight-opacity: 0;
+            --font-head: 'Bebas Neue', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            
+            --overlay-bg: rgba(255, 255, 255, 0.98);
+            --focus-text-color: #000000;
+            
+            /* Hidden State Variables */
+            --blur-shadow: rgba(0,0,0,0.2);
         }
 
         /* Dark Mode Override */
         body.light-mode {
-            /* Dark mode colors */
-            --ip-grey-bg: #1a1a1a;
-            --ip-card-bg: #2c2c2c;
-            --ip-dark: #f4f4f4;
-            --ip-border: #444444;
-            --text-main: #f4f4f4;
-            --text-muted: #aaaaaa;
-            --text-light: #ffffff;
-            --card-shadow: 0 2px 5px rgba(0,0,0,0.5);
-            --card-shadow-hover: 0 10px 20px rgba(0,0,0,0.8);
-            --logo-filter: brightness(0) invert(1);
+            --bg-body: #0a0a0a;
+            --bg-card: #141414;
+            --bg-header: rgba(20, 20, 20, 0.95);
+            
+            --text-primary: #ffffff;
+            --text-secondary: #888888;
+            
+            --border-subtle: #333333;
+            --border-strong: #ffffff;
+            
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.5);
+            --shadow-hover: 0 15px 30px rgba(0,0,0,0.8);
+            
+            --overlay-bg: rgba(0, 0, 0, 0.95);
+            --focus-text-color: #ffffff;
+            
+            --blur-shadow: rgba(255,255,255,0.3);
         }
 
+        * { box-sizing: border-box; }
+
         body {
-            background-color: var(--ip-grey-bg);
-            color: var(--text-main);
+            background-color: var(--bg-body);
+            color: var(--text-primary);
             font-family: var(--font-body);
             margin: 0; padding: 0;
             overflow-x: hidden;
-            transition: background-color 0.3s ease, color 0.3s ease;
+            transition: background 0.5s ease, color 0.5s ease;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* Noise & Spotlight entfernt für cleanen Look */
-        .mono-noise, .spotlight { display: none; }
-
-        /* --- TOOLBAR --- */
-        .toolbar {
-            position: absolute; top: 1.5rem; right: 2rem;
-            display: none; gap: 10px; z-index: 100; /* Hidden on desktop, shown on mobile */
-        }
-
-        /* QR + Toolbar Container */
-        .qr-toolbar-container {
+        /* --- LAYOUT --- */
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 0;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 0;
         }
 
-        .qr-toolbar-row {
-            display: flex;
-            align-items: stretch;
-            gap: 10px;
-        }
-
-        .qr-column {
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-        }
-
-        .toolbar-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            justify-content: flex-start;
-        }
-
-        .tool-btn {
-            background: var(--ip-card-bg);
-            border: 1px solid var(--ip-border);
-            color: var(--text-muted);
-            width: 40px; height: 40px;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer;
-            transition: 0.2s;
-            text-decoration: none;
-            font-size: 1.1rem;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        .tool-btn:hover {
-            background: var(--ip-blue);
-            color: #fff;
-            border-color: var(--ip-blue);
-        }
-
-        .container { max-width: 100%; margin: 0 auto; padding: 0; }
-
-        /* HEADER */
+        /* --- HEADER --- */
         .header-split {
-            display: flex; justify-content: space-between; align-items: center;
-            background: var(--ip-card-bg);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: var(--bg-header);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-subtle);
+            
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             padding: 1.5rem 3rem;
-            margin-bottom: 2rem;
-            border-bottom: 1px solid var(--ip-border);
-            position: relative;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+            transition: all 0.3s ease;
         }
 
         .header-content-left {
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            justify-content: center;
         }
 
-        .subtitle { 
-            color: var(--ip-blue); 
-            text-transform: uppercase; 
-            letter-spacing: 2px; 
-            font-size: 0.8rem; 
-            font-weight: 700; 
-            display: block; 
-            margin-bottom: 0;
-            font-family: var(--font-heading);
+        .logo-row {
+            margin-bottom: 0.5rem;
+            opacity: 0.8;
         }
         
-        /* LOGO STYLES */
-        .logo-row {
+        .ep-logo {
+            height: 32px;
+            width: auto;
+            filter: grayscale(100%);
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            letter-spacing: 2px;
+            font-family: var(--font-head);
+            margin-bottom: -5px;
+        }
+
+        h1 {
+            font-family: var(--font-head);
+            font-size: 3rem;
+            font-weight: 400;
+            margin: 0;
+            color: var(--text-primary);
+            line-height: 0.9;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* --- QR & TOOLBAR --- */
+        .qr-toolbar-container {
             display: flex;
             align-items: center;
-            gap: 20px;
-            margin-bottom: 10px;
-        }
-        .ep-logo {
-            height: 50px;
-            width: auto;
-            filter: var(--logo-filter);
-        }
-        /* Hide existing elements we don't need for the new design but keep in DOM for safety */
-        .logo-separator, .dc-logo {
-            display: none; 
+            gap: 2rem;
         }
 
-        /* TITLE */
-        h1 { 
-            font-family: var(--font-heading); 
-            font-size: clamp(1.8rem, 4vw, 3rem); 
-            margin: 0; 
-            line-height: 1.2; 
-            color: var(--ip-dark); 
-            font-weight: 700;
-        }
-        
-        /* QR SECTION */
-        .qr-section { 
-            display: flex; align-items: center; gap: 1rem; cursor: pointer; 
-            padding: 10px;
-            background: var(--ip-grey-bg);
-            border-radius: var(--radius-card);
-            border: 1px solid var(--ip-border);
-            transition: all 0.3s ease;
-        }
-        .qr-section:hover { transform: translateY(-2px); box-shadow: var(--card-shadow); border-color: var(--ip-blue); }
-        .qr-text { text-align: right; color: var(--ip-dark); font-size: 0.75rem; font-weight: 600; letter-spacing: 1px; line-height: 1.3; font-family: var(--font-heading); }
-        .qr-wrapper { background: white; padding: 4px; display: inline-block; border-radius: 2px; }
-
-        /* QR Link - Always visible below QR code */
-        .qr-link {
-            display: block;
-            text-align: center;
-            margin-top: 0.5rem;
-            color: var(--ip-blue);
-            text-decoration: none;
-            font-size: 0.75rem;
-            font-weight: 600;
-            font-family: var(--font-heading);
-            letter-spacing: 0.5px;
+        .qr-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: var(--bg-body);
+            padding: 10px 15px;
+            border: 1px solid var(--border-subtle);
+            cursor: pointer;
             transition: all 0.2s ease;
         }
-        .qr-link:hover {
-            color: var(--ip-dark);
-            text-decoration: underline;
+
+        .qr-section:hover {
+            border-color: var(--text-primary);
+            background: var(--bg-card);
         }
 
-        /* MOBILE JOIN BUTTON */
-        .mobile-join-btn {
-            display: none; 
-            background-color: var(--ip-blue);
-            color: #fff;
-            font-family: var(--font-heading);
-            font-size: 0.85rem;
+        .qr-text {
+            text-align: right;
+            font-size: 1.2rem;
+            color: var(--text-primary);
+            font-family: var(--font-head);
+            line-height: 0.9;
+            letter-spacing: 0.5px;
+        }
+
+        .qr-wrapper {
+            background: white;
+            padding: 2px;
+            display: block;
+        }
+        
+        .qr-link {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-decoration: none;
             text-transform: uppercase;
             letter-spacing: 1px;
-            text-decoration: none;
-            padding: 12px 24px;
-            border-radius: var(--radius-pill);
-            margin-top: 1rem;
-            transition: all 0.3s ease;
-            align-items: center;
-            gap: 10px;
+            margin-top: 5px;
+            display: block;
+            text-align: right;
             font-weight: 600;
-            width: fit-content;
+        }
+        .qr-link:hover { color: var(--text-primary); text-decoration: underline; }
+
+        /* --- BUTTONS --- */
+        .toolbar-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .tool-btn {
+            width: 40px; height: 40px;
+            border: 1px solid var(--border-subtle);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center; justify-content: center;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            border-radius: var(--radius-btn);
+        }
+
+        .tool-btn:hover {
+            border-color: var(--text-primary);
+            color: var(--text-primary);
+            background: var(--bg-body);
+        }
+
+        .mobile-join-btn {
+            display: none;
+            background: var(--text-primary);
+            color: var(--bg-card);
+            padding: 12px 24px;
+            font-family: var(--font-head);
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+            text-decoration: none;
+            border-radius: var(--radius-btn);
+            margin-top: 1rem;
+            transition: opacity 0.2s;
         }
         
         .mobile-join-btn:hover {
-            background-color: #004e6d;
-            transform: translateY(-1px);
+            opacity: 0.8;
         }
 
-        /* OVERLAYS */
+        /* --- BOARD GRID --- */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 2rem;
+            padding: 2rem 3rem 4rem 3rem;
+            width: 100%;
+        }
+
+        .column { min-width: 0; }
+
+        .column h2 {
+            font-family: var(--font-head);
+            font-size: 1.8rem;
+            color: var(--text-primary);
+            letter-spacing: 1px;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-strong);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 400;
+        }
+
+        /* --- CARDS & TRANSITIONS --- */
+        .card-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-height: 200px;
+        }
+
+        .idea-card-wrapper {
+            perspective: 1000px;
+        }
+
+        .idea-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-card);
+            padding: 1.5rem;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            border: 1px solid var(--border-subtle);
+            box-shadow: var(--shadow-sm);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            
+            /* === SMOOTH TRANSITION MAGIC === */
+            /* Physics-based cubic-bezier for a luxury feel */
+            transition: 
+                opacity 0.6s cubic-bezier(0.25, 0.8, 0.25, 1),
+                transform 0.6s cubic-bezier(0.25, 0.8, 0.25, 1),
+                filter 0.6s cubic-bezier(0.25, 0.8, 0.25, 1),
+                color 0.6s ease,
+                text-shadow 0.6s ease,
+                border-color 0.3s ease,
+                box-shadow 0.3s ease;
+            
+            /* Default Visible State */
+            color: var(--text-primary);
+            text-shadow: 0 0 0 transparent; /* Sharp text */
+            opacity: 1;
+            transform: scale(1);
+            filter: blur(0);
+        }
+
+        .idea-card:hover:not(.blurred) {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+            border-color: var(--text-primary);
+        }
+
+        /* Entry Animation (Page Load) */
+        .idea-card.animate-in {
+            animation: cardEnter 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        @keyframes cardEnter {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* === BLURRED / HIDDEN STATE === */
+        /* The "Dissolve" Effect */
+        .idea-card.blurred {
+            /* Text Dissolves */
+            color: transparent; 
+            text-shadow: 0 0 12px var(--blur-shadow); /* Creates a smoky blob where text was */
+            
+            /* Card Recedes */
+            background: var(--bg-card); /* Keep background solid */
+            opacity: 0.5; /* Fade out slightly */
+            transform: scale(0.98); /* Recess slightly */
+            
+            /* No interaction */
+            cursor: default;
+            box-shadow: none;
+            border-color: var(--border-subtle);
+        }
+
+        /* --- OVERLAYS --- */
         .overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(5px);
-            z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column;
-            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+            position: fixed; inset: 0;
+            background: var(--overlay-bg);
+            z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s ease;
             cursor: pointer;
         }
         .overlay.active { opacity: 1; pointer-events: all; }
-        
+
         .qr-overlay-content {
-            background: white; padding: 30px; border-radius: var(--radius-card);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.4); 
-            transform: scale(0.95); transition: transform 0.3s ease;
-            text-align: center;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.1);
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
         }
         .overlay.active .qr-overlay-content { transform: scale(1); }
-        .overlay-instruction { margin-top: 20px; color: #fff; font-family: var(--font-heading); letter-spacing: 1px; text-transform: uppercase; font-size: 0.9rem; }
 
-        /* FOCUS CARD STYLES */
         .focus-text {
-            font-family: var(--font-heading);
-            color: #fff;
-            font-size: clamp(1.8rem, 4vw, 3.5rem);
-            line-height: 1.4;
-            max-width: 80%;
+            color: var(--focus-text-color);
+            font-family: var(--font-head);
+            font-size: clamp(3rem, 8vw, 8rem);
+            line-height: 0.9;
             text-align: center;
-            font-weight: 600;
+            max-width: 90%;
+            text-transform: uppercase;
             transform: translateY(20px);
             transition: transform 0.4s ease;
         }
         .overlay.active .focus-text { transform: translateY(0); }
-
-        /* GRID */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 1.5rem;
-            width: 100%;
-            padding: 0 3rem 3rem 3rem;
-            box-sizing: border-box;
-        }
         
-        .column { min-width: 0; }
-        
-        .column h2 {
-            font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; 
-            color: var(--ip-blue);
-            border-bottom: 2px solid var(--ip-blue); 
-            padding-bottom: 10px; margin: 0 0 1.5rem 0;
-            font-family: var(--font-heading);
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
+        .overlay-instruction { display: none; }
 
-        .idea-card-wrapper { margin-bottom: 1rem; perspective: 1000px; }
-
-        /* CARD STYLES */
-        .idea-card {
-            background: var(--ip-card-bg);
-            border: 1px solid var(--ip-border);
-            padding: 1.5rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-            font-size: 0.95rem;
-            line-height: 1.6;
-            color: var(--text-main);
-            box-shadow: var(--card-shadow);
-            border-radius: var(--radius-card);
-        }
-
-        .idea-card.animate-in { 
-            animation: slideIn 0.5s ease-out;
-        }
-
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .idea-card:hover {
-            border-color: var(--ip-blue);
-            transform: translateY(-3px);
-            box-shadow: var(--card-shadow-hover);
-        }
-
-        /* BLURRED STATE (Clean Placeholder Look) */
-        .idea-card.blurred {
-            color: transparent;
-            cursor: default;
-            background: #fcfcfc;
-            border: 1px dashed #ccc;
-            box-shadow: none;
-            /* Striped pattern for hidden content */
-            background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, #f0f0f0 10px, #f0f0f0 20px);
-        }
-        .idea-card.blurred:hover {
-            transform: none;
-            border-color: #ccc;
-        }
-
-        /* === ADMIN CONTEXT MENU STYLES === */
+        /* --- CONTEXT MENU (ADMIN) --- */
         .context-menu {
-            position: absolute;
-            z-index: 10000;
-            background: var(--ip-card-bg);
-            border: 1px solid var(--ip-border);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
-            border-radius: var(--radius-card);
             display: none;
-            overflow: hidden;
+            position: absolute; z-index: 10000;
+            background: var(--bg-card);
+            border: 1px solid var(--text-primary);
+            box-shadow: var(--shadow-hover);
             min-width: 180px;
-            padding: 5px 0;
         }
-
         .context-menu-item {
-            padding: 10px 15px;
-            cursor: pointer;
-            color: var(--ip-dark);
-            font-size: 0.9rem;
+            padding: 12px 16px;
+            font-size: 0.85rem;
+            color: var(--text-primary);
             font-family: var(--font-body);
-            transition: background 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            cursor: pointer;
+            display: flex; align-items: center; gap: 10px;
+            transition: background 0.1s;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
         }
+        .context-menu-item:hover { background: var(--border-subtle); }
+        .context-menu-item.danger { color: #d32f2f; border-top: 1px solid var(--border-subtle); }
+        .context-menu-item.danger:hover { background: #ffebeb; }
 
-        .context-menu-item:hover {
-            background: var(--ip-grey-bg);
-            color: var(--ip-blue);
-            font-weight: 500;
+        /* --- RESPONSIVE --- */
+        @media (max-width: 1600px) { 
+            .dashboard-grid { grid-template-columns: repeat(4, 1fr); padding: 2rem; gap: 1.5rem; } 
+            h1 { font-size: 2.5rem; }
         }
-
-        .context-menu-item.danger {
-            color: #cf2e2e;
-            border-top: 1px solid #eee;
-            margin-top: 5px;
-            padding-top: 10px;
-        }
-
-        .context-menu-item.danger:hover {
-            background: #fff0f0;
-        }
-
-        /* RESPONSIVE GRID */
-        @media (max-width: 1600px) { .dashboard-grid { grid-template-columns: repeat(4, 1fr); padding: 0 2rem 2rem 2rem; } }
-        @media (max-width: 1300px) { .dashboard-grid { grid-template-columns: repeat(3, 1fr); } }
         
-        @media (max-width: 900px) { 
-            /* GRID Anpassung */
-            .dashboard-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; padding: 0 1rem 1rem 1rem; }
-            .header-split { flex-direction: column; align-items: flex-start; gap: 1.5rem; padding: 1.5rem; }
-            
-            /* MOBILE LOGO & QR CHANGES */
-            .ep-logo { height: 40px; }
-            .logo-row { gap: 15px; }
-
-            /* Hide QR container, Show Button */
-            .qr-section { display: none !important; }
-            .qr-link { display: none !important; }
-            .mobile-join-btn { display: inline-flex; }
-            .toolbar-buttons { display: none !important; }
-            .qr-toolbar-row { display: none !important; }
-
-            /* Show mobile toolbar on tablet and below */
-            .toolbar { display: flex !important; }
+        @media (max-width: 1200px) { 
+            .dashboard-grid { grid-template-columns: repeat(3, 1fr); } 
+            .header-split { padding: 1.5rem 2rem; }
         }
-
+        
+        @media (max-width: 900px) {
+            .header-split {
+                flex-direction: column; align-items: flex-start; gap: 1.5rem;
+                padding: 1.5rem; position: relative;
+            }
+            .dashboard-grid { grid-template-columns: repeat(2, 1fr); padding: 1rem; gap: 1rem; }
+            .qr-section, .qr-link, .toolbar-buttons { display: none !important; }
+            .mobile-join-btn { display: inline-block; width: 100%; text-align: center; }
+            
+            .toolbar { display: flex !important; position: absolute; top: 1.5rem; right: 1.5rem; gap: 8px; z-index: 100; }
+        }
+        
         @media (max-width: 600px) {
             .dashboard-grid { grid-template-columns: 1fr; }
-            .toolbar { display: flex !important; top: 1rem; right: 1rem; }
-            h1 { font-size: 2rem; }
+            h1 { font-size: 2.5rem; }
+            .column h2 { font-size: 1.5rem; }
+        }
+
+        .toolbar { display: none; }
+        
+        .admin-badge {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: var(--text-primary); color: var(--bg-card);
+            padding: 8px 16px; font-size: 0.75rem; font-weight: 600;
+            letter-spacing: 1px; text-transform: uppercase;
+            box-shadow: var(--shadow-sm); z-index: 90;
+            opacity: 0.9;
         }
     </style>
 </head>
 <body>
 
-<div class="mono-noise"></div>
-<div class="spotlight"></div>
-
-<!-- Mobile toolbar (hidden on desktop, shown on mobile) -->
 <div class="toolbar">
-    <button class="tool-btn" id="themeToggleMobile" title="Toggle Theme">☀︎</button>
+    <button class="tool-btn" id="themeToggleMobile" title="Theme">☀︎</button>
     <?php if ($is_own_workshop): ?>
-        <a href="admin.php" class="tool-btn" title="Admin Dashboard">⚙</a>
-        <a href="logout.php" class="tool-btn" title="Logout" style="color: #cf2e2e;">🚪</a>
+        <a href="admin.php" class="tool-btn" title="Admin">⚙</a>
+        <a href="logout.php" class="tool-btn" title="Logout" style="color: #d32f2f;">🚪</a>
     <?php else: ?>
-        <a href="login.php" class="tool-btn" title="Login as Admin">⚙</a>
+        <a href="login.php" class="tool-btn" title="Login">⚙</a>
     <?php endif; ?>
 </div>
 
 <?php if ($is_own_workshop && $current_user): ?>
-<div style="position: fixed; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,101,139,0.95); color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; z-index: 9998; backdrop-filter: blur(10px);">
-    👤 <?= htmlspecialchars($current_user['email']) ?> | Your Workshop
+<div class="admin-badge">
+    Admin Mode
 </div>
 <?php endif; ?>
 
@@ -516,7 +522,6 @@ $isAdmin = $is_own_workshop;
     <div class="qr-overlay-content">
         <div id="qrcodeBig"></div>
     </div>
-    <div class="overlay-instruction">Klicken zum Schließen</div>
 </div>
 
 <div class="overlay" id="focusOverlay">
@@ -525,8 +530,8 @@ $isAdmin = $is_own_workshop;
 
 <?php if ($isAdmin): ?>
     <div id="customContextMenu" class="context-menu">
-        <div class="context-menu-item" id="ctxToggle">👁 Einblenden/Ausblenden</div>
-        <div class="context-menu-item danger" id="ctxDelete">🗑 Löschen</div>
+        <div class="context-menu-item" id="ctxToggle">👁 VISIBILITY</div>
+        <div class="context-menu-item danger" id="ctxDelete">🗑 DELETE</div>
     </div>
 <?php endif; ?>
 
@@ -545,36 +550,35 @@ $isAdmin = $is_own_workshop;
             </div>
             
             <a href="eingabe.php?u=<?= urlencode($viewing_user_id) ?>" class="mobile-join-btn">
-               + Beitrag erstellen
+               + BEITRAG
             </a>
         </div>
 
         <div class="qr-toolbar-container">
-            <div class="qr-toolbar-row">
-                <div class="qr-column">
-                    <div class="qr-section" id="openQr">
-                        <div class="qr-text">SCAN TO<br>JOIN<br><span style="opacity: 0.6; font-weight: normal;">CLICK TO ZOOM</span></div>
-                        <div class="qr-wrapper" id="qrcodeSmall"></div>
-                    </div>
+            <div class="qr-column">
+                <div class="qr-section" id="openQr">
+                    <div class="qr-text">JOIN<br>NOW</div>
+                    <div class="qr-wrapper" id="qrcodeSmall"></div>
                 </div>
-                <div class="toolbar-buttons">
-                    <button class="tool-btn" id="themeToggle" title="Toggle Theme">☀︎</button>
-                    <?php if ($is_own_workshop): ?>
-                        <a href="admin.php" class="tool-btn" title="Admin Dashboard">⚙</a>
-                        <a href="logout.php" class="tool-btn" title="Logout" style="color: #cf2e2e;">🚪</a>
-                    <?php else: ?>
-                        <a href="login.php" class="tool-btn" title="Login as Admin">⚙</a>
-                    <?php endif; ?>
-                </div>
+                 <a href="eingabe.php?u=<?= urlencode($viewing_user_id) ?>" class="qr-link">Direct Link →</a>
             </div>
-            <a href="eingabe.php?u=<?= urlencode($viewing_user_id) ?>" class="qr-link">oder direkt zum Formular →</a>
+            
+            <div class="toolbar-buttons">
+                <button class="tool-btn" id="themeToggle" title="Toggle Theme">◐</button>
+                <?php if ($is_own_workshop): ?>
+                    <a href="admin.php" class="tool-btn" title="Admin Dashboard">⚙</a>
+                    <a href="logout.php" class="tool-btn" title="Logout" style="color: #d32f2f;">🚪</a>
+                <?php else: ?>
+                    <a href="login.php" class="tool-btn" title="Login as Admin">⚙</a>
+                <?php endif; ?>
+            </div>
         </div>
     </header>
 
     <div class="dashboard-grid" id="board">
         <?php foreach ($gruppen as $key => $info): ?>
             <div class="column" id="col-<?= $key ?>">
-                <h2><?= $info['icon'] ?> <?= $info['title'] ?></h2>
+                <h2><?= $info['title'] ?></h2>
                 <div class="card-container">
                     </div>
             </div>
@@ -589,29 +593,27 @@ $isAdmin = $is_own_workshop;
     const body = document.body;
 
     function updateIcon(isLight) {
-        const icon = isLight ? '☾' : '☀︎';
+        const icon = isLight ? '◐' : '◑';
         if (themeBtn) themeBtn.innerText = icon;
         if (themeBtnMobile) themeBtnMobile.innerText = icon;
     }
 
-    if (localStorage.getItem('theme') === 'light') {
+    if (localStorage.getItem('theme') === 'dark') {
         body.classList.add('light-mode');
         updateIcon(true);
+    } else {
+        updateIcon(false);
     }
 
     function toggleTheme() {
         body.classList.toggle('light-mode');
-        const isLight = body.classList.contains('light-mode');
-        localStorage.setItem('theme', isLight ? 'light' : 'dark');
-        updateIcon(isLight);
+        const isDark = body.classList.contains('light-mode');
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        updateIcon(isDark);
     }
 
-    if (themeBtn) {
-        themeBtn.addEventListener('click', toggleTheme);
-    }
-    if (themeBtnMobile) {
-        themeBtnMobile.addEventListener('click', toggleTheme);
-    }
+    if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
+    if (themeBtnMobile) themeBtnMobile.addEventListener('click', toggleTheme);
 
     // --- QR CODE LOGIC ---
     const currentUrl = window.location.href;
@@ -620,9 +622,9 @@ $isAdmin = $is_own_workshop;
 
     // 1. Small QR
     new QRCode(document.getElementById("qrcodeSmall"), {
-        text: inputUrl, width: 60, height: 60,
-        colorDark : "#00658b", colorLight : "#ffffff",
-        correctLevel : QRCode.CorrectLevel.H
+        text: inputUrl, width: 45, height: 45,
+        colorDark : "#000000", colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.L
     });
 
     // 2. Big QR
@@ -630,31 +632,31 @@ $isAdmin = $is_own_workshop;
     const openQrBtn = document.getElementById('openQr');
     let bigQrGenerated = false;
 
-    openQrBtn.addEventListener('click', () => {
-        qrOverlay.classList.add('active');
-        if (!bigQrGenerated) {
-            new QRCode(document.getElementById("qrcodeBig"), { 
-                text: inputUrl, width: 350, height: 350, 
-                colorDark : "#00658b", colorLight : "#ffffff", 
-                correctLevel : QRCode.CorrectLevel.H 
-            });
-            bigQrGenerated = true;
-        }
-    });
+    if(openQrBtn) {
+        openQrBtn.addEventListener('click', () => {
+            qrOverlay.classList.add('active');
+            if (!bigQrGenerated) {
+                new QRCode(document.getElementById("qrcodeBig"), { 
+                    text: inputUrl, width: 400, height: 400, 
+                    colorDark : "#000000", colorLight : "#ffffff", 
+                    correctLevel : QRCode.CorrectLevel.H 
+                });
+                bigQrGenerated = true;
+            }
+        });
+    }
 
-    // --- FOCUS MODE LOGIC (Local + Remote) ---
+    // --- FOCUS MODE LOGIC ---
     const focusOverlay = document.getElementById('focusOverlay');
     const focusContent = document.getElementById('focusContent');
     const board = document.getElementById('board');
-    let remoteFocusActiveId = null; // Track if we are currently in a remote session
+    let remoteFocusActiveId = null; 
 
     // Local Click Event
     board.addEventListener('click', function(e) {
         const wrapper = e.target.closest('.idea-card-wrapper');
-        
         if (wrapper) {
             const card = wrapper.querySelector('.idea-card');
-            // Only open if the card is NOT blurred
             if (card && !card.classList.contains('blurred')) {
                 const text = card.innerText;
                 focusContent.innerText = text;
@@ -663,17 +665,12 @@ $isAdmin = $is_own_workshop;
         }
     });
 
-    // Close overlays on click
     qrOverlay.addEventListener('click', () => qrOverlay.classList.remove('active'));
-    
     focusOverlay.addEventListener('click', () => {
         focusOverlay.classList.remove('active');
-        // If user manually closes it, we can technically reset our tracker, 
-        // but the next polling might open it again if Admin hasn't turned it off.
-        // This is acceptable behavior (admin enforces focus).
     });
 
-    // --- CONTEXT MENU LOGIC (ADMIN ONLY) ---
+    // --- CONTEXT MENU LOGIC ---
     <?php if ($isAdmin): ?>
     (function() {
         const ctxMenu = document.getElementById('customContextMenu');
@@ -681,14 +678,12 @@ $isAdmin = $is_own_workshop;
         const ctxDelete = document.getElementById('ctxDelete');
         let currentCardId = null;
 
-        // Global click to close menu
         document.addEventListener('click', function(e) {
             if (!ctxMenu.contains(e.target)) {
                 ctxMenu.style.display = 'none';
             }
         });
 
-        // Right-click listener on cards
         document.addEventListener('contextmenu', function(e) {
             const wrapper = e.target.closest('.idea-card-wrapper');
             if (wrapper) {
@@ -696,11 +691,9 @@ $isAdmin = $is_own_workshop;
                 currentCardId = wrapper.getAttribute('data-id');
                 const card = wrapper.querySelector('.idea-card');
                 
-                // Update text based on state
                 const isHidden = card.classList.contains('blurred');
-                ctxToggle.innerHTML = isHidden ? '👁 Einblenden' : '🚫 Ausblenden';
+                ctxToggle.innerHTML = isHidden ? '👁 SHOW CARD' : '🚫 HIDE CARD';
 
-                // Position and show menu
                 ctxMenu.style.display = 'block';
                 ctxMenu.style.left = e.pageX + 'px';
                 ctxMenu.style.top = e.pageY + 'px';
@@ -709,7 +702,6 @@ $isAdmin = $is_own_workshop;
             }
         });
 
-        // Handle Toggle
         ctxToggle.addEventListener('click', function() {
             if (currentCardId) {
                 fetch('admin.php?toggle_id=' + currentCardId + '&ajax=1')
@@ -719,9 +711,8 @@ $isAdmin = $is_own_workshop;
             }
         });
 
-        // Handle Delete
         ctxDelete.addEventListener('click', function() {
-            if (currentCardId && confirm('Diesen Eintrag wirklich löschen?')) {
+            if (currentCardId && confirm('Delete this card?')) {
                 fetch('admin.php?delete=' + currentCardId + '&ajax=1')
                     .then(() => updateBoard())
                     .catch(err => console.error(err));
@@ -733,7 +724,6 @@ $isAdmin = $is_own_workshop;
 
 
     // --- DATA HANDLING ---
-    const gruppenConfig = <?= json_encode($gruppen) ?>;
     const initialData = <?= json_encode($data) ?>;
     
     renderData(initialData);
@@ -743,10 +733,8 @@ $isAdmin = $is_own_workshop;
         document.querySelectorAll('.idea-card-wrapper').forEach(el => existingIds.add(el.getAttribute('data-id')));
         const validIdsInNewData = new Set();
 
-        // 1. Check for Remote Focus first
         checkRemoteFocus(data);
 
-        // 2. Render Cards
         data.forEach(entry => {
             validIdsInNewData.add(entry.id);
             const isVisible = (entry.visible === true || entry.visible === "true");
@@ -799,17 +787,13 @@ $isAdmin = $is_own_workshop;
     }
 
     function checkRemoteFocus(data) {
-        // Find if any card has focus: true
         const focusedEntry = data.find(e => e.focus === true || e.focus === "true");
 
         if (focusedEntry) {
-            // Admin wants this card focused
             focusContent.innerText = focusedEntry.text;
             focusOverlay.classList.add('active');
             remoteFocusActiveId = focusedEntry.id;
         } else {
-            // No card is focused remotely.
-            // If we were previously holding a remote focus open, we should close it now.
             if (remoteFocusActiveId !== null) {
                 focusOverlay.classList.remove('active');
                 remoteFocusActiveId = null;

@@ -41,17 +41,12 @@ if ($config && isset($config['categories'])) {
 // --- PDF EXPORT MODE ---
 if (isset($_GET['mode']) && $_GET['mode'] === 'pdf') {
     $data = safeReadJson($data_file);
-
-    // Load user's configuration for categories and title
     $config = loadConfig($config_file);
-
-    // Build PDF labels from user's config
     $pdf_labels = [];
-    $pdf_title = 'Workshop Protocol'; // Default
+    $pdf_title = 'Workshop Protocol'; 
 
     if ($config && isset($config['categories'])) {
         foreach ($config['categories'] as $category) {
-            // Use display_name if available, otherwise use name with icon
             if (isset($category['display_name'])) {
                 $pdf_labels[$category['key']] = $category['display_name'];
             } else {
@@ -60,13 +55,10 @@ if (isset($_GET['mode']) && $_GET['mode'] === 'pdf') {
                 $pdf_labels[$category['key']] = $icon . ' ' . $name;
             }
         }
-
-        // Use custom header title if set
         if (isset($config['header_title'])) {
             $pdf_title = $config['header_title'];
         }
     } else {
-        // Fallback if no config found
         $pdf_labels = ['general' => '💡 General'];
         $pdf_title = 'Live Situation Room';
     }
@@ -77,21 +69,20 @@ if (isset($_GET['mode']) && $_GET['mode'] === 'pdf') {
         <meta charset="UTF-8">
         <title><?= htmlspecialchars($pdf_title) ?> - Workshop Protokoll</title>
         <style>
-            /* PDF Style */
-            body { font-family: sans-serif; color: #32373c; line-height: 1.5; padding: 40px; max-width: 900px; margin: 0 auto; }
-            h1 { font-family: sans-serif; font-size: 2.2rem; border-bottom: 3px solid #00658b; padding-bottom: 10px; margin-bottom: 5px; color: #00658b; text-transform: uppercase; }
-            .meta { color: #666; font-size: 0.9rem; margin-bottom: 3rem; }
+            body { font-family: 'Helvetica', sans-serif; color: #111; line-height: 1.4; padding: 40px; max-width: 900px; margin: 0 auto; }
+            h1 { font-family: 'Helvetica', sans-serif; font-size: 2.5rem; border-bottom: 2px solid #111; padding-bottom: 10px; margin-bottom: 5px; color: #111; text-transform: uppercase; font-weight: 800; letter-spacing: -1px; }
+            .meta { color: #666; font-size: 0.8rem; margin-bottom: 4rem; text-transform: uppercase; letter-spacing: 1px; }
             .section { margin-bottom: 3rem; page-break-inside: avoid; }
-            .section-title { font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; border-left: 5px solid #00658b; padding-left: 10px; margin-bottom: 1.5rem; color: #00658b; }
-            .entry { margin-bottom: 1.5rem; padding: 15px; background: #f9f9f9; border-radius: 4px; }
-            .entry-text { font-size: 1rem; margin-bottom: 5px; }
-            .entry-meta { font-size: 0.75rem; color: #888; text-transform: uppercase; }
-            .no-data { color: #999; font-style: italic; }
+            .section-title { font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; border-left: 4px solid #111; padding-left: 15px; margin-bottom: 1.5rem; color: #111; }
+            .entry { margin-bottom: 1.5rem; padding: 0 0 15px 0; border-bottom: 1px solid #eee; }
+            .entry-text { font-size: 1rem; margin-bottom: 5px; color: #000; }
+            .entry-meta { font-size: 0.7rem; color: #999; text-transform: uppercase; letter-spacing: 0.5px; }
+            .no-data { color: #999; font-style: italic; font-size: 0.8rem; }
         </style>
     </head>
     <body onload="window.print()">
         <h1><?= htmlspecialchars($pdf_title) ?></h1>
-        <div class="meta">Workshop Ergebnisse • Generiert am <?= date('d.m.Y \u\m H:i') ?> Uhr</div>
+        <div class="meta">PROTOCOL • Generated: <?= date('d.m.Y H:i') ?></div>
 
         <?php foreach ($pdf_labels as $key => $label): ?>
             <div class="section">
@@ -101,14 +92,14 @@ if (isset($_GET['mode']) && $_GET['mode'] === 'pdf') {
                 foreach ($data as $entry) {
                     if (($entry['thema'] ?? '') === $key) {
                         $hasEntries = true;
-                        $status = ($entry['visible'] ?? false) ? "LIVE" : "ENTWURF";
+                        $status = ($entry['visible'] ?? false) ? "LIVE" : "DRAFT";
                         echo '<div class="entry">';
                         echo '<div class="entry-text">' . nl2br(htmlspecialchars($entry['text'])) . '</div>';
-                        echo '<div class="entry-meta">' . date('H:i', $entry['zeit']) . ' Uhr • Status: ' . $status . '</div>';
+                        echo '<div class="entry-meta">' . date('H:i', $entry['zeit']) . ' • ' . $status . '</div>';
                         echo '</div>';
                     }
                 }
-                if (!$hasEntries) echo '<div class="no-data">Keine Einträge vorhanden.</div>';
+                if (!$hasEntries) echo '<div class="no-data">No entries found.</div>';
                 ?>
             </div>
         <?php endforeach; ?>
@@ -118,14 +109,11 @@ if (isset($_GET['mode']) && $_GET['mode'] === 'pdf') {
     exit;
 }
 
-// --- ACTION HANDLER (ATOMIC) ---
-// All actions now use user-specific data file
-
+// --- ACTION HANDLER ---
 {
     $is_ajax = isset($_REQUEST['ajax']);
     $req = $_REQUEST;
 
-    // 🔒 DELETE SINGLE ENTRY
     if (isset($req['delete'])) {
         $id = $req['delete'];
         atomicUpdate($data_file, function($data) use ($id) {
@@ -134,38 +122,30 @@ if (isset($_GET['mode']) && $_GET['mode'] === 'pdf') {
         if ($is_ajax) { echo "OK"; exit; }
     }
 
-    // 🔒 DELETE ALL
     if (isset($req['deleteall']) && $req['deleteall'] === 'confirm') {
-        atomicUpdate($data_file, function($data) {
-            return [];
-        });
+        atomicUpdate($data_file, function($data) { return []; });
         if ($is_ajax) { echo "OK"; exit; }
     }
 
-    // 🔒 TOGGLE VISIBILITY
     if (isset($req['toggle_id'])) {
         $id = $req['toggle_id'];
         atomicUpdate($data_file, function($data) use ($id) {
             foreach ($data as &$entry) {
-                if ($entry['id'] === $id) {
-                    $entry['visible'] = !($entry['visible'] ?? false);
-                }
+                if ($entry['id'] === $id) { $entry['visible'] = !($entry['visible'] ?? false); }
             }
             return $data;
         });
         if ($is_ajax) { echo "OK"; exit; }
     }
 
-    // 🔒 TOGGLE FOCUS (nur EIN Eintrag kann focused sein)
     if (isset($req['toggle_focus'])) {
         $id = $req['toggle_focus'];
         atomicUpdate($data_file, function($data) use ($id) {
             foreach ($data as &$entry) {
                 if ($entry['id'] === $id) {
-                    $currentFocus = $entry['focus'] ?? false;
-                    $entry['focus'] = !$currentFocus;
+                    $entry['focus'] = !($entry['focus'] ?? false);
                 } else {
-                    $entry['focus'] = false; // Alle anderen ausschalten
+                    $entry['focus'] = false;
                 }
             }
             return $data;
@@ -173,17 +153,13 @@ if (isset($_GET['mode']) && $_GET['mode'] === 'pdf') {
         if ($is_ajax) { echo "OK"; exit; }
     }
 
-    // 🔒 EDIT ENTRY TEXT
     if (isset($req['action']) && $req['action'] === 'edit' && isset($req['id']) && isset($req['new_text'])) {
         $id = $req['id'];
         $new_text = trim($req['new_text']);
-
         if (!empty($new_text)) {
             atomicUpdate($data_file, function($data) use ($id, $new_text) {
                 foreach ($data as &$entry) {
-                    if ($entry['id'] === $id) {
-                        $entry['text'] = $new_text;
-                    }
+                    if ($entry['id'] === $id) { $entry['text'] = $new_text; }
                 }
                 return $data;
             });
@@ -193,312 +169,385 @@ if (isset($_GET['mode']) && $_GET['mode'] === 'pdf') {
         }
     }
 
-    // 🔒 MOVE TO DIFFERENT THEMA
     if (isset($req['action']) && $req['action'] === 'move' && isset($req['id']) && isset($req['new_thema'])) {
         $id = $req['id'];
         $new_thema = $req['new_thema'];
         atomicUpdate($data_file, function($data) use ($id, $new_thema) {
             foreach ($data as &$entry) {
-                if ($entry['id'] === $id) {
-                    $entry['thema'] = $new_thema;
-                }
+                if ($entry['id'] === $id) { $entry['thema'] = $new_thema; }
             }
             return $data;
         });
         if ($is_ajax) { echo "OK"; exit; }
     }
 
-    // 🔒 SHOW ALL IN COLUMN
     if (isset($req['action_col']) && $req['action_col'] === 'show' && isset($req['col'])) {
         $col = $req['col'];
         atomicUpdate($data_file, function($data) use ($col) {
             foreach ($data as &$entry) {
-                if ($entry['thema'] === $col) {
-                    $entry['visible'] = true;
-                }
+                if ($entry['thema'] === $col) { $entry['visible'] = true; }
             }
             return $data;
         });
         if ($is_ajax) { echo "OK"; exit; }
     }
 
-    // 🔒 HIDE ALL IN COLUMN
     if (isset($req['action_col']) && $req['action_col'] === 'hide' && isset($req['col'])) {
         $col = $req['col'];
         atomicUpdate($data_file, function($data) use ($col) {
             foreach ($data as &$entry) {
-                if ($entry['thema'] === $col) {
-                    $entry['visible'] = false;
-                }
+                if ($entry['thema'] === $col) { $entry['visible'] = false; }
             }
             return $data;
         });
         if ($is_ajax) { echo "OK"; exit; }
     }
 
-    // 🔒 SHOW ALL
     if (isset($req['action_all']) && $req['action_all'] === 'show') {
         atomicUpdate($data_file, function($data) {
-            foreach ($data as &$entry) {
-                $entry['visible'] = true;
-            }
+            foreach ($data as &$entry) { $entry['visible'] = true; }
             return $data;
         });
         if ($is_ajax) { echo "OK"; exit; }
     }
 
-    // 🔒 HIDE ALL
     if (isset($req['action_all']) && $req['action_all'] === 'hide') {
         atomicUpdate($data_file, function($data) {
-            foreach ($data as &$entry) {
-                $entry['visible'] = false;
-            }
+            foreach ($data as &$entry) { $entry['visible'] = false; }
             return $data;
         });
         if ($is_ajax) { echo "OK"; exit; }
     }
 }
 
-// Daten für Display laden (Read-Only)
+// Data for Display
 $data = safeReadJson($data_file);
 ?>
 <!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Admin Panel | Live Situation Room</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     
     <style>
-        /* --- DESIGN SYSTEM --- */
+        /* --- RESET & VARIABLES --- */
+        * { box-sizing: border-box; } 
+        
         :root {
-            /* Colors */
-            --ip-blue: #00658b;       /* Primary Brand Color */
-            --ip-dark: #32373c;       /* Text / Dark Elements */
-            --ip-light: #ffffff;      /* Backgrounds */
-            --ip-grey-bg: #f4f4f4;    /* Secondary Background */
-            --ip-border: #e0e0e0;     /* Subtle Borders */
+            --bg-body: #f5f5f5;
+            --bg-card: #ffffff;
+            --text-main: #111111;
+            --text-muted: #666666;
+            --border-color: #e0e0e0;
             
-            /* Action Colors */
-            --accent-success: #00d084;
-            --accent-danger: #cf2e2e;
-            --accent-warning: #ff6900;
-
-            /* Typography */
-            --font-heading: 'Montserrat', sans-serif;
-            --font-body: 'Roboto', sans-serif;
+            --color-green: #27ae60; 
+            --color-red: #e74c3c;   
+            --color-focus: #f1c40f; 
             
-            /* Radius */
-            --radius-pill: 9999px;
-            --radius-card: 4px;
+            --font-head: 'Bebas Neue', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            
+            --radius-btn: 4px;
+            --shadow: 0 4px 6px rgba(0,0,0,0.03);
+            --shadow-hover: 0 8px 20px rgba(0,0,0,0.06);
+            --trans-speed: 0.2s;
         }
 
         body {
-            background-color: var(--ip-grey-bg);
-            color: var(--ip-dark);
+            background-color: var(--bg-body);
+            color: var(--text-main);
             font-family: var(--font-body);
             margin: 0; padding: 0;
-            line-height: 1.6;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
         }
 
-        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
-
-        /* Login Screen */
-        .login-wrapper {
-            max-width: 400px; margin: 10vh auto; padding: 3rem;
-            background: var(--ip-light); 
-            border-top: 5px solid var(--ip-blue);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-            border-radius: var(--radius-card);
+        .container { 
+            max-width: 1600px; 
+            margin: 0 auto; 
+            padding: 2rem; 
+            width: 100%;
         }
-        .login-wrapper h1 { font-family: var(--font-heading); font-size: 2rem; margin: 0 0 1rem 0; text-align: center; color: var(--ip-blue); }
-        .login-wrapper input, .login-wrapper button { width: 100%; box-sizing: border-box; padding: 14px; font-size: 1rem; margin-bottom: 1rem; border-radius: var(--radius-pill); }
-        .login-wrapper input { background: #f9f9f9; border: 1px solid var(--ip-border); color: var(--ip-dark); }
-        .login-wrapper input:focus { outline: none; border-color: var(--ip-blue); }
-        .login-wrapper button { border-radius: var(--radius-pill); cursor: pointer; }
-        .error-msg { background: rgba(207, 46, 46, 0.1); border-left: 3px solid var(--accent-danger); padding: 1rem; margin-bottom: 1rem; color: var(--accent-danger); }
 
-        /* HEADER */
+        /* --- HEADER --- */
         .admin-header {
-            display: flex; justify-content: space-between; align-items: center;
-            background: var(--ip-light);
-            padding: 1.5rem 2rem; 
+            display: flex; 
+            justify-content: space-between; /* DESKTOP: Pushes Title left, Buttons right */
+            align-items: flex-end;
+            background: var(--bg-card);
+            padding: 2rem 3rem; 
             margin-bottom: 2rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
-            border-radius: var(--radius-card);
-            flex-wrap: wrap; gap: 1rem;
+            border: 1px solid var(--border-color);
+            border-bottom: 3px solid var(--text-main);
         }
-        .admin-header h1 { font-family: var(--font-heading); font-size: 2rem; margin: 0; line-height: 1; color: var(--ip-blue); font-weight: 700; }
-        .subtitle { color: var(--ip-dark); text-transform: uppercase; letter-spacing: 1px; font-size: 0.75rem; font-weight: 600; display: block; margin-bottom: 0.2rem; opacity: 0.6; }
-        .header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
-        /* BUTTONS - Pill Shaped */
+        .admin-header h1 { 
+            font-family: var(--font-head); font-size: 3.5rem; margin: 0; 
+            line-height: 0.9; color: var(--text-main); font-weight: 400; 
+            text-transform: uppercase;
+        }
+        .subtitle { 
+            color: var(--text-muted); text-transform: uppercase; 
+            letter-spacing: 2px; font-size: 0.85rem; font-weight: 600; 
+            display: block; margin-bottom: 0.5rem; 
+            font-family: var(--font-head);
+        }
+        
+        /* Desktop: Buttons aligned normally */
+        .header-actions { 
+            display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 5px; 
+        }
+
+        /* --- BUTTONS --- */
         .btn {
-            padding: 10px 24px; 
-            background: var(--ip-dark); 
-            border: none;
-            color: #fff; 
+            padding: 12px 20px; 
+            background: #fff; 
+            border: 1px solid var(--border-color);
+            color: var(--text-muted); 
             text-decoration: none; 
-            font-weight: 600; 
-            font-family: var(--font-heading);
-            letter-spacing: 0.5px;
+            font-family: var(--font-head);
+            font-size: 1.1rem;
+            letter-spacing: 1px;
             cursor: pointer; 
-            transition: 0.3s; 
-            font-size: 0.85rem; 
-            display: inline-block;
-            text-align: center;
-            border-radius: var(--radius-pill);
-            box-shadow: none;
+            display: inline-flex; align-items: center; justify-content: center;
+            border-radius: var(--radius-btn);
+            line-height: 1;
+            transition: all var(--trans-speed) cubic-bezier(0.4, 0, 0.2, 1);
+            min-height: 44px; 
+            white-space: nowrap;
         }
-        .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         
-        .btn-danger { background: var(--accent-danger); color: white; }
-        .btn-success { background: var(--accent-success); color: white; }
-        .btn-neutral { background: #e0e0e0; color: #555; }
-        .btn-neutral:hover { background: #d0d0d0; }
-        .btn-primary { background: var(--ip-blue); color: white; }
-        .btn-sm { padding: 6px 16px; font-size: 0.75rem; }
+        .btn:hover, .btn:active { 
+            border-color: var(--text-main); 
+            color: var(--text-main); 
+            transform: translateY(-1px);
+        }
+        
+        .btn-primary { background: var(--text-main); color: #fff; border-color: var(--text-main); }
+        .btn-primary:hover { background: #333; color: #fff; }
+        
+        .btn-danger { color: var(--color-red); border-color: rgba(231, 76, 60, 0.3); }
+        .btn-danger:hover { background: var(--color-red); color: white; border-color: var(--color-red); }
+        
+        .btn-success { color: var(--color-green); border-color: rgba(39, 174, 96, 0.3); font-weight: bold; }
+        .btn-success:hover { background: var(--color-green); color: #fff; border-color: var(--color-green); }
 
-        /* COMMAND PANEL */
+        .btn-focus { color: #ccc; border-color: #eee; }
+        .btn-focus:hover { color: var(--color-focus); border-color: var(--color-focus); }
+        .btn-focus.is-focused { background: var(--color-focus); color: #fff; border-color: var(--color-focus); }
+
+        /* --- INFO BOX --- */
+        .info-box {
+            background: #fff; border: 1px solid var(--border-color);
+            padding: 20px 30px; margin-bottom: 24px;
+            display: flex; flex-direction: column; gap: 15px;
+            width: 100%;
+        }
+        .info-box h3 { 
+            margin: 0; color: var(--text-main); font-family: var(--font-head); 
+            font-size: 1.5rem; letter-spacing: 0.5px; font-weight: 400;
+        }
+        .link-row { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .link-label { font-family: var(--font-head); font-size: 1rem; color: var(--text-muted); min-width: 180px; }
+        .link-input { 
+            flex: 1; min-width: 250px; padding: 12px; font-family: 'Inter', monospace; font-size: 0.9rem; 
+            border: 1px solid var(--border-color); background: #fafafa; color: #333;
+            cursor: pointer; transition: 0.2s; border-radius: var(--radius-btn);
+            width: 100%;
+        }
+
+        /* --- COMMAND PANEL --- */
         .command-panel {
-            background: var(--ip-light); 
-            border: 1px solid var(--ip-border);
-            padding: 2rem; margin-bottom: 2rem;
-            border-radius: var(--radius-card);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            background: var(--bg-card); 
+            border: 1px solid var(--border-color);
+            padding: 2rem 3rem; margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            width: 100%;
         }
-        .command-panel h3 { margin: 0 0 1.5rem 0; font-family: var(--font-heading); font-weight: 600; color: var(--ip-blue); font-size: 1.2rem; border-bottom: 1px solid var(--ip-border); padding-bottom: 10px; }
+        .command-panel h3 { 
+            margin: 0 0 1.5rem 0; font-family: var(--font-head); 
+            font-weight: 400; color: var(--text-main); font-size: 2rem; 
+            border-bottom: 1px solid var(--text-main); padding-bottom: 10px; 
+        }
         
-        .command-row { display: flex; gap: 3rem; align-items: flex-start; }
-        .command-label { display: block; color: var(--ip-dark); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 12px; font-family: var(--font-heading); text-transform: uppercase;}
+        .command-row { display: flex; gap: 4rem; align-items: flex-start; flex-wrap: wrap; }
+        .command-col { flex: 1; min-width: 250px; }
+        .command-label { 
+            display: block; color: var(--text-muted); font-size: 0.9rem; 
+            margin-bottom: 15px; font-family: var(--font-head); 
+            letter-spacing: 1px;
+        }
 
-        /* Global Buttons Layout */
-        .global-btns { display: flex; gap: 10px; }
+        .global-btns { display: flex; gap: 10px; width: 100%; }
+        .global-btns .btn { flex: 1; justify-content: center; height: 50px; font-size: 1.2rem; }
 
-        /* Sector Layout */
-        .sector-group { flex: 1; }
-        .sector-container { display: flex; flex-wrap: wrap; width: 100%; gap: 10px; }
+        /* Sector Grid */
+        .sector-container { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
+            gap: 15px; 
+            width: 100%;
+        }
 
         .sector-ctrl {
-            display: inline-flex; align-items: center; gap: 10px;
-            padding: 8px 16px; background: #f9f9f9; border: 1px solid var(--ip-border);
-            border-radius: var(--radius-pill);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 15px; background: #fff; border: 1px solid var(--border-color);
+            transition: 0.2s; border-radius: var(--radius-btn);
+            min-height: 50px;
         }
-        .sector-label { font-weight: 700; font-size: 0.8rem; color: var(--ip-blue); font-family: var(--font-heading); }
-        .st-btn { cursor: pointer; padding: 4px 10px; font-size: 0.75rem; font-weight: 600; transition: 0.2s; user-select: none; border-radius: var(--radius-pill); }
+        .sector-ctrl:hover { border-color: #999; transform: translateY(-1px); }
         
-        .btn-on { color: #ccc; }
-        .btn-on:hover, .btn-on.active-on { background: var(--accent-success); color: white; }
+        .sector-label { 
+            font-size: 1.3rem; color: var(--text-main); 
+            font-family: var(--font-head); line-height: 1;
+        }
         
-        .btn-off { color: #ccc; }
-        .btn-off:hover, .btn-off.active-off { background: var(--accent-danger); color: white; }
+        .st-btn { 
+            cursor: pointer; padding: 6px 12px; font-size: 0.9rem; 
+            font-weight: 600; transition: all 0.2s; user-select: none; 
+            border-radius: 2px; letter-spacing: 1px; color: #ccc;
+        }
+        
+        .btn-on.active-on { color: var(--color-green); font-weight: 900; }
+        .btn-off.active-off { color: var(--color-red); text-decoration: line-through; }
 
-        /* FEED GRID */
+        /* --- FEED GRID --- */
         #admin-feed {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); 
+            gap: 1.5rem;
+            width: 100%;
         }
 
+        .feed-header { 
+            display: flex; justify-content: space-between; align-items: flex-end; 
+            margin-bottom: 20px; border-bottom: 2px solid var(--text-main); 
+            padding-bottom: 10px; flex-wrap: wrap; gap: 10px;
+        }
+        .feed-header h2 { 
+            font-family: var(--font-head); color: var(--text-main); 
+            margin: 0; font-size: 2.5rem; line-height: 1; font-weight: 400; 
+        }
+
+        /* --- CARDS --- */
         .admin-card {
-            background: var(--ip-light); 
-            border: 1px solid var(--ip-border);
-            padding: 1.5rem; transition: 0.3s; position: relative;
-            border-radius: var(--radius-card);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            background: var(--bg-card); 
+            border: 1px solid var(--border-color);
+            padding: 1.5rem; transition: 0.3s ease; position: relative;
+            box-shadow: var(--shadow);
+            display: flex; flex-direction: column;
+            border-radius: var(--radius-btn);
+            width: 100%;
         }
-        .admin-card:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.08); }
         
-        /* Status Colors using Borders */
-        .admin-card.status-live { border-top: 4px solid var(--accent-success); }
-        .admin-card.status-hidden { border-top: 4px solid #ccc; opacity: 0.8; }
+        .admin-card.status-live { 
+            border: 1px solid var(--color-green); 
+            box-shadow: 0 0 15px rgba(39, 174, 96, 0.1);
+        }
+        .admin-card.status-hidden { 
+            border: 1px dashed #ccc; opacity: 0.75; background: #fafafa;
+        }
 
-        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; }
+        .card-header { 
+            display: flex; justify-content: space-between; align-items: center; 
+            margin-bottom: 1rem; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; 
+            flex-wrap: wrap; gap: 5px;
+        }
         
         .admin-select { 
-            padding: 6px 12px; background: #fff; border: 1px solid #ddd; 
-            color: var(--ip-dark); font-size: 0.8rem; max-width: 60%; 
-            border-radius: 4px; font-family: var(--font-body);
+            padding: 8px 0; background: transparent; border: none; border-bottom: 1px solid #eee;
+            color: var(--text-muted); font-size: 0.9rem; width: 100%; max-width: 200px;
+            font-family: var(--font-body); font-weight: 600; cursor: pointer;
         }
-        
-        .card-time { font-size: 0.75rem; color: #999; font-weight: 500; }
-        .card-body { font-size: 1rem; margin-bottom: 1.5rem; line-height: 1.6; min-height: 40px; word-wrap: break-word; color: #444; }
+        .card-time { font-size: 0.8rem; color: #999; font-family: 'Inter', monospace; white-space: nowrap; }
+        .card-body { 
+            font-size: 1rem; margin-bottom: 1.5rem; line-height: 1.6; 
+            min-height: 60px; word-break: break-word; color: var(--text-main); flex-grow: 1;
+        }
 
-        /* Edit Mode Styles */
         .entry-text-edit {
-            width: 100%;
-            min-height: 120px;
-            padding: 12px;
-            border: 2px solid var(--ip-blue);
-            border-radius: 4px;
-            font-family: var(--font-body);
-            font-size: 1rem;
-            line-height: 1.6;
-            color: #444;
-            resize: vertical;
-            box-sizing: border-box;
-        }
-        .entry-text-edit:focus {
-            outline: none;
-            border-color: var(--ip-blue);
-            box-shadow: 0 0 0 3px rgba(0, 101, 139, 0.1);
+            width: 100%; min-height: 120px; padding: 12px;
+            border: 1px solid var(--text-main); background: #fff;
+            font-family: var(--font-body); font-size: 1rem; line-height: 1.6;
+            color: var(--text-main); resize: vertical; box-sizing: border-box;
         }
 
-        .card-actions { display: flex; gap: 8px; }
-        .card-actions .btn { flex: 1; padding: 10px; font-size: 0.75rem; border-radius: 4px; }
-
-        .card-edit-actions {
-            display: flex;
-            gap: 8px;
-            margin-top: 10px;
+        .card-actions { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr 2fr auto; 
+            gap: 10px; margin-top: auto; 
         }
-        .card-edit-actions .btn {
-            flex: 1;
-            padding: 10px;
-            font-size: 0.75rem;
-            border-radius: 4px;
-        }
+        .card-actions .btn { padding: 10px; font-size: 0.9rem; width: 100%; }
 
-        /* Focus Button Special Style */
-        .btn-focus { background: white; border: 1px solid var(--accent-warning); color: var(--accent-warning); }
-        .btn-focus:hover { background: var(--accent-warning); color: white; }
-        .btn-focus.is-focused { background: var(--accent-warning); color: white; }
-        
-        .feed-header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid var(--ip-border); padding-bottom: 15px; flex-wrap: wrap; gap: 10px; }
-        .feed-header h2 { font-family: var(--font-heading); color: var(--ip-dark); margin: 0; font-size: 1.5rem; font-weight: 700; }
+        .card-edit-actions { display: flex; gap: 10px; margin-top: 10px; }
+        .card-edit-actions .btn { flex: 1; }
 
         /* =========================================
-           MOBILE RESPONSIVENESS
+           MOBILE OPTIMIZATIONS (Max Width 900px)
            ========================================= */
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
             .container { padding: 1rem; }
             
-            .admin-header { flex-direction: column; align-items: flex-start; gap: 1.5rem; padding: 1.5rem; }
-            .admin-header h1 { font-size: 1.8rem; }
-            .header-actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-            .header-actions .btn { width: 100%; box-sizing: border-box; }
+            /* Header Stacking for Mobile */
+            .admin-header { 
+                flex-direction: column; align-items: flex-start; 
+                gap: 1.5rem; padding: 1.5rem; 
+            }
+            .admin-header h1 { font-size: 2.5rem; }
+            
+            .header-title-group { width: 100%; margin-bottom: 1rem; }
+
+            /* Header buttons: 2x2 Grid */
+            .header-actions { 
+                width: 100%; display: grid; 
+                grid-template-columns: 1fr 1fr; gap: 8px; margin-left: 0;
+            }
+            .header-actions .btn { width: 100%; height: 50px; font-size: 1rem; }
+            /* Last button spans full width if odd number */
             .header-actions .btn:last-child:nth-child(odd) { grid-column: span 2; }
 
-            .login-wrapper { width: 100%; margin: 2rem 0; box-sizing: border-box; padding: 1.5rem; }
-
+            /* Command Panel vertical stack */
+            .command-panel { padding: 1.5rem; }
             .command-row { flex-direction: column; gap: 2rem; }
-            .command-row > div { width: 100%; } 
-            
-            .global-btns { width: 100%; gap: 10px; }
-            .global-btns .btn { flex: 1; }
+            .command-col { width: 100%; }
 
-            .sector-container { display: flex; flex-direction: column; gap: 10px; width: 100%; }
-            .sector-ctrl { 
-                display: flex; justify-content: space-between; width: 100%; 
-                box-sizing: border-box; margin: 0; padding: 12px 20px;
+            .global-btns { gap: 15px; }
+            .global-btns .btn { height: 60px; font-size: 1.4rem; }
+
+            /* Sectors: Clean Vertical List for Mobile */
+            .sector-container { 
+                grid-template-columns: 1fr 1fr; /* 2 columns for thumb reach */
+                gap: 10px;
             }
-            .st-btn { padding: 6px 14px; font-size: 0.85rem; } 
+            .sector-ctrl {
+                flex-direction: column; align-items: flex-start; justify-content: center;
+                height: 80px; padding: 10px;
+                gap: 5px;
+            }
+            .sector-ctrl > div { width: 100%; display: flex; justify-content: space-between; font-size: 1.2rem; }
+            .st-btn { padding: 8px; font-size: 1rem; }
+
+            /* Feed goes single column */
+            #admin-feed { grid-template-columns: 1fr; }
             
-            #admin-feed { grid-template-columns: 1fr; } 
-            .feed-header { flex-direction: column; align-items: flex-start; }
-            .admin-select { max-width: 100%; }
+            /* Card Buttons: 2x2 Grid to prevent squishing */
+            .card-actions { 
+                grid-template-columns: 1fr 1fr; 
+                gap: 10px;
+            }
+            /* Make the Delete button fit in the grid logic */
+            .card-actions .btn:nth-child(4) { grid-column: auto; } 
+            .card-actions .btn { height: 50px; font-size: 1.1rem; }
+
+            .info-box { padding: 1.5rem; }
+            .link-row { flex-direction: column; align-items: flex-start; gap: 5px; }
+            .link-input { width: 100%; }
         }
     </style>
 </head>
@@ -506,84 +555,77 @@ $data = safeReadJson($data_file);
 
 <div class="container">
     <header class="admin-header">
-        <div>
-            <span class="subtitle">Live Situation Room</span>
-            <h1>Your Workshop Dashboard</h1>
-            <p style="font-size: 14px; color: #767676; margin-top: 8px;">👤 <?= htmlspecialchars($current_user['email']) ?></p>
+        <div class="header-title-group">
+            <span class="subtitle">Dashboard &bull; <?= htmlspecialchars($current_user['email']) ?></span>
+            <h1>Workshop Control</h1>
         </div>
         <div class="header-actions">
-            <a href="customize.php" class="btn btn-primary">Customize</a>
-            <a href="subscription_manage.php" class="btn btn-neutral">Subscription</a>
-            <a href="admin.php?mode=pdf" target="_blank" class="btn btn-neutral">PDF Export</a>
-            <a href="index.php?u=<?= urlencode($user_id) ?>" target="_blank" class="btn btn-neutral">View Live</a>
+            <a href="customize.php" class="btn">Customize</a>
+            <a href="subscription_manage.php" class="btn">Subscription</a>
+            <a href="admin.php?mode=pdf" target="_blank" class="btn">PDF Export</a>
+            <a href="index.php?u=<?= urlencode($user_id) ?>" target="_blank" class="btn btn-primary">Open Live View</a>
             <a href="logout.php" class="btn btn-danger">Logout</a>
         </div>
     </header>
 
-    <div style="background: #e7f3f8; border: 2px solid #00658b; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
-        <h3 style="margin: 0 0 12px 0; color: #00658b; font-size: 16px;">🔗 Your Workshop URLs</h3>
-        <p style="margin: 0 0 12px 0; font-size: 14px; color: #32373c;">Share these links with workshop participants:</p>
-
-        <div style="margin-bottom: 12px;">
-            <strong style="display: block; font-size: 13px; color: #767676; margin-bottom: 4px;">Live Dashboard (View Only):</strong>
-            <input type="text" readonly value="<?= getPublicWorkshopURL($user_id) ?>" onclick="this.select(); document.execCommand('copy');" style="width: 100%; padding: 8px; font-family: monospace; font-size: 12px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;" title="Click to copy">
+    <div class="info-box">
+        <h3>🔗 Connection Links</h3>
+        <div class="link-row">
+            <span class="link-label">VISITOR VIEW (READ ONLY):</span>
+            <input type="text" class="link-input" readonly value="<?= getPublicWorkshopURL($user_id) ?>" onclick="this.select(); document.execCommand('copy');" title="Click to copy">
         </div>
-
-        <div>
-            <strong style="display: block; font-size: 13px; color: #767676; margin-bottom: 4px;">Submission Form (Participants):</strong>
-            <input type="text" readonly value="<?= getPublicInputURL($user_id) ?>" onclick="this.select(); document.execCommand('copy');" style="width: 100%; padding: 8px; font-family: monospace; font-size: 12px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;" title="Click to copy">
+        <div class="link-row">
+            <span class="link-label">PARTICIPANT FORM (INPUT):</span>
+            <input type="text" class="link-input" readonly value="<?= getPublicInputURL($user_id) ?>" onclick="this.select(); document.execCommand('copy');" title="Click to copy">
         </div>
-
-        <p style="margin: 12px 0 0 0; font-size: 12px; color: #767676;">💡 Click any URL to copy to clipboard</p>
     </div>
 
-        <div class="command-panel">
-            <h3>Mass Control</h3>
+    <div class="command-panel">
+        <h3>Session Controls</h3>
+        
+        <div class="command-row">
+            <div class="command-col">
+                <span class="command-label">GLOBAL ACTIONS</span>
+                <div class="global-btns">
+                    <button onclick="if(confirm('Go LIVE with ALL cards?')) runCmd('action_all=show')" class="btn btn-success">ALL LIVE</button>
+                    <button onclick="if(confirm('HIDE ALL cards?')) runCmd('action_all=hide')" class="btn btn-danger">ALL HIDE</button>
+                </div>
+            </div>
             
-            <div class="command-row">
-                <div>
-                    <span class="command-label">GLOBAL ACTIONS</span>
-                    <div class="global-btns">
-                        <button onclick="if(confirm('ALLES Live schalten?')) runCmd('action_all=show')" class="btn btn-sm btn-success" style="flex:1">ALL LIVE</button>
-                        <button onclick="if(confirm('ALLES verstecken?')) runCmd('action_all=hide')" class="btn btn-sm btn-neutral" style="flex:1">ALL HIDE</button>
-                    </div>
-                </div>
-                
-                <div class="sector-group">
-                    <span class="command-label">SECTOR CONTROL</span>
-                    <div class="sector-container">
-                        <?php foreach ($gruppen_labels as $key => $label): ?>
-                            <div class="sector-ctrl" id="ctrl-<?= $key ?>">
-                                <span class="sector-label"><?= strtoupper(substr($label,0,3)) ?></span>
-                                <div>
-                                    <span onclick="runCmd('action_col=show&col=<?= $key ?>')" class="st-btn btn-on">ON</span>
-                                    <span style="color:#ddd; margin: 0 4px;">|</span>
-                                    <span onclick="runCmd('action_col=hide&col=<?= $key ?>')" class="st-btn btn-off">OFF</span>
-                                </div>
+            <div class="command-col">
+                <span class="command-label">SECTOR VISIBILITY</span>
+                <div class="sector-container">
+                    <?php foreach ($gruppen_labels as $key => $label): ?>
+                        <div class="sector-ctrl" id="ctrl-<?= $key ?>">
+                            <span class="sector-label"><?= strtoupper(substr($label,0,4)) ?></span>
+                            <div>
+                                <span onclick="runCmd('action_col=show&col=<?= $key ?>')" class="st-btn btn-on">ON</span>
+                                <span style="color:#eee; margin: 0 4px;">|</span>
+                                <span onclick="runCmd('action_col=hide&col=<?= $key ?>')" class="st-btn btn-off">OFF</span>
                             </div>
-                        <?php endforeach; ?>
-                    </div>
+                        </div>
+                    <?php endforeach; ?>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div style="margin-bottom: 2rem;">
-            <div class="feed-header">
-                <h2>Incoming Data Feed</h2>
-                <div id="purge-btn-wrapper"></div>
-            </div>
+    <div style="margin-bottom: 2rem;">
+        <div class="feed-header">
+            <h2>Incoming Data Feed</h2>
+            <div id="purge-btn-wrapper"></div>
         </div>
+    </div>
 
-        <div id="admin-feed">
-             <div style="padding: 3rem; text-align: center; color: #999; grid-column: 1 / -1;">Loading Data...</div>
-        </div>
+    <div id="admin-feed">
+         <div style="padding: 3rem; text-align: center; color: #999; grid-column: 1 / -1; font-family: var(--font-head); font-size: 1.5rem;">Loading Data Stream...</div>
+    </div>
 
 </div>
 
 <script>
     const gruppenLabels = <?= json_encode($gruppen_labels) ?>;
 
-    // HTML escape function to prevent XSS
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
@@ -595,10 +637,10 @@ $data = safeReadJson($data_file);
         const purgeWrapper = document.getElementById('purge-btn-wrapper');
         
         if (data.length > 0) {
-            purgeWrapper.innerHTML = `<button onclick="if(confirm('WARNING: PURGE ALL?')) runCmd('deleteall=confirm')" class="btn btn-danger" style="font-size: 0.7rem;">PURGE ALL</button>`;
+            purgeWrapper.innerHTML = `<button onclick="if(confirm('WARNING: PERMANENTLY DELETE ALL?')) runCmd('deleteall=confirm')" class="btn btn-danger btn-sm">PURGE ALL DATA</button>`;
         } else {
             purgeWrapper.innerHTML = '';
-            feed.innerHTML = '<div style="padding: 3rem; text-align: center; color: #999; grid-column: 1 / -1;">NO DATA AVAILABLE</div>';
+            feed.innerHTML = '<div style="padding: 4rem; text-align: center; color: #ccc; grid-column: 1 / -1; font-family: var(--font-head); font-size: 2rem;">NO DATA AVAILABLE</div>';
             return;
         }
 
@@ -623,7 +665,7 @@ $data = safeReadJson($data_file);
             }
             
             const cardStatusClass = isVisible ? 'status-live' : 'status-hidden';
-            const btnClass = isVisible ? 'btn-neutral' : 'btn-success';
+            const btnClass = isVisible ? 'btn-danger' : 'btn-success'; 
             const btnText = isVisible ? 'HIDE' : 'GO LIVE';
             const focusClass = isFocused ? 'is-focused' : '';
 
@@ -645,7 +687,7 @@ $data = safeReadJson($data_file);
                 </div>
 
                 <div class="card-actions">
-                    <button onclick="toggleEditMode('${escapedId}')" class="btn btn-neutral btn-edit" data-id="${escapedId}">EDIT</button>
+                    <button onclick="toggleEditMode('${escapedId}')" class="btn" data-id="${escapedId}">EDIT</button>
 
                     <button onclick="runCmd('toggle_focus=${escapedId}')" class="btn btn-focus ${focusClass}">FOCUS</button>
 
@@ -653,12 +695,12 @@ $data = safeReadJson($data_file);
                         ${btnText}
                     </button>
 
-                    <button onclick="if(confirm('Delete?')) runCmd('delete=${escapedId}')" class="btn btn-danger" style="flex: 0 0 auto;">✕</button>
+                    <button onclick="if(confirm('Delete?')) runCmd('delete=${escapedId}')" class="btn btn-danger">✕</button>
                 </div>
 
                 <div class="card-edit-actions" style="display: none;">
                     <button onclick="saveEdit('${escapedId}')" class="btn btn-success">💾 SAVE</button>
-                    <button onclick="cancelEdit('${escapedId}')" class="btn btn-neutral">CANCEL</button>
+                    <button onclick="cancelEdit('${escapedId}')" class="btn">CANCEL</button>
                 </div>
             </div>`;
         });
@@ -689,37 +731,30 @@ $data = safeReadJson($data_file);
 
     async function runCmd(queryParams) {
         document.body.style.cursor = 'wait';
-
-        // Temporarily pause auto-refresh during operation
         stopAutoRefresh();
 
         try {
             const response = await fetch('admin.php?' + queryParams + '&ajax=1');
-
             if (response.ok) {
                 updateAdminBoard();
-                // Resume auto-refresh after operation completes
                 startAutoRefresh();
             } else {
                 console.error("Server Error");
-                startAutoRefresh(); // Resume even on error
+                startAutoRefresh(); 
             }
         } catch (e) {
             console.error(e);
-            startAutoRefresh(); // Resume even on error
+            startAutoRefresh();
         } finally {
             document.body.style.cursor = 'default';
         }
     }
 
-    // Auto-refresh control
     let refreshInterval = null;
     let isEditMode = false;
 
     function startAutoRefresh() {
-        if (refreshInterval) {
-            clearInterval(refreshInterval);
-        }
+        if (refreshInterval) clearInterval(refreshInterval);
         refreshInterval = setInterval(updateAdminBoard, 2000);
     }
 
@@ -738,24 +773,21 @@ $data = safeReadJson($data_file);
         const normalActions = card.querySelector('.card-actions');
         const editActions = card.querySelector('.card-edit-actions');
 
-        // Toggle visibility
         if (display.style.display === 'none') {
-            // Cancel edit mode
             display.style.display = 'block';
             textarea.style.display = 'none';
-            normalActions.style.display = 'flex';
+            normalActions.style.display = 'grid';
             editActions.style.display = 'none';
             isEditMode = false;
-            startAutoRefresh(); // Resume auto-refresh
+            startAutoRefresh();
         } else {
-            // Enter edit mode
             display.style.display = 'none';
             textarea.style.display = 'block';
             normalActions.style.display = 'none';
             editActions.style.display = 'flex';
             textarea.focus();
             isEditMode = true;
-            stopAutoRefresh(); // Pause auto-refresh
+            stopAutoRefresh();
         }
     }
 
@@ -768,23 +800,19 @@ $data = safeReadJson($data_file);
             alert('⚠️ Text cannot be empty!');
             return;
         }
-
         document.body.style.cursor = 'wait';
-
         try {
             const response = await fetch('admin.php?action=edit&id=' + entryId + '&new_text=' + encodeURIComponent(newText) + '&ajax=1');
             const result = await response.text();
-
             if (result === 'OK') {
                 isEditMode = false;
-                startAutoRefresh(); // Resume auto-refresh
+                startAutoRefresh(); 
                 updateAdminBoard();
             } else {
                 alert('❌ Error saving: ' + result);
                 document.body.style.cursor = 'default';
             }
         } catch (e) {
-            console.error(e);
             alert('❌ Network error');
             document.body.style.cursor = 'default';
         }
@@ -797,34 +825,27 @@ $data = safeReadJson($data_file);
         const textarea = cardBody.querySelector('.entry-text-edit');
         const normalActions = card.querySelector('.card-actions');
         const editActions = card.querySelector('.card-edit-actions');
-
-        // Restore original text
         const originalText = card.getAttribute('data-original-text')
             .replace(/&quot;/g, '"')
             .replace(/&#39;/g, "'");
         textarea.value = originalText;
 
-        // Exit edit mode
         display.style.display = 'block';
         textarea.style.display = 'none';
-        normalActions.style.display = 'flex';
+        normalActions.style.display = 'grid';
         editActions.style.display = 'none';
         isEditMode = false;
-        startAutoRefresh(); // Resume auto-refresh
+        startAutoRefresh();
     }
 
     function updateAdminBoard() {
-        // Don't refresh if in edit mode
-        if (isEditMode) {
-            return;
-        }
+        if (isEditMode) return;
         fetch('index.php?api=1&u=<?= urlencode($user_id) ?>')
             .then(response => response.json())
             .then(data => renderAdmin(data))
             .catch(err => console.error(err));
     }
 
-    // Initialize
     updateAdminBoard();
     startAutoRefresh();
 

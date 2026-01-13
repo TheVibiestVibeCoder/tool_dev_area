@@ -36,216 +36,218 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reset Password - Live Situation Room</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
     <style>
+        /* --- DESIGN SYSTEM (Monochrome / Bebas) --- */
         :root {
-            --ip-blue: #00658b;
-            --ip-dark: #32373c;
-            --ip-grey-bg: #f4f4f4;
-            --accent-success: #00d084;
-            --accent-danger: #cf2e2e;
+            /* Neutrals */
+            --bg-body: #f5f5f5;
+            --bg-card: #ffffff;
+            --text-main: #111111;
+            --text-muted: #666666;
+            --border-color: #e0e0e0;
+            
+            /* Status Colors */
+            --color-green: #27ae60; 
+            --color-red: #e74c3c;   
+            
+            /* Typography */
+            --font-head: 'Bebas Neue', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            
+            /* UI */
+            --radius-input: 4px;
+            --radius-btn: 4px;
+            --shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Roboto', sans-serif;
-            background: linear-gradient(135deg, var(--ip-blue) 0%, #004d6b 100%);
+            font-family: var(--font-body);
+            background-color: var(--bg-body);
+            color: var(--text-main);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
+            -webkit-font-smoothing: antialiased;
         }
 
         .container {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
             max-width: 500px;
             width: 100%;
-            padding: 48px 40px;
+            padding: 40px;
+            border-radius: var(--radius-btn);
         }
 
+        /* --- HEADER --- */
         .logo {
             text-align: center;
-            margin-bottom: 32px;
+            margin-bottom: 30px;
         }
 
         .logo h1 {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 28px;
-            color: var(--ip-blue);
-            margin-bottom: 8px;
+            font-family: var(--font-head);
+            font-size: 3rem;
+            line-height: 1;
+            color: var(--text-main);
+            margin-bottom: 5px;
+            text-transform: uppercase;
         }
 
         .logo p {
-            font-size: 14px;
-            color: #767676;
-            line-height: 1.5;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
         }
 
-        .form-group {
-            margin-bottom: 24px;
-        }
+        /* --- FORM ELEMENTS --- */
+        .form-group { margin-bottom: 20px; }
 
         label {
             display: block;
-            font-weight: 500;
-            color: var(--ip-dark);
+            font-family: var(--font-head);
+            font-size: 1.1rem;
+            color: var(--text-main);
             margin-bottom: 8px;
-            font-size: 14px;
+            letter-spacing: 0.5px;
         }
 
         input[type="email"],
         input[type="text"] {
             width: 100%;
-            padding: 14px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 15px;
-            font-family: 'Roboto', sans-serif;
-            transition: all 0.3s ease;
+            padding: 14px;
+            border: 1px solid var(--border-color);
+            background: #fafafa;
+            border-radius: var(--radius-input);
+            font-size: 1rem;
+            font-family: var(--font-body);
+            color: var(--text-main);
+            transition: all 0.2s ease;
         }
 
-        input[type="email"]:focus,
-        input[type="text"]:focus {
+        input:focus {
             outline: none;
-            border-color: var(--ip-blue);
-            box-shadow: 0 0 0 3px rgba(0, 101, 139, 0.1);
+            border-color: var(--text-main);
+            background: #fff;
         }
 
+        /* --- BUTTONS --- */
         .btn {
             width: 100%;
             padding: 16px;
-            background: var(--ip-blue);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 500;
-            font-family: 'Roboto', sans-serif;
+            background: var(--text-main);
+            color: #fff;
+            border: 1px solid var(--text-main);
+            border-radius: var(--radius-btn);
+            font-family: var(--font-head);
+            font-size: 1.2rem;
+            letter-spacing: 1px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
+            margin-top: 10px;
+            text-transform: uppercase;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
         }
 
         .btn:hover {
-            background: #004d6b;
+            background: #333;
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 101, 139, 0.3);
         }
 
         .btn:active {
             transform: translateY(0);
         }
 
-        .btn-secondary {
-            background: #767676;
-            margin-top: 12px;
-        }
-
-        .btn-secondary:hover {
-            background: #5a5a5a;
-        }
-
+        /* --- ALERTS --- */
         .alert {
-            padding: 14px 16px;
-            border-radius: 8px;
+            padding: 12px 16px;
+            border-radius: var(--radius-input);
             margin-bottom: 24px;
-            font-size: 14px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-left: 4px solid;
         }
 
         .alert-error {
-            background: #ffe6e6;
-            color: var(--accent-danger);
-            border: 1px solid #ffcccc;
+            background: #fff5f5;
+            color: var(--color-red);
+            border-color: var(--color-red);
         }
 
         .alert-success {
-            background: #e6f9f0;
-            color: #00855a;
-            border: 1px solid #b3e6d1;
+            background: #f0fff4;
+            color: var(--color-green);
+            border-color: var(--color-green);
         }
 
+        /* --- SUCCESS TOKEN BOX --- */
         .token-box {
-            background: #f8f8f8;
-            border: 2px solid var(--accent-success);
-            border-radius: 8px;
-            padding: 20px;
+            background: #fafafa;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-input);
+            padding: 24px;
             margin-top: 24px;
         }
 
         .token-box h3 {
-            font-size: 16px;
-            color: var(--ip-dark);
+            font-family: var(--font-head);
+            font-size: 1.4rem;
+            color: var(--text-main);
             margin-bottom: 12px;
-        }
-
-        .token-box .token {
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 6px;
-            padding: 12px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            word-break: break-all;
-            margin-bottom: 12px;
-            color: var(--ip-dark);
+            letter-spacing: 0.5px;
         }
 
         .token-box p {
-            font-size: 13px;
-            color: #767676;
-            line-height: 1.5;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.6;
             margin-bottom: 16px;
         }
 
-        .copy-btn {
-            width: 100%;
-            padding: 12px;
-            background: var(--ip-blue);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            cursor: pointer;
-            margin-bottom: 8px;
+        .token-box ul {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-left: 20px;
+            line-height: 1.6;
+            margin-bottom: 20px;
         }
 
-        .copy-btn:hover {
-            background: #004d6b;
-        }
-
+        /* --- LINK BOX --- */
         .link-box {
             text-align: center;
-            padding: 16px;
-            background: #f8f8f8;
-            border-radius: 8px;
             margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-color);
         }
 
         .link-box a {
-            color: var(--ip-blue);
+            color: var(--text-main);
             text-decoration: none;
-            font-size: 14px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border-bottom: 1px solid transparent;
+            transition: 0.2s;
         }
 
         .link-box a:hover {
-            text-decoration: underline;
+            border-bottom-color: var(--text-main);
         }
 
         @media (max-width: 600px) {
-            .container {
-                padding: 32px 24px;
-            }
-
-            .logo h1 {
-                font-size: 24px;
-            }
+            .container { padding: 30px 20px; border: none; box-shadow: none; background: transparent; }
+            .logo h1 { font-size: 2.5rem; }
         }
     </style>
 </head>
@@ -253,6 +255,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="container">
         <div class="logo">
             <h1>Reset Password</h1>
+            
             <p>Enter your email address and we'll send you a password reset link.</p>
         </div>
 
@@ -268,16 +271,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <div class="token-box">
-                <h3>📧 Check Your Email</h3>
+                <h3>Check Your Email</h3>
                 <p>If your email is registered in our system, you will receive a password reset link shortly.</p>
                 <p>The link will expire in 1 hour for security reasons.</p>
-                <p style="margin-top: 16px;"><strong>Didn't receive the email?</strong></p>
-                <ul style="font-size: 13px; color: #767676; margin-left: 20px; line-height: 1.8;">
+                <p style="margin-top: 16px; font-weight: 600; color: var(--text-main);">Didn't receive the email?</p>
+                <ul>
                     <li>Check your spam/junk folder</li>
                     <li>Make sure you entered the correct email address</li>
                     <li>Wait a few minutes and try again</li>
                 </ul>
-                <a href="forgot_password.php" class="btn" style="margin-top: 16px;">Request Another Link</a>
+                <a href="forgot_password.php" class="btn" style="margin-top: 10px;">Request Another Link</a>
             </div>
         <?php else: ?>
             <form method="POST" action="">

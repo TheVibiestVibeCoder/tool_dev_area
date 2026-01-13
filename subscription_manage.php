@@ -69,334 +69,330 @@ if (isset($_GET['error'])) {
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Subscription Management</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        /* --- DESIGN SYSTEM (Monochrome / Bebas) --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
-            --ip-blue: #00658b;
-            --ip-dark: #32373c;
-            --ip-grey-bg: #f4f4f4;
-            --ip-card-bg: #ffffff;
-            --ip-border: #e0e0e0;
-            --accent-success: #00d084;
-            --accent-danger: #cf2e2e;
-            --accent-warning: #ffa500;
-            --font-heading: 'Montserrat', sans-serif;
-            --font-body: 'Roboto', sans-serif;
+            /* Neutrals */
+            --bg-body: #f5f5f5;
+            --bg-card: #ffffff;
+            --text-main: #111111;
+            --text-muted: #666666;
+            --border-color: #e0e0e0;
+            
+            /* Status Colors */
+            --color-green: #27ae60; 
+            --color-red: #e74c3c;   
+            --color-warning: #f39c12;
+            
+            /* Typography */
+            --font-head: 'Bebas Neue', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            
+            /* UI */
+            --radius-btn: 4px;
+            --radius-card: 4px;
+            --shadow: 0 4px 6px rgba(0,0,0,0.03);
         }
 
         body {
             font-family: var(--font-body);
-            background-color: var(--ip-grey-bg);
-            color: var(--ip-dark);
-            line-height: 1.6;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
         }
 
+        /* --- HEADER --- */
         .navbar {
-            background: var(--ip-blue);
-            color: white;
-            padding: 1rem 2rem;
+            background: var(--bg-card);
+            border-bottom: 3px solid var(--text-main);
+            padding: 1.5rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .navbar h1 {
-            font-family: var(--font-heading);
-            font-size: 1.5rem;
-            font-weight: 700;
-        }
-
-        .navbar a {
-            color: white;
-            text-decoration: none;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            transition: background 0.3s;
-        }
-
-        .navbar a:hover {
-            background: rgba(255,255,255,0.1);
-        }
-
-        .container {
-            max-width: 1000px;
-            margin: 2rem auto;
-            padding: 0 2rem;
-        }
-
-        .alert {
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-            border-radius: 8px;
-            font-weight: 500;
-        }
-
-        .alert.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .alert.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .alert.warning {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeaa7;
-        }
-
-        .card {
-            background: var(--ip-card-bg);
-            border-radius: 12px;
-            padding: 2rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-bottom: 2rem;
-        }
-
-        .card h2 {
-            font-family: var(--font-heading);
-            font-size: 1.8rem;
-            margin-bottom: 1rem;
-            color: var(--ip-blue);
-        }
-
-        .card h3 {
-            font-family: var(--font-heading);
-            font-size: 1.4rem;
-            margin-bottom: 1rem;
-            margin-top: 1.5rem;
-        }
-
-        .subscription-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
             flex-wrap: wrap;
             gap: 1rem;
         }
 
+        .navbar h1 {
+            font-family: var(--font-head);
+            font-size: 2rem;
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1;
+        }
+
+        .nav-links { display: flex; gap: 20px; flex-wrap: wrap; }
+
+        .navbar a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: color 0.2s;
+        }
+
+        .navbar a:hover { color: var(--text-main); }
+
+        .container {
+            max-width: 1000px;
+            margin: 3rem auto;
+            padding: 0 2rem;
+            width: 100%;
+        }
+
+        /* --- ALERTS --- */
+        .alert {
+            padding: 1rem 1.5rem;
+            margin-bottom: 2rem;
+            border-left: 4px solid;
+            background: #fff;
+            font-size: 0.95rem;
+            box-shadow: var(--shadow);
+            word-wrap: break-word;
+        }
+        .alert.success { border-color: var(--color-green); color: var(--color-green); }
+        .alert.error { border-color: var(--color-red); color: var(--color-red); }
+        .alert.warning { border-color: var(--color-warning); color: var(--color-warning); }
+        .alert a { font-weight: 700; text-decoration: underline; }
+
+        /* --- CARD --- */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 2.5rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            border-radius: var(--radius-card);
+            width: 100%;
+        }
+
+        .card h2 {
+            font-family: var(--font-head);
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+            line-height: 1;
+        }
+
+        .card h3 {
+            font-family: var(--font-head);
+            font-size: 1.8rem;
+            margin: 2.5rem 0 1rem 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        /* SUBSCRIPTION HEADER */
+        .subscription-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+
+        .plan-info-group { display: flex; flex-direction: column; gap: 8px; }
+
         .plan-badge {
             display: inline-block;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-weight: 700;
-            font-size: 1.2rem;
-        }
-
-        .plan-badge.free {
-            background: #e0e0e0;
-            color: #666;
-        }
-
-        .plan-badge.premium {
-            background: var(--ip-blue);
-            color: white;
-        }
-
-        .plan-badge.enterprise {
-            background: var(--accent-warning);
-            color: white;
+            padding: 6px 12px;
+            border: 1px solid var(--text-main);
+            font-family: var(--font-head);
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+            color: var(--text-main);
+            background: transparent;
+            width: fit-content;
         }
 
         .status-badge {
             display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 12px;
-            font-size: 0.9rem;
-            font-weight: 600;
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #fff;
+            vertical-align: middle;
+            margin-left: 8px;
+            border-radius: 2px;
         }
+        .status-badge.active { background: var(--color-green); }
+        .status-badge.canceled { background: var(--color-red); }
+        .status-badge.past_due { background: var(--color-warning); }
 
-        .status-badge.active {
-            background: var(--accent-success);
-            color: white;
-        }
+        .price-tag { font-size: 2rem; font-family: var(--font-head); color: var(--text-main); }
+        .price-period { font-size: 1rem; color: var(--text-muted); font-family: var(--font-body); }
 
-        .status-badge.canceled {
-            background: var(--accent-danger);
-            color: white;
-        }
-
-        .status-badge.past_due {
-            background: var(--accent-warning);
-            color: white;
-        }
-
+        /* --- INFO GRID --- */
         .info-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
             margin-bottom: 2rem;
+            width: 100%;
         }
 
         .info-item {
-            padding: 1rem;
-            background: var(--ip-grey-bg);
-            border-radius: 8px;
+            background: #fafafa;
+            border: 1px solid #eee;
+            padding: 1.2rem;
+            border-radius: var(--radius-card);
+            min-width: 0;
         }
 
         .info-item label {
             display: block;
-            font-size: 0.9rem;
-            color: #666;
+            font-size: 0.85rem;
+            color: var(--text-muted);
             margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
         }
 
         .info-item .value {
-            font-size: 1.2rem;
+            font-size: 1rem;
             font-weight: 600;
-            color: var(--ip-dark);
+            color: var(--text-main);
+            word-wrap: break-word; 
+            overflow-wrap: anywhere; 
+            line-height: 1.3;
         }
 
-        .usage-bar-container {
-            margin: 1rem 0;
-        }
+        /* USAGE BARS */
+        .usage-bar-container { margin: 1.5rem 0; }
 
         .usage-bar-label {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
+            display: flex; justify-content: space-between;
+            margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 500;
         }
 
         .usage-bar {
-            height: 24px;
-            background: var(--ip-grey-bg);
-            border-radius: 12px;
+            height: 8px;
+            background: #eee;
             overflow: hidden;
-            position: relative;
+            border-radius: 4px; 
         }
 
         .usage-bar-fill {
             height: 100%;
-            background: var(--ip-blue);
-            transition: width 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            font-size: 0.85rem;
+            background: var(--text-main);
+            transition: width 0.3s ease;
         }
+        .usage-bar-fill.warning { background: var(--color-warning); }
+        .usage-bar-fill.danger { background: var(--color-red); }
 
-        .usage-bar-fill.warning {
-            background: var(--accent-warning);
-        }
-
-        .usage-bar-fill.danger {
-            background: var(--accent-danger);
-        }
-
-        .feature-list {
-            list-style: none;
-        }
-
+        /* FEATURE LIST */
+        .feature-list { list-style: none; margin-top: 1rem; }
         .feature-list li {
             padding: 0.75rem 0;
-            border-bottom: 1px solid var(--ip-border);
+            border-bottom: 1px solid #f0f0f0;
+            display: flex; align-items: center; gap: 10px;
+            font-size: 0.95rem;
+        }
+        .check { color: var(--color-green); font-weight: bold; }
+
+        /* --- BUTTONS --- */
+        .btn-group { 
+            display: flex; 
+            gap: 1rem; 
+            flex-wrap: wrap; 
+            margin-top: 2rem; 
+            width: 100%;
+            align-items: stretch; /* KEY FIX: Forces equal height */
+        }
+
+        /* Make Forms flex containers too so their children expand */
+        .btn-group form {
             display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .feature-list li:last-child {
-            border-bottom: none;
-        }
-
-        .check {
-            color: var(--accent-success);
-            font-weight: 700;
+            flex: 1;
+            min-width: 200px;
         }
 
         .btn {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-family: var(--font-heading);
+            padding: 0 24px; /* Use flex alignment for vertical */
+            border: 1px solid var(--border-color);
+            background: #fff;
+            color: var(--text-muted);
+            font-family: var(--font-head);
+            font-size: 1.1rem;
+            letter-spacing: 1px;
             text-decoration: none;
-            display: inline-block;
-        }
-
-        .btn.primary {
-            background: var(--ip-blue);
-            color: white;
-        }
-
-        .btn.primary:hover {
-            background: #004a66;
-        }
-
-        .btn.secondary {
-            background: transparent;
-            color: var(--ip-blue);
-            border: 2px solid var(--ip-blue);
-        }
-
-        .btn.secondary:hover {
-            background: var(--ip-blue);
-            color: white;
-        }
-
-        .btn.danger {
-            background: var(--accent-danger);
-            color: white;
-        }
-
-        .btn.danger:hover {
-            background: #a82424;
-        }
-
-        .btn-group {
+            cursor: pointer;
+            transition: all 0.2s;
             display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-btn);
+            
+            /* HEIGHT FIX */
+            min-height: 54px;
+            height: 100%; 
+            width: 100%;
+            text-align: center;
         }
+        
+        .btn:hover { border-color: var(--text-main); color: var(--text-main); transform: translateY(-1px); }
 
+        .btn.primary { background: var(--text-main); color: #fff; border-color: var(--text-main); }
+        .btn.primary:hover { background: #333; }
+
+        .btn.danger { color: var(--color-red); border-color: rgba(231, 76, 60, 0.3); }
+        .btn.danger:hover { background: var(--color-red); color: white; }
+
+        /* Anchor tags need flex-grow if not in a form */
+        a.btn { flex: 1; min-width: 200px; }
+
+        /* --- MOBILE OPTIMIZATION --- */
         @media (max-width: 768px) {
-            .subscription-header {
-                flex-direction: column;
-                align-items: flex-start;
+            .navbar { flex-direction: column; align-items: flex-start; gap: 1.5rem; padding: 1.5rem; }
+            .nav-links { width: 100%; justify-content: space-between; }
+            
+            .container { padding: 1rem; margin: 1rem auto; width: 100%; }
+            .card { padding: 1.5rem; }
+            
+            .subscription-header { flex-direction: column; align-items: flex-start; gap: 1.5rem; }
+            
+            .info-grid { 
+                grid-template-columns: 1fr; 
+                gap: 1rem; 
             }
-
-            .info-grid {
-                grid-template-columns: 1fr;
+            
+            .info-item { 
+                padding: 1rem; 
+                width: 100%; 
             }
-
-            .btn-group {
-                flex-direction: column;
-                width: 100%;
-            }
-
-            .btn {
-                width: 100%;
-            }
+            
+            .btn-group { flex-direction: column; gap: 10px; }
+            .btn-group form, a.btn { width: 100%; min-width: 0; }
         }
     </style>
 </head>
 <body>
     <div class="navbar">
-        <h1>Subscription Management</h1>
-        <div>
+        <h1>Subscription</h1>
+        <div class="nav-links">
             <a href="admin.php">Dashboard</a>
-            <a href="pricing.php">View Plans</a>
-            <a href="logout.php">Logout</a>
+            <a href="pricing.php">Plans</a>
+            <a href="logout.php" style="color: var(--color-red);">Logout</a>
         </div>
     </div>
 
@@ -411,28 +407,30 @@ if (isset($_GET['error'])) {
 
         <?php if ($limit_check['is_over']): ?>
             <div class="alert warning">
-                <strong>⚠ Usage Limit Exceeded</strong><br>
-                You've exceeded your plan limits (<?php echo implode(', ', $limit_check['over_limits']); ?>).
-                Please <a href="pricing.php" style="color: inherit; text-decoration: underline;">upgrade your plan</a> to continue using all features.
+                <strong>⚠ LIMIT EXCEEDED</strong><br>
+                You have exceeded your plan limits (<?php echo implode(', ', $limit_check['over_limits']); ?>).
+                <a href="pricing.php">UPGRADE PLAN</a>
             </div>
         <?php endif; ?>
 
         <div class="card">
             <div class="subscription-header">
-                <div>
+                <div class="plan-info-group">
                     <h2>Current Plan</h2>
-                    <span class="plan-badge <?php echo $subscription['plan_id']; ?>">
-                        <?php echo $plan['name']; ?>
-                    </span>
-                    <span class="status-badge <?php echo $subscription['status']; ?>">
-                        <?php echo ucfirst($subscription['status']); ?>
-                    </span>
+                    <div>
+                        <span class="plan-badge">
+                            <?php echo strtoupper($plan['name']); ?>
+                        </span>
+                        <span class="status-badge <?php echo $subscription['status']; ?>">
+                            <?php echo strtoupper($subscription['status']); ?>
+                        </span>
+                    </div>
                 </div>
                 <?php if ($subscription['plan_id'] !== 'free'): ?>
                     <div>
-                        <strong><?php echo $plan['price_monthly'] ? '€' . number_format($plan['price_monthly'], 2) : 'Custom'; ?></strong>
+                        <span class="price-tag"><?php echo $plan['price_monthly'] ? '€' . number_format($plan['price_monthly'], 2) : 'Custom'; ?></span>
                         <?php if ($plan['price_monthly']): ?>
-                            <span style="color: #666;"> / month</span>
+                            <span class="price-period">/ month</span>
                         <?php endif; ?>
                     </div>
                 <?php endif; ?>
@@ -441,27 +439,25 @@ if (isset($_GET['error'])) {
             <div class="info-grid">
                 <?php if ($subscription['current_period_end']): ?>
                     <div class="info-item">
-                        <label>Billing Period</label>
+                        <label>Next Billing Date</label>
                         <div class="value">
-                            <?php echo date('M d, Y', $subscription['current_period_end']); ?>
+                            <?php echo date('d. M Y', $subscription['current_period_end']); ?>
                         </div>
-                        <small>Renews on</small>
                     </div>
                 <?php endif; ?>
 
                 <?php if ($subscription['cancel_at_period_end']): ?>
                     <div class="info-item">
                         <label>Status</label>
-                        <div class="value" style="color: var(--accent-danger);">
-                            Canceling
+                        <div class="value" style="color: var(--color-red);">
+                            Scheduled for Cancellation
                         </div>
-                        <small>Ends <?php echo date('M d, Y', $subscription['current_period_end']); ?></small>
                     </div>
                 <?php endif; ?>
 
                 <div class="info-item">
                     <label>Account Email</label>
-                    <div class="value" style="font-size: 1rem;">
+                    <div class="value">
                         <?php echo htmlspecialchars($user_email); ?>
                     </div>
                 </div>
@@ -471,59 +467,43 @@ if (isset($_GET['error'])) {
 
             <div class="usage-bar-container">
                 <div class="usage-bar-label">
-                    <span>Columns / Categories</span>
+                    <span>Active Columns</span>
                     <span>
-                        <?php echo $usage['columns']; ?>
-                        <?php if ($limits['max_columns'] !== -1): ?>
-                            / <?php echo $limits['max_columns']; ?>
-                        <?php else: ?>
-                            / Unlimited
-                        <?php endif; ?>
+                        <?php echo $usage['columns']; ?> / 
+                        <?php echo $limits['max_columns'] !== -1 ? $limits['max_columns'] : '∞'; ?>
                     </span>
                 </div>
                 <div class="usage-bar">
                     <?php
                     $column_percentage = $limits['max_columns'] !== -1
                         ? min(100, ($usage['columns'] / $limits['max_columns']) * 100)
-                        : 10; // Show small bar for unlimited
+                        : 5; 
                     $column_class = $column_percentage > 90 ? 'danger' : ($column_percentage > 70 ? 'warning' : '');
                     ?>
-                    <div class="usage-bar-fill <?php echo $column_class; ?>" style="width: <?php echo $column_percentage; ?>%">
-                        <?php if ($column_percentage > 20): ?>
-                            <?php echo $limits['max_columns'] !== -1 ? round($column_percentage) . '%' : 'Unlimited'; ?>
-                        <?php endif; ?>
-                    </div>
+                    <div class="usage-bar-fill <?php echo $column_class; ?>" style="width: <?php echo $column_percentage; ?>%"></div>
                 </div>
             </div>
 
             <div class="usage-bar-container">
                 <div class="usage-bar-label">
-                    <span>Estimated Participants</span>
+                    <span>Est. Participants</span>
                     <span>
-                        ~<?php echo $usage['participants_estimate']; ?>
-                        <?php if ($limits['max_participants'] !== -1): ?>
-                            / <?php echo $limits['max_participants']; ?>
-                        <?php else: ?>
-                            / Unlimited
-                        <?php endif; ?>
+                        ~<?php echo $usage['participants_estimate']; ?> / 
+                        <?php echo $limits['max_participants'] !== -1 ? $limits['max_participants'] : '∞'; ?>
                     </span>
                 </div>
                 <div class="usage-bar">
                     <?php
                     $participant_percentage = $limits['max_participants'] !== -1
                         ? min(100, ($usage['participants_estimate'] / $limits['max_participants']) * 100)
-                        : 10;
+                        : 5;
                     $participant_class = $participant_percentage > 90 ? 'danger' : ($participant_percentage > 70 ? 'warning' : '');
                     ?>
-                    <div class="usage-bar-fill <?php echo $participant_class; ?>" style="width: <?php echo $participant_percentage; ?>%">
-                        <?php if ($participant_percentage > 20): ?>
-                            <?php echo $limits['max_participants'] !== -1 ? round($participant_percentage) . '%' : 'Unlimited'; ?>
-                        <?php endif; ?>
-                    </div>
+                    <div class="usage-bar-fill <?php echo $participant_class; ?>" style="width: <?php echo $participant_percentage; ?>%"></div>
                 </div>
             </div>
 
-            <h3>Plan Features</h3>
+            <h3>Features Included</h3>
             <ul class="feature-list">
                 <?php foreach ($plan['features'] as $feature => $value): ?>
                     <li>
@@ -542,29 +522,28 @@ if (isset($_GET['error'])) {
                 <?php endforeach; ?>
             </ul>
 
-            <h3>Actions</h3>
             <div class="btn-group">
                 <?php if ($subscription['plan_id'] === 'free'): ?>
-                    <a href="pricing.php" class="btn primary">Upgrade Plan</a>
+                    <a href="pricing.php" class="btn primary">UPGRADE PLAN</a>
                 <?php else: ?>
-                    <a href="pricing.php" class="btn secondary">Change Plan</a>
+                    <a href="pricing.php" class="btn">CHANGE PLAN</a>
 
                     <?php if ($subscription['stripe_customer_id']): ?>
-                        <form method="POST" style="display: inline;">
+                        <form method="POST">
                             <input type="hidden" name="action" value="portal">
-                            <button type="submit" class="btn secondary">Manage Payment Method</button>
+                            <button type="submit" class="btn">MANAGE BILLING</button>
                         </form>
                     <?php endif; ?>
 
                     <?php if ($subscription['cancel_at_period_end']): ?>
-                        <form method="POST" style="display: inline;">
+                        <form method="POST">
                             <input type="hidden" name="action" value="reactivate">
-                            <button type="submit" class="btn primary">Reactivate Subscription</button>
+                            <button type="submit" class="btn primary">REACTIVATE</button>
                         </form>
                     <?php else: ?>
-                        <form method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to cancel your subscription? You will still have access until the end of your billing period.');">
+                        <form method="POST" onsubmit="return confirm('Cancel subscription?');">
                             <input type="hidden" name="action" value="cancel">
-                            <button type="submit" class="btn danger">Cancel Subscription</button>
+                            <button type="submit" class="btn danger">CANCEL SUBSCRIPTION</button>
                         </form>
                     <?php endif; ?>
                 <?php endif; ?>
