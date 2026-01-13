@@ -1,0 +1,63 @@
+# ============================================
+# WORKSHOP TOOL - SECURITY HARDENING
+# Created: 2026-01-13
+# INSTRUCTIONS: Rename this file to .htaccess
+# ============================================
+
+# Block direct access to sensitive files
+<FilesMatch "^\.env$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Block all JSON files (accessed via PHP only)
+<FilesMatch "\.json$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Block all log files
+<FilesMatch "\.(log)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Block backup files
+<FilesMatch "\.(bak|backup)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Block composer files
+<FilesMatch "^composer\.(json|lock|phar)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Block directory listing
+Options -Indexes
+
+# Block all hidden files (.env, .git, etc)
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Protect data directory
+RedirectMatch 403 ^/data/.*$
+
+# Protect backup directories
+RedirectMatch 403 .*/backups/.*$
+
+# Force HTTPS (UNCOMMENT WHEN SSL IS READY)
+# RewriteEngine On
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Security headers (backup if PHP headers fail)
+<IfModule mod_headers.c>
+    Header always set X-Frame-Options "DENY"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
