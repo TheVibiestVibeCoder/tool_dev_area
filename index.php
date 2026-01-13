@@ -152,14 +152,16 @@ $isAdmin = $is_own_workshop;
 
         /* --- HEADER --- */
         .header-split {
-            position: sticky;
+            position: fixed;
             top: 0;
+            left: 0;
+            right: 0;
             z-index: 50;
             background: var(--bg-header);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--border-subtle);
-            
+
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -301,9 +303,10 @@ $isAdmin = $is_own_workshop;
         /* --- BOARD GRID --- */
         .dashboard-grid {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 2rem;
             padding: 2rem 3rem 4rem 3rem;
+            padding-top: 8rem; /* Space for fixed header */
             width: 100%;
         }
 
@@ -469,28 +472,28 @@ $isAdmin = $is_own_workshop;
         .context-menu-item.danger:hover { background: #ffebeb; }
 
         /* --- RESPONSIVE --- */
-        @media (max-width: 1600px) { 
-            .dashboard-grid { grid-template-columns: repeat(4, 1fr); padding: 2rem; gap: 1.5rem; } 
+        @media (max-width: 1600px) {
+            .dashboard-grid { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); padding: 2rem; padding-top: 8rem; gap: 1.5rem; }
             h1 { font-size: 2.5rem; }
         }
-        
-        @media (max-width: 1200px) { 
-            .dashboard-grid { grid-template-columns: repeat(3, 1fr); } 
+
+        @media (max-width: 1200px) {
+            .dashboard-grid { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
             .header-split { padding: 1.5rem 2rem; }
         }
-        
+
         @media (max-width: 900px) {
             .header-split {
                 flex-direction: column; align-items: flex-start; gap: 1.5rem;
                 padding: 1.5rem; position: relative;
             }
-            .dashboard-grid { grid-template-columns: repeat(2, 1fr); padding: 1rem; gap: 1rem; }
+            .dashboard-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); padding: 1rem; padding-top: 10rem; gap: 1rem; }
             .qr-section, .qr-link, .toolbar-buttons { display: none !important; }
             .mobile-join-btn { display: inline-block; width: 100%; text-align: center; }
-            
+
             .toolbar { display: flex !important; position: absolute; top: 1.5rem; right: 1.5rem; gap: 8px; z-index: 100; }
         }
-        
+
         @media (max-width: 600px) {
             .dashboard-grid { grid-template-columns: 1fr; }
             h1 { font-size: 2.5rem; }
