@@ -34,8 +34,9 @@ $data = safeReadJson($data_file);
 
 // Build gruppen from config
 $gruppen = [];
-$headerTitle = 'Live Situation Room'; 
-$logoUrl = ''; 
+$headerTitle = 'Live Situation Room';
+$logoUrl = '';
+$logoSize = 100; // Default 100px
 
 if ($config && isset($config['categories'])) {
     foreach ($config['categories'] as $category) {
@@ -46,6 +47,7 @@ if ($config && isset($config['categories'])) {
     }
     $headerTitle = $config['header_title'] ?? $headerTitle;
     $logoUrl = $config['logo_url'] ?? $logoUrl;
+    $logoSize = $config['logo_size'] ?? $logoSize;
 } else {
     $gruppen = [
         'general' => ['title' => 'GENERAL', 'icon' => '💡']
@@ -177,9 +179,9 @@ $isAdmin = $is_own_workshop;
         }
         
         .ep-logo {
-            height: 32px;
             width: auto;
             filter: grayscale(100%);
+            /* Height is dynamically set via inline style based on user config */
         }
 
         .subtitle {
@@ -547,7 +549,7 @@ $isAdmin = $is_own_workshop;
         <div class="header-content-left">
             <?php if (!empty($logoUrl)): ?>
             <div class="logo-row">
-                <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Logo" class="ep-logo">
+                <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Logo" class="ep-logo" style="height: <?= intval($logoSize) ?>px;">
             </div>
             <?php endif; ?>
 

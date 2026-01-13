@@ -41,11 +41,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         // Validate and process header title
         $newHeaderTitle = trim($_POST['header_title'] ?? '');
+        // Convert newlines to <br> tags for natural input
+        $newHeaderTitle = str_replace(["\r\n", "\n", "\r"], '<br>', $newHeaderTitle);
         // 🔒 SECURITY: Only allow <br> tags to prevent XSS
         $newHeaderTitle = strip_tags($newHeaderTitle, '<br>');
 
     // Validate and process logo URL
     $newLogoUrl = trim($_POST['logo_url'] ?? '');
+
+    // Validate and process logo size
+    $newLogoSize = intval($_POST['logo_size'] ?? 100);
+    // Ensure logo size is within reasonable bounds (20px - 500px)
+    if ($newLogoSize < 20) $newLogoSize = 20;
+    if ($newLogoSize > 500) $newLogoSize = 500;
 
     // Validate logo URL is safe (no javascript:, data:, etc.)
     if (!empty($newLogoUrl) && !isUrlSafe($newLogoUrl)) {
@@ -56,31 +64,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Validate and process categories
     $newCategories = [];
-    $categoryKeys = $_POST['category_key'] ?? [];
     $categoryNames = $_POST['category_name'] ?? [];
-    $categoryAbbrevs = $_POST['category_abbrev'] ?? [];
     $categoryIcons = $_POST['category_icon'] ?? [];
-    $categoryDisplayNames = $_POST['category_display_name'] ?? [];
+    $categoryCustomFormNames = $_POST['category_custom_form_name'] ?? [];
+    $categoryUseCustomFormName = $_POST['category_use_custom_form_name'] ?? [];
 
     $errors = [];
 
     // Process each category
-    for ($i = 0; $i < count($categoryKeys); $i++) {
-        $key = trim($categoryKeys[$i] ?? '');
+    for ($i = 0; $i < count($categoryNames); $i++) {
         $name = trim($categoryNames[$i] ?? '');
-        $abbrev = trim($categoryAbbrevs[$i] ?? '');
         $icon = trim($categoryIcons[$i] ?? '');
-        $displayName = trim($categoryDisplayNames[$i] ?? '');
 
-        if (empty($key) || empty($name) || empty($abbrev)) {
-            $errors[] = "Category $i: Key, Name, and Abbreviation are required.";
+        if (empty($name)) {
+            $errors[] = "Category " . ($i + 1) . ": Name is required.";
             continue;
         }
 
-        // Validate key format (lowercase alphanumeric)
-        if (!preg_match('/^[a-z0-9_]+$/', $key)) {
-            $errors[] = "Category $i: Key must use lowercase letters, numbers, and underscores only.";
-            continue;
+        // Auto-generate key from name (lowercase, replace spaces with underscores)
+        $key = strtolower(preg_replace('/[^a-z0-9]+/i', '_', $name));
+        $key = trim($key, '_'); // Remove leading/trailing underscores
+
+        // Auto-generate abbreviation (first 3 letters, uppercase)
+        $abbrev = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $name), 0, 3));
+        if (empty($abbrev)) {
+            $abbrev = 'CAT'; // Fallback if no letters in name
+        }
+
+        // Determine display name for form
+        $useCustomFormName = isset($categoryUseCustomFormName[$i]) && $categoryUseCustomFormName[$i] === 'yes';
+        $customFormName = trim($categoryCustomFormNames[$i] ?? '');
+
+        // If custom form name is enabled and provided, use it; otherwise use the main name with icon
+        if ($useCustomFormName && !empty($customFormName)) {
+            $displayName = $customFormName;
+        } else {
+            // Use icon + name as default
+            $displayName = !empty($icon) ? $icon . ' ' . $name : $name;
         }
 
         // Process Leitfragen for this category
@@ -96,6 +116,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'abbreviation' => $abbrev,
             'icon' => $icon,
             'display_name' => $displayName,
+            'use_custom_form_name' => $useCustomFormName,
+            'custom_form_name' => $customFormName,
             'leitfragen' => $leitfragenArray
         ];
     }
@@ -118,6 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $newConfig = [
                 'header_title' => $newHeaderTitle,
                 'logo_url' => $newLogoUrl,
+                'logo_size' => $newLogoSize,
                 'categories' => $newCategories
             ];
 
@@ -319,6 +342,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         textarea { resize: vertical; min-height: 120px; }
 
+        /* RANGE SLIDER STYLING */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--border-color);
+            outline: none;
+            border-radius: 10px;
+            padding: 0;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--color-green);
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: var(--color-green);
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
         /* CATEGORY CARD */
         .category-card {
             background: #fafafa;
@@ -366,7 +421,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         .form-row input {
             /* Input pushes to bottom */
-            margin-top: auto; 
+            margin-top: auto;
+        }
+
+        /* SIMPLIFIED 2-COLUMN LAYOUT FOR CATEGORIES */
+        .form-row-simple {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 1.5rem;
         }
 
         /* ADD CATEGORY BTN */
@@ -427,6 +490,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             .form-row { grid-template-columns: 1fr; gap: 20px; }
             .form-row .form-group { display: block; height: auto; }
             .form-row input { margin-top: 0; }
+            .form-row-simple { grid-template-columns: 1fr; gap: 20px; }
             
             .category-card { padding: 1rem; }
             .category-header { margin-bottom: 1rem; }
@@ -462,10 +526,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     Dashboard Title
                     <span class="help-text">
                         The main title displayed at the top of the Situation Room screen.<br>
-                        Tip: Type <strong>&lt;br&gt;</strong> to force a line break.
+                        Tip: Press <strong>Enter</strong> to add a line break naturally.
                     </span>
                 </label>
-                <input type="text" id="header_title" name="header_title" value="<?= htmlspecialchars($config['header_title'] ?? '') ?>" required>
+                <textarea id="header_title" name="header_title" rows="3" required><?php
+                    // Convert <br> tags back to newlines for display in textarea
+                    echo htmlspecialchars(str_replace('<br>', "\n", $config['header_title'] ?? ''));
+                ?></textarea>
             </div>
 
             <div class="form-group">
@@ -476,6 +543,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </span>
                 </label>
                 <input type="text" id="logo_url" name="logo_url" value="<?= htmlspecialchars($config['logo_url'] ?? '') ?>" placeholder="https://example.com/logo.png">
+            </div>
+
+            <div class="form-group">
+                <label for="logo_size">
+                    Logo Size: <span id="logo_size_display"><?= htmlspecialchars($config['logo_size'] ?? 100) ?>px</span>
+                    <span class="help-text">
+                        Adjust the height of your logo. Default is 100px.
+                    </span>
+                </label>
+                <input type="range" id="logo_size" name="logo_size" min="20" max="500" step="5" value="<?= htmlspecialchars($config['logo_size'] ?? 100) ?>" oninput="document.getElementById('logo_size_display').textContent = this.value + 'px'" style="width: 100%; height: 40px; cursor: pointer;">
             </div>
         </div>
 
@@ -496,51 +573,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <button type="button" class="btn btn-danger" onclick="removeCategory(this)">Remove</button>
                         </div>
 
-                        <div class="form-row">
+                        <div class="form-row-simple">
                             <div class="form-group">
                                 <label>
-                                    Key 
-                                    <span class="help-text">Internal System ID. Use <strong>lowercase letters only</strong>. No spaces. (e.g. <em>finance_team</em>)</span>
-                                </label>
-                                <input type="text" name="category_key[]" value="<?= htmlspecialchars($category['key'] ?? '') ?>" required pattern="[a-z0-9_]+">
-                            </div>
-
-                            <div class="form-group">
-                                <label>
-                                    Name 
-                                    <span class="help-text">The big headline for this column on the main screen.</span>
+                                    Name
+                                    <span class="help-text">The display name for this category. Used everywhere by default. <strong>Key and Abbreviation are auto-generated.</strong></span>
                                 </label>
                                 <input type="text" name="category_name[]" value="<?= htmlspecialchars($category['name'] ?? '') ?>" required>
                             </div>
 
                             <div class="form-group">
                                 <label>
-                                    Abbreviation 
-                                    <span class="help-text">Short 3-letter code for the Admin buttons (e.g. <em>FIN</em>).</span>
+                                    Icon
+                                    <span class="help-text">Optional emoji (e.g. 💡)</span>
                                 </label>
-                                <input type="text" name="category_abbrev[]" value="<?= htmlspecialchars($category['abbreviation'] ?? '') ?>" required maxlength="3">
-                            </div>
-
-                            <div class="form-group">
-                                <label>
-                                    Icon 
-                                    <span class="help-text">Paste an Emoji here (e.g. 💡).</span>
-                                </label>
-                                <input type="text" name="category_icon[]" value="<?= htmlspecialchars($category['icon'] ?? '') ?>">
+                                <input type="text" name="category_icon[]" value="<?= htmlspecialchars($category['icon'] ?? '') ?>" placeholder="💡">
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <label>
-                                Display Name (Input Form) 
-                                <span class="help-text">The label participants see on their phones. Best combined with an icon (e.g. <em>💰 Finance Team</em>).</span>
+                        <div class="form-group custom-form-name-wrapper">
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" name="category_use_custom_form_name[<?= $index ?>]" value="yes" onchange="toggleCustomFormName(this)" <?= !empty($category['use_custom_form_name']) ? 'checked' : '' ?> style="width: auto; cursor: pointer;">
+                                <span style="font-family: var(--font-body); font-size: 0.95rem; font-weight: 500;">Use different name for input form</span>
                             </label>
-                            <input type="text" name="category_display_name[]" value="<?= htmlspecialchars($category['display_name'] ?? '') ?>">
+                            <span class="help-text">By default, participants see: <strong><?= htmlspecialchars(($category['icon'] ?? '') . ' ' . ($category['name'] ?? '')) ?></strong>. Check this to customize it.</span>
+
+                            <div class="custom-form-name-input" style="<?= empty($category['use_custom_form_name']) ? 'display: none;' : '' ?> margin-top: 12px;">
+                                <input type="text" name="category_custom_form_name[<?= $index ?>]" value="<?= htmlspecialchars($category['custom_form_name'] ?? '') ?>" placeholder="e.g. 💰 Finance & Budgeting Team">
+                            </div>
                         </div>
 
                         <div class="form-group">
                             <label>
-                                Guiding Questions 
+                                Guiding Questions
                                 <span class="help-text">Help your participants! Write questions here to guide them. <strong>One question per line.</strong></span>
                             </label>
                             <textarea name="category_leitfragen_<?= $index ?>"><?= htmlspecialchars(implode("\n", $category['leitfragen'] ?? [])) ?></textarea>
@@ -574,51 +639,39 @@ function addCategory() {
             <button type="button" class="btn btn-danger" onclick="removeCategory(this)">Remove</button>
         </div>
 
-        <div class="form-row">
+        <div class="form-row-simple">
             <div class="form-group">
                 <label>
-                    Key 
-                    <span class="help-text">Internal System ID. Use <strong>lowercase letters only</strong>. No spaces. (e.g. <em>finance_team</em>)</span>
-                </label>
-                <input type="text" name="category_key[]" value="" required pattern="[a-z0-9_]+">
-            </div>
-
-            <div class="form-group">
-                <label>
-                    Name 
-                    <span class="help-text">The big headline for this column on the main screen.</span>
+                    Name
+                    <span class="help-text">The display name for this category. Used everywhere by default. <strong>Key and Abbreviation are auto-generated.</strong></span>
                 </label>
                 <input type="text" name="category_name[]" value="" required>
             </div>
 
             <div class="form-group">
                 <label>
-                    Abbreviation 
-                    <span class="help-text">Short 3-letter code for the Admin buttons (e.g. <em>FIN</em>).</span>
+                    Icon
+                    <span class="help-text">Optional emoji (e.g. 💡)</span>
                 </label>
-                <input type="text" name="category_abbrev[]" value="" required maxlength="3">
-            </div>
-
-            <div class="form-group">
-                <label>
-                    Icon 
-                    <span class="help-text">Paste an Emoji here (e.g. 💡).</span>
-                </label>
-                <input type="text" name="category_icon[]" value="">
+                <input type="text" name="category_icon[]" value="" placeholder="💡">
             </div>
         </div>
 
-        <div class="form-group">
-            <label>
-                Display Name (Input Form) 
-                <span class="help-text">The label participants see on their phones. Best combined with an icon (e.g. <em>💰 Finance Team</em>).</span>
+        <div class="form-group custom-form-name-wrapper">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                <input type="checkbox" name="category_use_custom_form_name[${categoryIndex}]" value="yes" onchange="toggleCustomFormName(this)" style="width: auto; cursor: pointer;">
+                <span style="font-family: var(--font-body); font-size: 0.95rem; font-weight: 500;">Use different name for input form</span>
             </label>
-            <input type="text" name="category_display_name[]" value="">
+            <span class="help-text">By default, participants see the category name with icon. Check this to customize it.</span>
+
+            <div class="custom-form-name-input" style="display: none; margin-top: 12px;">
+                <input type="text" name="category_custom_form_name[${categoryIndex}]" value="" placeholder="e.g. 💰 Finance & Budgeting Team">
+            </div>
         </div>
 
         <div class="form-group">
             <label>
-                Guiding Questions 
+                Guiding Questions
                 <span class="help-text">Help your participants! Write questions here to guide them. <strong>One question per line.</strong></span>
             </label>
             <textarea name="category_leitfragen_${categoryIndex}"></textarea>
@@ -645,6 +698,17 @@ function updateCategoryNumbers() {
     cards.forEach((card, index) => {
         card.querySelector('.category-number').textContent = `Category ${index + 1}`;
     });
+}
+
+function toggleCustomFormName(checkbox) {
+    const wrapper = checkbox.closest('.custom-form-name-wrapper');
+    const input = wrapper.querySelector('.custom-form-name-input');
+
+    if (checkbox.checked) {
+        input.style.display = 'block';
+    } else {
+        input.style.display = 'none';
+    }
 }
 
 // Form validation
