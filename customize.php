@@ -430,6 +430,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             grid-template-columns: 2fr 1fr;
             gap: 20px;
             margin-bottom: 1.5rem;
+            align-items: stretch;
+        }
+
+        .form-row-simple .form-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 0;
+            height: 100%;
+        }
+
+        .form-row-simple label {
+            margin-bottom: 10px;
+        }
+
+        .form-row-simple input {
+            margin-top: auto;
         }
 
         /* ADD CATEGORY BTN */
@@ -491,6 +507,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             .form-row .form-group { display: block; height: auto; }
             .form-row input { margin-top: 0; }
             .form-row-simple { grid-template-columns: 1fr; gap: 20px; }
+            .form-row-simple .form-group { display: block; height: auto; }
+            .form-row-simple input { margin-top: 0; }
             
             .category-card { padding: 1rem; }
             .category-header { margin-bottom: 1rem; }
