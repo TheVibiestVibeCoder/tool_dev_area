@@ -319,11 +319,19 @@ $isAdmin = $is_own_workshop;
             letter-spacing: 1px;
             margin-bottom: 1.5rem;
             padding-bottom: 0.5rem;
+            padding-top: 1rem;
             border-bottom: 1px solid var(--border-strong);
             display: flex;
             align-items: center;
             gap: 10px;
             font-weight: 400;
+
+            /* Sticky column titles that stay below fixed header */
+            position: sticky;
+            top: 6rem; /* Stays below the fixed header */
+            background: var(--bg-body);
+            z-index: 40;
+            margin-top: -1rem;
         }
 
         /* --- CARDS & TRANSITIONS --- */
@@ -485,13 +493,17 @@ $isAdmin = $is_own_workshop;
         @media (max-width: 900px) {
             .header-split {
                 flex-direction: column; align-items: flex-start; gap: 1.5rem;
-                padding: 1.5rem; position: relative;
+                padding: 1.5rem; position: fixed; /* Keep fixed on mobile */
             }
-            .dashboard-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); padding: 1rem; padding-top: 10rem; gap: 1rem; }
+            .dashboard-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); padding: 1rem; padding-top: 11rem; gap: 1rem; }
             .qr-section, .qr-link, .toolbar-buttons { display: none !important; }
             .mobile-join-btn { display: inline-block; width: 100%; text-align: center; }
 
             .toolbar { display: flex !important; position: absolute; top: 1.5rem; right: 1.5rem; gap: 8px; z-index: 100; }
+
+            .column h2 {
+                top: 8rem; /* Adjust for taller mobile header */
+            }
         }
 
         @media (max-width: 600px) {
