@@ -267,45 +267,58 @@ function isPathSafe($file_path, $base_dir = __DIR__) {
 }
 
 /**
- * Generate CSRF token for forms
- * 🔒 SECURITY: Protects against cross-site request forgery
- *
- * @return string CSRF token
+ * CSRF Token Wrapper Functions
+ * These functions provide compatibility wrappers for the CSRF functions
+ * defined in user_auth.php (generateCSRFToken and validateCSRFToken)
  */
-function generateCsrfToken() {
-    // Start session if not already started
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
 
-    // Generate token if it doesn't exist
-    if (!isset($_SESSION['csrf_token'])) {
-        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-    }
+if (!function_exists('generateCsrfToken')) {
+    /**
+     * Generate CSRF token - wrapper for generateCSRFToken()
+     * @return string CSRF token
+     */
+    function generateCsrfToken() {
+        // Ensure session is started
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
 
-    return $_SESSION['csrf_token'];
+        // Check if user_auth.php function exists
+        if (function_exists('generateCSRFToken')) {
+            return generateCSRFToken();
+        }
+
+        // Fallback: generate token directly
+        if (!isset($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+        return $_SESSION['csrf_token'];
+    }
 }
 
-/**
- * Verify CSRF token from form submission
- * 🔒 SECURITY: Validates the CSRF token
- *
- * @param string $token Token to verify
- * @return bool True if token is valid
- */
-function verifyCsrfToken($token) {
-    // Start session if not already started
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
+if (!function_exists('verifyCsrfToken')) {
+    /**
+     * Verify CSRF token - wrapper for validateCSRFToken()
+     * @param string $token Token to verify
+     * @return bool True if token is valid
+     */
+    function verifyCsrfToken($token) {
+        // Ensure session is started
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
 
-    // Check if session token exists
-    if (!isset($_SESSION['csrf_token'])) {
-        return false;
-    }
+        // Check if user_auth.php function exists
+        if (function_exists('validateCSRFToken')) {
+            return validateCSRFToken($token);
+        }
 
-    // Compare tokens (timing-safe comparison)
-    return hash_equals($_SESSION['csrf_token'], $token);
+        // Fallback: validate token directly
+        if (!isset($_SESSION['csrf_token'])) {
+            return false;
+        }
+        return hash_equals($_SESSION['csrf_token'], $token);
+    }
 }
 
 ?>
