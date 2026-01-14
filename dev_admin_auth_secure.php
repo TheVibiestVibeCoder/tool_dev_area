@@ -1,17 +1,17 @@
 <?php
 /**
- * Dev Admin Authentication System
- * Separate authentication system for developer/admin access to master control panel
+ * Dev Admin Authentication System - Production Security Hardened
+ * REPLACE dev_admin_auth.php with this file for production
  *
- * Security Features:
- * - Separate session namespace (dev_admin_*)
- * - Rate limiting on login attempts
- * - Bcrypt password hashing
- * - CSRF protection
- * - Secure session configuration
+ * Additional Security Features:
+ * - Comprehensive security logging
+ * - Optional IP whitelist
+ * - Suspicious activity detection
+ * - Account lockout notifications
+ * - Session fingerprinting
+ * - Timing attack prevention
  *
- * @version 1.0.0
- * @author Live Situation Room Dev Team
+ * @version 2.0.0 - Production Ready
  */
 
 require_once __DIR__ . '/file_handling_robust.php';
@@ -21,36 +21,110 @@ require_once __DIR__ . '/dev_admin_security_logger.php';
 // Constants
 define('DEV_ADMINS_FILE', __DIR__ . '/dev_admins.json');
 define('DEV_ADMIN_SESSION_PREFIX', 'dev_admin_');
-define('DEV_ADMIN_SESSION_TIMEOUT', 7200); // 2 hours
-define('DEV_ADMIN_MAX_LOGIN_ATTEMPTS', 5);
-define('DEV_ADMIN_LOCKOUT_DURATION', 900); // 15 minutes
+define('DEV_ADMIN_SESSION_TIMEOUT', 3600); // 1 hour for production (stricter)
+define('DEV_ADMIN_MAX_LOGIN_ATTEMPTS', 3); // Reduced to 3 for production
+define('DEV_ADMIN_LOCKOUT_DURATION', 1800); // 30 minutes lockout
+
+// Optional IP whitelist - comma separated IPs in environment variable
+// Example: DEV_ADMIN_IP_WHITELIST="203.0.113.1,198.51.100.1"
+define('DEV_ADMIN_IP_WHITELIST', getenv('DEV_ADMIN_IP_WHITELIST') ?: '');
+
+/**
+ * Check if IP is whitelisted (if whitelist is configured)
+ */
+function checkDevAdminIpWhitelist() {
+    $whitelist = DEV_ADMIN_IP_WHITELIST;
+    if (empty($whitelist)) {
+        return true; // No whitelist configured, allow all
+    }
+
+    $allowedIps = array_map('trim', explode(',', $whitelist));
+    $clientIp = $_SERVER['REMOTE_ADDR'] ?? '';
+
+    if (!in_array($clientIp, $allowedIps)) {
+        DevAdminSecurityLogger::security('IP_NOT_WHITELISTED', [
+            'ip' => $clientIp,
+            'allowed_ips' => $allowedIps
+        ]);
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * Generate session fingerprint for additional security
+ */
+function generateDevAdminSessionFingerprint() {
+    return hash('sha256',
+        ($_SERVER['HTTP_USER_AGENT'] ?? '') .
+        ($_SERVER['REMOTE_ADDR'] ?? '') .
+        'dev_admin_salt_change_me'
+    );
+}
+
+/**
+ * Validate session fingerprint
+ */
+function validateDevAdminSessionFingerprint() {
+    $currentFingerprint = generateDevAdminSessionFingerprint();
+    $storedFingerprint = $_SESSION[DEV_ADMIN_SESSION_PREFIX . 'fingerprint'] ?? '';
+
+    return hash_equals($currentFingerprint, $storedFingerprint);
+}
 
 /**
  * Initialize secure session for dev admins
  */
 function devAdminInitSession() {
     if (session_status() === PHP_SESSION_NONE) {
+        // More secure session configuration for production
         ini_set('session.cookie_httponly', '1');
         ini_set('session.cookie_samesite', 'Strict');
         ini_set('session.use_strict_mode', '1');
+        ini_set('session.use_only_cookies', '1');
+        ini_set('session.cookie_lifetime', '0'); // Session cookie
+
+        // Force HTTPS in production
         if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
             ini_set('session.cookie_secure', '1');
         }
+
         session_name('DEV_ADMIN_SESSION');
         session_start();
+
+        // Regenerate session ID periodically (every 15 minutes)
+        if (!isset($_SESSION[DEV_ADMIN_SESSION_PREFIX . 'created'])) {
+            $_SESSION[DEV_ADMIN_SESSION_PREFIX . 'created'] = time();
+        } else if (time() - $_SESSION[DEV_ADMIN_SESSION_PREFIX . 'created'] > 900) {
+            session_regenerate_id(true);
+            $_SESSION[DEV_ADMIN_SESSION_PREFIX . 'created'] = time();
+        }
     }
 }
 
 /**
  * Check if dev admin is logged in
- *
- * @return bool True if logged in and session valid
  */
 function isDevAdminLoggedIn() {
     devAdminInitSession();
 
+    // Check IP whitelist
+    if (!checkDevAdminIpWhitelist()) {
+        return false;
+    }
+
     if (!isset($_SESSION[DEV_ADMIN_SESSION_PREFIX . 'logged_in']) ||
         !$_SESSION[DEV_ADMIN_SESSION_PREFIX . 'logged_in']) {
+        return false;
+    }
+
+    // Validate session fingerprint
+    if (!validateDevAdminSessionFingerprint()) {
+        DevAdminSecurityLogger::security('SESSION_HIJACK_ATTEMPT', [
+            'username' => $_SESSION[DEV_ADMIN_SESSION_PREFIX . 'username'] ?? 'Unknown'
+        ]);
+        devAdminLogout();
         return false;
     }
 
@@ -58,6 +132,10 @@ function isDevAdminLoggedIn() {
     if (isset($_SESSION[DEV_ADMIN_SESSION_PREFIX . 'last_activity'])) {
         $elapsed = time() - $_SESSION[DEV_ADMIN_SESSION_PREFIX . 'last_activity'];
         if ($elapsed > DEV_ADMIN_SESSION_TIMEOUT) {
+            DevAdminSecurityLogger::info('SESSION_TIMEOUT', [
+                'username' => $_SESSION[DEV_ADMIN_SESSION_PREFIX . 'username'] ?? 'Unknown',
+                'elapsed_seconds' => $elapsed
+            ]);
             devAdminLogout();
             return false;
         }
@@ -71,8 +149,6 @@ function isDevAdminLoggedIn() {
 
 /**
  * Get current dev admin username
- *
- * @return string|null Username or null if not logged in
  */
 function getCurrentDevAdmin() {
     if (!isDevAdminLoggedIn()) {
@@ -83,8 +159,6 @@ function getCurrentDevAdmin() {
 
 /**
  * Load all dev admin accounts
- *
- * @return array Array of dev admin accounts
  */
 function loadDevAdmins() {
     if (!file_exists(DEV_ADMINS_FILE)) {
@@ -93,6 +167,7 @@ function loadDevAdmins() {
 
     $content = file_get_contents(DEV_ADMINS_FILE);
     if ($content === false) {
+        DevAdminSecurityLogger::error('FAILED_TO_READ_ADMINS_FILE');
         return [];
     }
 
@@ -102,16 +177,13 @@ function loadDevAdmins() {
 
 /**
  * Save dev admin accounts
- *
- * @param array $admins Array of dev admin accounts
- * @return bool Success status
  */
 function saveDevAdmins($admins) {
     $content = json_encode($admins, JSON_PRETTY_PRINT);
 
-    // Use atomic file operations with locking
     $fp = fopen(DEV_ADMINS_FILE, 'c');
     if (!$fp) {
+        DevAdminSecurityLogger::error('FAILED_TO_OPEN_ADMINS_FILE');
         return false;
     }
 
@@ -131,12 +203,6 @@ function saveDevAdmins($admins) {
 
 /**
  * Create a new dev admin account
- *
- * @param string $username Username (alphanumeric + underscore)
- * @param string $password Plain text password (will be hashed)
- * @param string $email Email address
- * @param string $full_name Full name of the admin
- * @return array Result with 'success' boolean and 'message' string
  */
 function createDevAdmin($username, $password, $email, $full_name) {
     // Validate input
@@ -148,18 +214,18 @@ function createDevAdmin($username, $password, $email, $full_name) {
         return ['success' => false, 'message' => 'Username must be 3-30 alphanumeric characters or underscore'];
     }
 
-    if (strlen($password) < 8) {
-        return ['success' => false, 'message' => 'Password must be at least 8 characters'];
+    // Strengthen password requirements for production
+    if (strlen($password) < 12) {
+        return ['success' => false, 'message' => 'Password must be at least 12 characters for production security'];
     }
 
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         return ['success' => false, 'message' => 'Invalid email address'];
     }
 
-    // Load existing admins
     $admins = loadDevAdmins();
 
-    // Check if username already exists
+    // Check duplicates
     foreach ($admins as $admin) {
         if ($admin['username'] === $username) {
             return ['success' => false, 'message' => 'Username already exists'];
@@ -185,25 +251,32 @@ function createDevAdmin($username, $password, $email, $full_name) {
     $admins[] = $newAdmin;
 
     if (saveDevAdmins($admins)) {
+        DevAdminSecurityLogger::info('ADMIN_ACCOUNT_CREATED', [
+            'username' => $username,
+            'email' => $email
+        ]);
         return ['success' => true, 'message' => 'Dev admin account created successfully'];
     } else {
-        error_log('Dev Admin: Failed to save dev admin account to file');
-        return ['success' => false, 'message' => 'Unable to create account. Please try again.'];
+        return ['success' => false, 'message' => 'Failed to save dev admin account'];
     }
 }
 
 /**
  * Authenticate dev admin login
- *
- * @param string $username Username
- * @param string $password Plain text password
- * @return array Result with 'success' boolean and 'message' string
  */
 function devAdminLogin($username, $password) {
+    // IP whitelist check
+    if (!checkDevAdminIpWhitelist()) {
+        return [
+            'success' => false,
+            'message' => 'Access denied from your IP address.'
+        ];
+    }
+
     // Rate limiting check
     $rateLimitResult = checkDevAdminRateLimit();
     if (!$rateLimitResult['allowed']) {
-        DevAdminSecurityLogger::security('LOGIN_RATE_LIMITED', [
+        DevAdminSecurityLogger::warning('RATE_LIMIT_EXCEEDED', [
             'username' => $username,
             'retry_after' => $rateLimitResult['retry_after']
         ]);
@@ -213,7 +286,6 @@ function devAdminLogin($username, $password) {
         ];
     }
 
-    // Load admins
     $admins = loadDevAdmins();
 
     // Find admin by username
@@ -227,12 +299,17 @@ function devAdminLogin($username, $password) {
         }
     }
 
+    // Generic error message to prevent username enumeration
+    $genericError = 'Invalid credentials';
+
     if ($admin === null) {
         recordDevAdminLoginAttempt(false);
-        DevAdminSecurityLogger::warning('LOGIN_FAILED_INVALID_USER', [
-            'username' => $username
+        DevAdminSecurityLogger::warning('LOGIN_FAILED_INVALID_USERNAME', [
+            'attempted_username' => $username
         ]);
-        return ['success' => false, 'message' => 'Invalid username or password'];
+        // Timing attack prevention - still verify a password even if user doesn't exist
+        password_verify($password, '$2y$12$' . str_repeat('a', 53));
+        return ['success' => false, 'message' => $genericError];
     }
 
     // Check if account is active
@@ -240,7 +317,7 @@ function devAdminLogin($username, $password) {
         DevAdminSecurityLogger::warning('LOGIN_FAILED_INACTIVE_ACCOUNT', [
             'username' => $username
         ]);
-        return ['success' => false, 'message' => 'This account has been deactivated'];
+        return ['success' => false, 'message' => 'Account is not active'];
     }
 
     // Check if account is locked
@@ -248,7 +325,7 @@ function devAdminLogin($username, $password) {
         $remainingTime = ceil((strtotime($admin['locked_until']) - time()) / 60);
         DevAdminSecurityLogger::warning('LOGIN_FAILED_ACCOUNT_LOCKED', [
             'username' => $username,
-            'remaining_lockout_minutes' => $remainingTime
+            'locked_until' => $admin['locked_until']
         ]);
         return ['success' => false, 'message' => 'Account is locked. Try again in ' . $remainingTime . ' minutes.'];
     }
@@ -257,24 +334,20 @@ function devAdminLogin($username, $password) {
     if (!password_verify($password, $admin['password_hash'])) {
         // Increment login attempts
         $admins[$adminIndex]['login_attempts']++;
-        $willBeLocked = $admins[$adminIndex]['login_attempts'] >= DEV_ADMIN_MAX_LOGIN_ATTEMPTS;
-
-        if ($willBeLocked) {
+        if ($admins[$adminIndex]['login_attempts'] >= DEV_ADMIN_MAX_LOGIN_ATTEMPTS) {
             $admins[$adminIndex]['locked_until'] = date('Y-m-d H:i:s', time() + DEV_ADMIN_LOCKOUT_DURATION);
-            DevAdminSecurityLogger::security('LOGIN_FAILED_ACCOUNT_LOCKED_NOW', [
+            DevAdminSecurityLogger::security('ACCOUNT_LOCKED_TOO_MANY_ATTEMPTS', [
                 'username' => $username,
-                'failed_attempts' => $admins[$adminIndex]['login_attempts']
-            ]);
-        } else {
-            DevAdminSecurityLogger::warning('LOGIN_FAILED_WRONG_PASSWORD', [
-                'username' => $username,
-                'attempt_count' => $admins[$adminIndex]['login_attempts']
+                'attempts' => $admins[$adminIndex]['login_attempts']
             ]);
         }
-
         saveDevAdmins($admins);
         recordDevAdminLoginAttempt(false);
-        return ['success' => false, 'message' => 'Invalid username or password'];
+        DevAdminSecurityLogger::warning('LOGIN_FAILED_INVALID_PASSWORD', [
+            'username' => $username,
+            'attempts' => $admins[$adminIndex]['login_attempts']
+        ]);
+        return ['success' => false, 'message' => $genericError];
     }
 
     // Successful login - reset attempts and update last login
@@ -292,11 +365,10 @@ function devAdminLogin($username, $password) {
     $_SESSION[DEV_ADMIN_SESSION_PREFIX . 'full_name'] = $admin['full_name'];
     $_SESSION[DEV_ADMIN_SESSION_PREFIX . 'login_time'] = time();
     $_SESSION[DEV_ADMIN_SESSION_PREFIX . 'last_activity'] = time();
+    $_SESSION[DEV_ADMIN_SESSION_PREFIX . 'fingerprint'] = generateDevAdminSessionFingerprint();
 
     recordDevAdminLoginAttempt(true);
-
-    // Log successful login
-    DevAdminSecurityLogger::info('LOGIN_SUCCESS', [
+    DevAdminSecurityLogger::info('LOGIN_SUCCESSFUL', [
         'username' => $username
     ]);
 
@@ -307,13 +379,9 @@ function devAdminLogin($username, $password) {
  * Logout dev admin
  */
 function devAdminLogout() {
-    devAdminInitSession();
+    $username = $_SESSION[DEV_ADMIN_SESSION_PREFIX . 'username'] ?? 'Unknown';
 
-    // Log logout event before clearing session
-    $username = $_SESSION[DEV_ADMIN_SESSION_PREFIX . 'username'] ?? 'unknown';
-    DevAdminSecurityLogger::info('LOGOUT', [
-        'username' => $username
-    ]);
+    devAdminInitSession();
 
     // Clear all dev admin session variables
     foreach (array_keys($_SESSION) as $key) {
@@ -338,20 +406,19 @@ function devAdminLogout() {
 
     // Destroy the session
     session_destroy();
+
+    DevAdminSecurityLogger::info('LOGOUT', ['username' => $username]);
 }
 
 /**
  * Rate limiting for login attempts (IP-based)
- *
- * @return array ['allowed' => bool, 'retry_after' => int]
  */
 function checkDevAdminRateLimit() {
     $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
     $rateLimitFile = __DIR__ . '/data/dev_admin_rate_limit.json';
 
-    // Ensure data directory exists
     if (!is_dir(__DIR__ . '/data')) {
-        mkdir(__DIR__ . '/data', 0777, true);
+        mkdir(__DIR__ . '/data', 0750, true);
     }
 
     $fp = fopen($rateLimitFile, 'c+');
@@ -403,8 +470,6 @@ function checkDevAdminRateLimit() {
 
 /**
  * Record a login attempt for rate limiting
- *
- * @param bool $success Whether the login was successful
  */
 function recordDevAdminLoginAttempt($success) {
     $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
@@ -437,8 +502,6 @@ function recordDevAdminLoginAttempt($success) {
 
 /**
  * Require dev admin authentication (redirect if not logged in)
- *
- * @param string $redirectTo URL to redirect to if not authenticated
  */
 function requireDevAdmin($redirectTo = 'dev_login.php') {
     if (!isDevAdminLoggedIn()) {
@@ -449,8 +512,6 @@ function requireDevAdmin($redirectTo = 'dev_login.php') {
 
 /**
  * Get dev admin session info
- *
- * @return array|null Session info or null if not logged in
  */
 function getDevAdminInfo() {
     if (!isDevAdminLoggedIn()) {

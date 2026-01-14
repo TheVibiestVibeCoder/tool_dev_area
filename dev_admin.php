@@ -4,6 +4,7 @@
  */
 
 require_once __DIR__ . '/dev_admin_auth.php';
+require_once __DIR__ . '/dev_admin_security_logger.php';
 require_once __DIR__ . '/security_helpers.php';
 require_once __DIR__ . '/user_auth.php';
 require_once __DIR__ . '/subscription_manager.php';
@@ -14,6 +15,12 @@ setSecurityHeaders();
 requireDevAdmin();
 
 $devAdmin = getDevAdminInfo();
+
+// Log admin panel access
+DevAdminSecurityLogger::info('ADMIN_PANEL_ACCESS', [
+    'page' => 'dev_admin.php',
+    'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown'
+]);
 $subscriptionManager = new SubscriptionManager();
 
 // Handle actions
@@ -32,6 +39,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     $result = generatePasswordResetTokenForUser($userId);
                     $actionMessage = $result['message'];
                     $actionType = $result['success'] ? 'success' : 'error';
+
+                    // Log password reset action
+                    if ($result['success']) {
+                        DevAdminSecurityLogger::warning('PASSWORD_RESET_GENERATED', [
+                            'target_user_id' => $userId,
+                            'target_email' => $result['email'] ?? 'unknown'
+                        ]);
+                    } else {
+                        DevAdminSecurityLogger::error('PASSWORD_RESET_FAILED', [
+                            'target_user_id' => $userId,
+                            'error' => $actionMessage
+                        ]);
+                    }
                 }
                 break;
         }
@@ -121,22 +141,45 @@ function getAllWorkshops($users) {
 }
 
 function generatePasswordResetTokenForUser($userId) {
-    if (!file_exists(USERS_FILE)) return ['success' => false, 'message' => 'Users file not found'];
+    // Security: Check file exists with generic error message
+    if (!file_exists(USERS_FILE)) {
+        error_log('Dev Admin: Users file not found when generating reset token');
+        return ['success' => false, 'message' => 'Unable to process request. Please try again.'];
+    }
+
     $data = json_decode(file_get_contents(USERS_FILE), true);
+
+    // Security: Check data structure with generic error message
+    if (!isset($data['users']) || !is_array($data['users'])) {
+        error_log('Dev Admin: Invalid users data structure when generating reset token');
+        return ['success' => false, 'message' => 'Unable to process request. Please try again.'];
+    }
+
     $userFound = false; $userEmail = '';
     foreach ($data['users'] as $user) {
         if ($user['id'] === $userId) { $userFound = true; $userEmail = $user['email']; break; }
     }
-    if (!$userFound) return ['success' => false, 'message' => 'User not found'];
-    $token = bin2hex(random_bytes(32)); $expiry = time() + 3600;
+
+    // Security: Generic error to prevent user enumeration
+    if (!$userFound) {
+        error_log('Dev Admin: User not found for reset token: ' . $userId);
+        return ['success' => false, 'message' => 'Unable to process request. Please try again.'];
+    }
+
+    $token = bin2hex(random_bytes(32));
+    $expiry = time() + RESET_TOKEN_EXPIRY;
     $tokensFile = RESET_TOKENS_FILE;
     $tokens = file_exists($tokensFile) ? json_decode(file_get_contents($tokensFile), true) : [];
     $tokens[] = ['token' => $token, 'user_id' => $userId, 'email' => $userEmail, 'expiry' => $expiry, 'used' => false, 'created_at' => date('Y-m-d H:i:s'), 'created_by' => 'dev_admin'];
+
     if (file_put_contents($tokensFile, json_encode($tokens, JSON_PRETTY_PRINT))) {
         $resetLink = 'https://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . '/reset_password.php?token=' . $token;
         return ['success' => true, 'message' => 'Password reset link generated', 'link' => $resetLink, 'email' => $userEmail];
     }
-    return ['success' => false, 'message' => 'Failed to save reset token'];
+
+    // Security: Generic error on file save failure
+    error_log('Dev Admin: Failed to save reset token to file');
+    return ['success' => false, 'message' => 'Unable to process request. Please try again.'];
 }
 ?>
 <!DOCTYPE html>

@@ -1,0 +1,151 @@
+# ============================================
+# PRODUCTION SECURITY - HARDENED .htaccess
+# REPLACE .htaccess WITH THIS FILE IN PRODUCTION
+# ============================================
+
+# Block direct access to sensitive files
+<FilesMatch "^\.env$">
+    Require all denied
+</FilesMatch>
+
+# Block ALL JSON files (accessed via PHP only)
+<FilesMatch "\.json$">
+    Require all denied
+</FilesMatch>
+
+# Block all log files
+<FilesMatch "\.(log)$">
+    Require all denied
+</FilesMatch>
+
+# Block backup files
+<FilesMatch "\.(bak|backup|old|save|swp|swo)$">
+    Require all denied
+</FilesMatch>
+
+# Block PHP files that shouldn't be accessed directly
+<FilesMatch "^(dev_admin_auth_secure|dev_admin_security_logger|file_handling_robust|security_helpers|subscription_manager|stripe_api_client|stripe_webhook|stripe_config)\.php$">
+    Require all denied
+</FilesMatch>
+
+# Block composer and package manager files
+<FilesMatch "^(composer\.(json|lock|phar)|package\.json|yarn\.lock)$">
+    Require all denied
+</FilesMatch>
+
+# Block directory listing
+Options -Indexes
+
+# Block all hidden files (.env, .git, etc)
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+# Protect data directory
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^data/ - [F,L]
+    RewriteRule ^logs/ - [F,L]
+    RewriteRule ^backups/ - [F,L]
+    RewriteRule ^FIXES/ - [F,L]
+</IfModule>
+
+# Block access to specific directories
+RedirectMatch 403 ^/data/.*$
+RedirectMatch 403 ^/logs/.*$
+RedirectMatch 403 ^/backups/.*$
+RedirectMatch 403 ^/FIXES/.*$
+RedirectMatch 403 ^/vendor/.*$
+RedirectMatch 403 .*/\.git/.*$
+
+# Force HTTPS - IMPORTANT: ENABLE THIS IN PRODUCTION
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# Enhanced Security Headers
+<IfModule mod_headers.c>
+    # Prevent clickjacking
+    Header always set X-Frame-Options "DENY"
+
+    # Prevent MIME type sniffing
+    Header always set X-Content-Type-Options "nosniff"
+
+    # XSS Protection
+    Header always set X-XSS-Protection "1; mode=block"
+
+    # Referrer Policy
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # HSTS - Force HTTPS for 1 year
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+
+    # Content Security Policy - ADJUST AS NEEDED
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://cdnjs.cloudflare.com https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; frame-src https://js.stripe.com https://checkout.stripe.com; connect-src 'self' https://api.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self';"
+
+    # Permissions Policy
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=(self), usb=()"
+
+    # Remove server signature
+    Header unset X-Powered-By
+    Header always unset X-Powered-By
+</IfModule>
+
+# Disable server signature
+ServerSignature Off
+
+# Protect against HTTP Request Smuggling
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{THE_REQUEST} !HTTP/1\.1$
+    RewriteRule .* - [F]
+</IfModule>
+
+# Limit request body size to prevent DoS (10MB)
+<IfModule mod_security.c>
+    SecRequestBodyLimit 10485760
+</IfModule>
+
+# Block suspicious user agents
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTP_USER_AGENT} (libwww-perl|wget|python|nikto|curl|scan|java|winhttp|clshttp|loader) [NC,OR]
+    RewriteCond %{HTTP_USER_AGENT} (<|>|'|%0A|%0D|%27|%3C|%3E|%00) [NC,OR]
+    RewriteCond %{HTTP_USER_AGENT} (;|<|>|'|"|\)|\(|%0A|%0D|%27|%3C|%3E|%00).*(libwww-perl|wget|python|nikto|curl|scan|java|winhttp|HTTrack|clshttp|archiver|loader|email|harvest|extract|grab|miner) [NC]
+    RewriteRule .* - [F,L]
+</IfModule>
+
+# Limit request methods
+<LimitExcept GET POST HEAD>
+    Require all denied
+</LimitExcept>
+
+# Disable directory browsing
+Options All -Indexes
+
+# Protect .htaccess file itself
+<Files .htaccess>
+    Require all denied
+</Files>
+
+# Block access to clear_cache.php in production
+<Files "clear_cache.php">
+    Require all denied
+</Files>
+
+# Block access to dev_admin_setup.php (only use once)
+<Files "dev_admin_setup.php">
+    Require all denied
+</Files>
+
+# Block access to create_dev_admin.php via web
+<Files "create_dev_admin.php">
+    Require all denied
+</Files>
+
+# Custom error pages (create these files)
+# ErrorDocument 403 /errors/403.html
+# ErrorDocument 404 /errors/404.html
+# ErrorDocument 500 /errors/500.html
