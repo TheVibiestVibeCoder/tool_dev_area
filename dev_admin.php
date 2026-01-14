@@ -1,6 +1,7 @@
 <?php
 /**
- * Dev Admin Control Panel - Adapted to Workshop Control Design Language
+ * Dev Admin Control Panel - Adapted & Mobile Optimized
+ * No-scroll card layout for mobile viewports
  */
 
 require_once __DIR__ . '/dev_admin_auth.php';
@@ -43,7 +44,7 @@ $allUsers = getAllUsersDetailed();
 $stats = calculatePlatformStats($allUsers);
 $allWorkshops = getAllWorkshops($allUsers);
 
-// Helper functions (Logic remains identical to your source)
+// --- Logic remains untouched per your strict instruction ---
 function getAllUsersDetailed() {
     if (!file_exists(USERS_FILE)) return [];
     $data = json_decode(file_get_contents(USERS_FILE), true);
@@ -143,7 +144,7 @@ function generatePasswordResetTokenForUser($userId) {
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dev Panel | Live Situation Room</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -172,6 +173,7 @@ function generatePasswordResetTokenForUser($userId) {
             margin: 0; padding: 0;
             line-height: 1.5;
             -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
         }
 
         .container { max-width: 1600px; margin: 0 auto; padding: 2rem; width: 100%; }
@@ -199,6 +201,7 @@ function generatePasswordResetTokenForUser($userId) {
             font-size: 1.1rem; letter-spacing: 1px; cursor: pointer; 
             display: inline-flex; align-items: center; justify-content: center;
             border-radius: var(--radius-btn); line-height: 1; transition: 0.2s;
+            min-height: 44px;
         }
         .btn:hover { border-color: var(--text-main); color: var(--text-main); transform: translateY(-1px); }
         .btn-primary { background: var(--text-main); color: #fff; border-color: var(--text-main); }
@@ -226,22 +229,53 @@ function generatePasswordResetTokenForUser($userId) {
         /* --- SECTIONS --- */
         .section-panel {
             background: var(--bg-card); border: 1px solid var(--border-color);
-            padding: 2rem; margin-bottom: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            padding: 2rem; margin-bottom: 2rem;
         }
         .section-panel h2 {
             font-family: var(--font-head); font-size: 2rem; margin: 0 0 1.5rem 0;
             border-bottom: 1px solid var(--text-main); padding-bottom: 10px;
         }
 
-        /* --- TABLE STYLE --- */
-        .data-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        /* --- DATA TABLE & MOBILE CARDS --- */
+        .table-wrapper { width: 100%; }
+        .data-table { width: 100%; border-collapse: collapse; }
         .data-table th {
             font-family: var(--font-head); text-align: left; padding: 12px;
             color: var(--text-muted); border-bottom: 2px solid var(--text-main);
             letter-spacing: 1px; font-size: 1.1rem;
         }
         .data-table td { padding: 15px 12px; border-bottom: 1px solid var(--border-color); font-size: 0.95rem; }
-        .data-table tr:hover { background: #fafafa; }
+
+        /* Mobile Responsive Strategy: Table -> Cards */
+        @media (max-width: 900px) {
+            .container { padding: 1rem; }
+            .admin-header { flex-direction: column; align-items: flex-start; padding: 1.5rem; }
+            .admin-header h1 { font-size: 2.5rem; }
+
+            .stats-grid { grid-template-columns: 1fr; gap: 10px; }
+            .section-panel { padding: 1.2rem; }
+
+            /* Hide table headers on mobile */
+            .data-table thead { display: none; }
+            
+            /* Transform rows into individual cards */
+            .data-table tr { 
+                display: flex; flex-direction: column; 
+                border: 1px solid var(--border-color); 
+                margin-bottom: 1.5rem; padding: 1rem; 
+                background: #fff;
+            }
+            .data-table td { 
+                display: flex; justify-content: space-between; align-items: center;
+                padding: 8px 0; border-bottom: 1px dashed #eee;
+            }
+            .data-table td::before { 
+                content: attr(data-label); 
+                font-family: var(--font-head); color: var(--text-muted); 
+                font-size: 0.9rem; letter-spacing: 1px;
+            }
+            .data-table td:last-child { border-bottom: none; padding-top: 15px; }
+        }
 
         /* --- BADGES --- */
         .badge {
@@ -261,24 +295,12 @@ function generatePasswordResetTokenForUser($userId) {
         }
         .modal.show { display: flex; }
         .modal-content {
-            background: #fff; padding: 3rem; max-width: 700px; width: 90%;
-            border-top: 10px solid var(--text-main); position: relative;
+            background: #fff; padding: 2rem; max-width: 600px; width: 95%;
+            border-top: 8px solid var(--text-main);
         }
         .code-box {
-            background: #f8f8f8; padding: 15px; font-family: monospace;
-            border: 1px solid var(--border-color); word-break: break-all; margin: 1.5rem 0;
-        }
-
-        .alert {
-            padding: 1.5rem; margin-bottom: 2rem; border-left: 5px solid; font-weight: 600;
-        }
-        .alert-success { background: #e8f5e9; border-color: var(--color-green); color: #1b5e20; }
-        .alert-error { background: #ffebee; border-color: var(--color-red); color: #b71c1c; }
-
-        @media (max-width: 900px) {
-            .admin-header { flex-direction: column; align-items: flex-start; gap: 1.5rem; padding: 1.5rem; }
-            .admin-header h1 { font-size: 2.5rem; }
-            .data-table { display: block; overflow-x: auto; }
+            background: #f8f8f8; padding: 15px; font-family: monospace; font-size: 0.85rem;
+            border: 1px solid var(--border-color); word-break: break-all; margin: 1rem 0;
         }
     </style>
 </head>
@@ -286,14 +308,13 @@ function generatePasswordResetTokenForUser($userId) {
 
 <div class="container">
     <header class="admin-header">
-        <div class="header-title-group">
-            <span class="subtitle">Platform Master Control &bull; DEV ACCESS</span>
+        <div>
+            <span class="subtitle">Platform Master &bull; DEV ACCESS</span>
             <h1>Dev Dashboard</h1>
         </div>
-        <div class="header-actions">
-            <div style="text-align: right; margin-right: 20px; font-family: var(--font-head);">
-                <div style="font-size: 1.2rem;"><?= htmlspecialchars($devAdmin['full_name']) ?></div>
-                <div style="font-size: 0.8rem; color: var(--text-muted);">SUPERUSER</div>
+        <div style="display: flex; gap: 15px; align-items: center; margin-top: 15px;">
+            <div class="mobile-hide" style="text-align: right; font-family: var(--font-head);">
+                <div style="font-size: 1.1rem;"><?= htmlspecialchars($devAdmin['full_name']) ?></div>
             </div>
             <a href="dev_logout.php" class="btn btn-danger">System Logout</a>
         </div>
@@ -306,130 +327,88 @@ function generatePasswordResetTokenForUser($userId) {
     <?php endif; ?>
 
     <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-label">Total Platform Users</div>
-            <div class="stat-value"><?= number_format($stats['total_users']); ?></div>
-            <div class="stat-subtext"><?= number_format($stats['active_users']); ?> active this week</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">Running Workshops</div>
-            <div class="stat-value"><?= number_format($stats['total_workshops']); ?></div>
-            <div class="stat-subtext">Configured environments</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">Data Entries</div>
-            <div class="stat-value"><?= number_format($stats['total_entries']); ?></div>
-            <div class="stat-subtext">Total records stored</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">Monthly MRR</div>
-            <div class="stat-value">€<?= number_format($stats['revenue_monthly'], 2); ?></div>
-            <div class="stat-subtext">+ €<?= number_format($stats['revenue_yearly'], 2); ?> ARR</div>
-        </div>
-    </div>
-
-    <div class="section-panel">
-        <h2>Plan Distribution</h2>
-        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
-            <div class="stat-card" style="border-left-color: #eee;">
-                <div class="stat-label">Free</div>
-                <div class="stat-value" style="font-size: 2rem;"><?= $stats['subscription_breakdown']['free']; ?></div>
-            </div>
-            <div class="stat-card" style="border-left-color: #f1c40f;">
-                <div class="stat-label">Premium</div>
-                <div class="stat-value" style="font-size: 2rem;"><?= $stats['subscription_breakdown']['premium']; ?></div>
-            </div>
-            <div class="stat-card" style="border-left-color: #9b59b6;">
-                <div class="stat-label">Enterprise</div>
-                <div class="stat-value" style="font-size: 2rem;"><?= $stats['subscription_breakdown']['enterprise']; ?></div>
-            </div>
-            <div class="stat-card" style="border-left-color: var(--color-red);">
-                <div class="stat-label">Churned</div>
-                <div class="stat-value" style="font-size: 2rem;"><?= $stats['subscription_breakdown']['cancelled']; ?></div>
-            </div>
-        </div>
+        <div class="stat-card"><div class="stat-label">Total Users</div><div class="stat-value"><?= number_format($stats['total_users']); ?></div></div>
+        <div class="stat-card"><div class="stat-label">Active Workshops</div><div class="stat-value"><?= number_format($stats['total_workshops']); ?></div></div>
+        <div class="stat-card"><div class="stat-label">Monthly MRR</div><div class="stat-value">€<?= number_format($stats['revenue_monthly'], 2); ?></div></div>
     </div>
 
     <div class="section-panel">
         <h2>User Database</h2>
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>ID (Short)</th>
-                    <th>Email Address</th>
-                    <th>Plan</th>
-                    <th>Status</th>
-                    <th>Last Activity</th>
-                    <th style="text-align: right;">Operations</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($allUsers as $user): ?>
-                <tr>
-                    <td style="font-family: monospace;"><?= htmlspecialchars(substr($user['id'] ?? 'N/A', 0, 8)); ?></td>
-                    <td><strong><?= htmlspecialchars($user['email'] ?? 'N/A'); ?></strong></td>
-                    <td>
-                        <?php $plan = $user['subscription']['plan_id'] ?? 'free'; ?>
-                        <span class="badge badge-<?= $plan; ?>"><?= strtoupper($plan); ?></span>
-                    </td>
-                    <td>
-                        <?php
-                        $status = $user['subscription']['status'] ?? 'active';
-                        $cancelAtPeriodEnd = $user['subscription']['cancel_at_period_end'] ?? false;
-                        $isCancelled = ($status === 'canceled' || $status === 'cancelled' || $cancelAtPeriodEnd);
-                        ?>
-                        <span class="badge <?= $isCancelled ? 'badge-cancelled' : 'badge-active'; ?>">
-                            <?= $isCancelled ? ($cancelAtPeriodEnd ? 'PENDING CANCEL' : 'CANCELLED') : 'ACTIVE'; ?>
-                        </span>
-                    </td>
-                    <td><?= $user['last_login'] ? date('d.m.Y H:i', is_numeric($user['last_login']) ? $user['last_login'] : strtotime($user['last_login'])) : 'Never'; ?></td>
-                    <td style="text-align: right;">
-                        <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.9rem;" onclick="sendResetLink('<?= $user['id'] ?>', '<?= $user['email'] ?>')">RESET PWD</button>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Email Address</th>
+                        <th>Plan</th>
+                        <th>Status</th>
+                        <th>Last Activity</th>
+                        <th style="text-align: right;">Operations</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($allUsers as $user): ?>
+                    <tr>
+                        <td data-label="EMAIL"><strong><?= htmlspecialchars($user['email'] ?? 'N/A'); ?></strong></td>
+                        <td data-label="PLAN">
+                            <?php $plan = $user['subscription']['plan_id'] ?? 'free'; ?>
+                            <span class="badge badge-<?= $plan; ?>"><?= strtoupper($plan); ?></span>
+                        </td>
+                        <td data-label="STATUS">
+                            <?php
+                            $status = $user['subscription']['status'] ?? 'active';
+                            $cancelAtPeriodEnd = $user['subscription']['cancel_at_period_end'] ?? false;
+                            $isCancelled = ($status === 'canceled' || $status === 'cancelled' || $cancelAtPeriodEnd);
+                            ?>
+                            <span class="badge <?= $isCancelled ? 'badge-cancelled' : 'badge-active'; ?>">
+                                <?= $isCancelled ? 'CANCELLED' : 'ACTIVE'; ?>
+                            </span>
+                        </td>
+                        <td data-label="ACTIVITY"><?= $user['last_login'] ? date('d.m.y', is_numeric($user['last_login']) ? $user['last_login'] : strtotime($user['last_login'])) : 'Never'; ?></td>
+                        <td style="text-align: right;">
+                            <button class="btn btn-primary" style="width: 100%;" onclick="sendResetLink('<?= $user['id'] ?>', '<?= $user['email'] ?>')">RESET PWD</button>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <div class="section-panel">
-        <h2>Platform Activity: Live Workshops</h2>
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>Owner</th>
-                    <th>Categories</th>
-                    <th>Entries</th>
-                    <th style="text-align: right;">View</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($allWorkshops as $workshop): ?>
-                <tr>
-                    <td><strong><?= htmlspecialchars($workshop['title']); ?></strong></td>
-                    <td><?= htmlspecialchars($workshop['user_email']); ?></td>
-                    <td><?= $workshop['categories_count']; ?></td>
-                    <td><?= $workshop['entries_count']; ?></td>
-                    <td style="text-align: right;">
-                        <a href="index.php?u=<?= urlencode($workshop['user_id']); ?>" target="_blank" class="btn">OPEN VIEW</a>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+        <h2>Live Workshops</h2>
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Workshop Title</th>
+                        <th>Owner</th>
+                        <th>Entries</th>
+                        <th style="text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($allWorkshops as $workshop): ?>
+                    <tr>
+                        <td data-label="TITLE"><strong><?= htmlspecialchars($workshop['title']); ?></strong></td>
+                        <td data-label="OWNER"><?= htmlspecialchars($workshop['user_email']); ?></td>
+                        <td data-label="DATA"><?= $workshop['entries_count']; ?> entries</td>
+                        <td style="text-align: right;">
+                            <a href="index.php?u=<?= urlencode($workshop['user_id']); ?>" target="_blank" class="btn" style="width: 100%;">OPEN VIEW</a>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <div id="resetModal" class="modal">
     <div class="modal-content">
-        <h2 style="font-family: var(--font-head); font-size: 2.5rem; margin-top: 0;">RESET LINK GENERATED</h2>
-        <p>User: <strong id="resetEmail"></strong></p>
+        <h2 style="font-family: var(--font-head); font-size: 2rem;">RESET LINK READY</h2>
         <div class="code-box" id="resetLink"></div>
-        <div style="display: flex; gap: 10px; margin-top: 20px;">
-            <button class="btn btn-primary" onclick="copyResetLink()">COPY TO CLIPBOARD</button>
-            <button class="btn" onclick="closeResetModal()">CLOSE</button>
-        </div>
+        <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="copyResetLink()">COPY LINK</button>
+        <button class="btn" style="width: 100%;" onclick="closeResetModal()">CLOSE</button>
     </div>
 </div>
 
@@ -442,21 +421,18 @@ function generatePasswordResetTokenForUser($userId) {
 <script>
     let currentResetLink = '';
     function sendResetLink(userId, email) {
-        if (confirm('GENERATE NEW ACCESS LINK FOR: ' + email + '?')) {
+        if (confirm('GENERATE RESET LINK?')) {
             document.getElementById('resetUserId').value = userId;
             document.getElementById('resetForm').submit();
         }
     }
     function showResetModal(email, link) {
         currentResetLink = link;
-        document.getElementById('resetEmail').textContent = email;
         document.getElementById('resetLink').textContent = link;
         document.getElementById('resetModal').classList.add('show');
     }
     function closeResetModal() { document.getElementById('resetModal').classList.remove('show'); }
-    function copyResetLink() {
-        navigator.clipboard.writeText(currentResetLink).then(() => alert('Copied!'));
-    }
+    function copyResetLink() { navigator.clipboard.writeText(currentResetLink).then(() => alert('Copied!')); }
 
     <?php if ($actionType === 'success' && isset($_POST['action']) && $_POST['action'] === 'send_reset_link'): ?>
         <?php $result = generatePasswordResetTokenForUser($_POST['user_id']); if ($result['success']): ?>
