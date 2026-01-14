@@ -30,7 +30,7 @@ $actionType = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     // Verify CSRF token
-    if (!isset($_POST['csrf_token']) || !verifyCsrfToken($_POST['csrf_token'])) {
+    if (!isset($_POST['csrf_token']) || !validateCSRFToken($_POST['csrf_token'])) {
         $actionMessage = 'Invalid security token';
         $actionType = 'error';
     } else {
@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 }
 
 // Generate CSRF token
-$csrfToken = generateCsrfToken();
+$csrfToken = generateCSRFToken();
 
 // Load all users
 $allUsers = getAllUsersDetailed();
