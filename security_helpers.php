@@ -266,4 +266,46 @@ function isPathSafe($file_path, $base_dir = __DIR__) {
     return strpos($real_path, $real_base) === 0;
 }
 
+/**
+ * Generate CSRF token for forms
+ * 🔒 SECURITY: Protects against cross-site request forgery
+ *
+ * @return string CSRF token
+ */
+function generateCsrfToken() {
+    // Start session if not already started
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    // Generate token if it doesn't exist
+    if (!isset($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+
+    return $_SESSION['csrf_token'];
+}
+
+/**
+ * Verify CSRF token from form submission
+ * 🔒 SECURITY: Validates the CSRF token
+ *
+ * @param string $token Token to verify
+ * @return bool True if token is valid
+ */
+function verifyCsrfToken($token) {
+    // Start session if not already started
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    // Check if session token exists
+    if (!isset($_SESSION['csrf_token'])) {
+        return false;
+    }
+
+    // Compare tokens (timing-safe comparison)
+    return hash_equals($_SESSION['csrf_token'], $token);
+}
+
 ?>
