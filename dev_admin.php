@@ -111,14 +111,18 @@ function calculatePlatformStats($users) {
         // Count subscription types - FIXED: use plan_id not plan
         $plan = $user['subscription']['plan_id'] ?? 'free';
         $status = $user['subscription']['status'] ?? 'active';
+        $cancelAtPeriodEnd = $user['subscription']['cancel_at_period_end'] ?? false;
 
-        if ($status === 'active' || $status === 'trialing') {
+        // Check if subscription is cancelled (either status=canceled OR cancel_at_period_end=true)
+        if ($status === 'canceled' || $status === 'cancelled' || $cancelAtPeriodEnd) {
+            $stats['subscription_breakdown']['cancelled']++;
+        } elseif ($status === 'active' || $status === 'trialing') {
             if (isset($stats['subscription_breakdown'][$plan])) {
                 $stats['subscription_breakdown'][$plan]++;
             }
 
-            // Calculate revenue
-            if ($plan === 'premium') {
+            // Calculate revenue (only for active, non-cancelled subscriptions)
+            if ($plan === 'premium' && !$cancelAtPeriodEnd) {
                 $billingCycle = $user['subscription']['billing_cycle'] ?? 'monthly';
                 if ($billingCycle === 'monthly') {
                     $stats['revenue_monthly'] += 19.99;
@@ -126,8 +130,6 @@ function calculatePlatformStats($users) {
                     $stats['revenue_yearly'] += 203.89;
                 }
             }
-        } elseif ($status === 'cancelled' || $status === 'canceled') {
-            $stats['subscription_breakdown']['cancelled']++;
         }
 
         // Count workshops and entries for this user - FIXED: use 'id' not 'user_id'
@@ -736,17 +738,26 @@ function generatePasswordResetTokenForUser($userId) {
                                 <td>
                                     <?php
                                     $status = $user['subscription']['status'] ?? 'active';
-                                    $statusClass = 'badge-' . ($status === 'active' || $status === 'trialing' ? 'active' : 'cancelled');
+                                    $cancelAtPeriodEnd = $user['subscription']['cancel_at_period_end'] ?? false;
+
+                                    // Show cancelled if either status is canceled OR cancel_at_period_end is true
+                                    if ($status === 'canceled' || $status === 'cancelled' || $cancelAtPeriodEnd) {
+                                        $statusClass = 'badge-cancelled';
+                                        $displayStatus = $cancelAtPeriodEnd ? 'Cancelling' : 'Cancelled';
+                                    } else {
+                                        $statusClass = 'badge-' . ($status === 'active' || $status === 'trialing' ? 'active' : 'cancelled');
+                                        $displayStatus = ucfirst($status);
+                                    }
                                     ?>
-                                    <span class="badge <?php echo $statusClass; ?>"><?php echo ucfirst($status); ?></span>
+                                    <span class="badge <?php echo $statusClass; ?>"><?php echo $displayStatus; ?></span>
                                 </td>
                                 <td><?php
                                     $createdAt = $user['created_at'] ?? null;
-                                    echo $createdAt ? htmlspecialchars(date('Y-m-d', is_numeric($createdAt) ? $createdAt : strtotime($createdAt))) : 'N/A';
+                                    echo $createdAt ? htmlspecialchars(date('d.m.Y', is_numeric($createdAt) ? $createdAt : strtotime($createdAt))) : 'N/A';
                                 ?></td>
                                 <td><?php
                                     $lastLogin = $user['last_login'] ?? null;
-                                    echo $lastLogin ? htmlspecialchars(date('Y-m-d H:i', is_numeric($lastLogin) ? $lastLogin : strtotime($lastLogin))) : 'Never';
+                                    echo $lastLogin ? htmlspecialchars(date('d.m.Y H:i', is_numeric($lastLogin) ? $lastLogin : strtotime($lastLogin))) : 'Never';
                                 ?></td>
                                 <td>
                                     <button class="btn btn-primary btn-small" onclick="sendResetLink('<?php echo htmlspecialchars($user['id'] ?? ''); ?>', '<?php echo htmlspecialchars($user['email'] ?? ''); ?>')">
