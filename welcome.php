@@ -16,6 +16,7 @@ if (isLoggedIn()) {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <script type="importmap">
         {
@@ -312,37 +313,37 @@ if (isLoggedIn()) {
             <h2 class="fade-in">System Capabilities</h2>
             <div class="features-grid fade-in">
                 <div class="feature-card">
-                    <div class="feature-icon">👥</div>
+                    <div class="feature-icon"><i class="fa-solid fa-users-rays"></i></div>
                     <h3>High Concurrency</h3>
                     <p>Optimized for large-scale workshops. Handle 50+ simultaneous participants submitting ideas in real-time without lag.</p>
                 </div>
 
                 <div class="feature-card">
-                    <div class="feature-icon">⚡</div>
+                    <div class="feature-icon"><i class="fa-solid fa-bolt-lightning"></i></div>
                     <h3>Real-Time Sync</h3>
                     <p>Submissions appear instantly on the dashboard. Live polling ensures the main screen is always up to date.</p>
                 </div>
 
                 <div class="feature-card">
-                    <div class="feature-icon">🎯</div>
+                    <div class="feature-icon"><i class="fa-solid fa-bullseye"></i></div>
                     <h3>Focus Mode</h3>
                     <p>Admins can spotlight specific cards, dimming the rest of the interface to guide the room's attention instantly.</p>
                 </div>
 
                 <div class="feature-card">
-                    <div class="feature-icon">📱</div>
+                    <div class="feature-icon"><i class="fa-solid fa-mobile-screen-button"></i></div>
                     <h3>BYOD Ready</h3>
                     <p>Participants use their own devices via QR code. No app installation required—just scan and contribute.</p>
                 </div>
 
                 <div class="feature-card">
-                    <div class="feature-icon">🔒</div>
+                    <div class="feature-icon"><i class="fa-solid fa-shield-halved"></i></div>
                     <h3>Secure & Private</h3>
                     <p>Built for internal corporate use. Session isolation and secure login for moderators ensure data privacy.</p>
                 </div>
 
                 <div class="feature-card">
-                    <div class="feature-icon">📊</div>
+                    <div class="feature-icon"><i class="fa-solid fa-chart-simple"></i></div>
                     <h3>Instant Visuals</h3>
                     <p>Data is automatically organized into a clean, masonry-style grid that adapts perfectly to any screen size.</p>
                 </div>
