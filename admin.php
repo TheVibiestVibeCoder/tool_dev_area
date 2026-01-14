@@ -455,6 +455,7 @@ $data = safeReadJson($data_file);
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
         /* --- RESET & VARIABLES --- */
@@ -500,7 +501,7 @@ $data = safeReadJson($data_file);
         /* --- HEADER --- */
         .admin-header {
             display: flex; 
-            justify-content: space-between; /* DESKTOP: Pushes Title left, Buttons right */
+            justify-content: space-between; 
             align-items: flex-end;
             background: var(--bg-card);
             padding: 2rem 3rem; 
@@ -521,7 +522,6 @@ $data = safeReadJson($data_file);
             font-family: var(--font-head);
         }
         
-        /* Desktop: Buttons aligned normally */
         .header-actions { 
             display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 5px; 
         }
@@ -543,6 +543,7 @@ $data = safeReadJson($data_file);
             transition: all var(--trans-speed) cubic-bezier(0.4, 0, 0.2, 1);
             min-height: 44px; 
             white-space: nowrap;
+            gap: 8px; /* Spacing for icons */
         }
         
         .btn:hover, .btn:active { 
@@ -733,7 +734,6 @@ $data = safeReadJson($data_file);
         @media (max-width: 900px) {
             .container { padding: 1rem; }
             
-            /* Header Stacking for Mobile */
             .admin-header { 
                 flex-direction: column; align-items: flex-start; 
                 gap: 1.5rem; padding: 1.5rem; 
@@ -742,16 +742,13 @@ $data = safeReadJson($data_file);
             
             .header-title-group { width: 100%; margin-bottom: 1rem; }
 
-            /* Header buttons: 2x2 Grid */
             .header-actions { 
                 width: 100%; display: grid; 
                 grid-template-columns: 1fr 1fr; gap: 8px; margin-left: 0;
             }
             .header-actions .btn { width: 100%; height: 50px; font-size: 1rem; }
-            /* Last button spans full width if odd number */
             .header-actions .btn:last-child:nth-child(odd) { grid-column: span 2; }
 
-            /* Command Panel vertical stack */
             .command-panel { padding: 1.5rem; }
             .command-row { flex-direction: column; gap: 2rem; }
             .command-col { width: 100%; }
@@ -759,9 +756,8 @@ $data = safeReadJson($data_file);
             .global-btns { gap: 15px; }
             .global-btns .btn { height: 60px; font-size: 1.4rem; }
 
-            /* Sectors: Clean Vertical List for Mobile */
             .sector-container { 
-                grid-template-columns: 1fr 1fr; /* 2 columns for thumb reach */
+                grid-template-columns: 1fr 1fr;
                 gap: 10px;
             }
             .sector-ctrl {
@@ -772,15 +768,12 @@ $data = safeReadJson($data_file);
             .sector-ctrl > div { width: 100%; display: flex; justify-content: space-between; font-size: 1.2rem; }
             .st-btn { padding: 8px; font-size: 1rem; }
 
-            /* Feed goes single column */
             #admin-feed { grid-template-columns: 1fr; }
             
-            /* Card Buttons: 2x2 Grid to prevent squishing */
             .card-actions { 
                 grid-template-columns: 1fr 1fr; 
                 gap: 10px;
             }
-            /* Make the Delete button fit in the grid logic */
             .card-actions .btn:nth-child(4) { grid-column: auto; } 
             .card-actions .btn { height: 50px; font-size: 1.1rem; }
 
@@ -799,17 +792,17 @@ $data = safeReadJson($data_file);
             <h1>Workshop Control</h1>
         </div>
         <div class="header-actions">
-            <a href="customize.php" class="btn">Customize</a>
-            <a href="subscription_manage.php" class="btn">Subscription</a>
-            <a href="admin.php?mode=pdf" target="_blank" class="btn">PDF Export</a>
-            <a href="index.php?u=<?= urlencode($user_id) ?>" target="_blank" class="btn btn-primary">Open Live View</a>
-            <a href="logout.php" class="btn btn-danger">Logout</a>
+            <a href="customize.php" class="btn"><i class="fa-solid fa-sliders"></i> Customize</a>
+            <a href="subscription_manage.php" class="btn"><i class="fa-solid fa-credit-card"></i> Subscription</a>
+            <a href="admin.php?mode=pdf" target="_blank" class="btn"><i class="fa-solid fa-file-pdf"></i> PDF Export</a>
+            <a href="index.php?u=<?= urlencode($user_id) ?>" target="_blank" class="btn btn-primary"><i class="fa-solid fa-eye"></i> Open Live View</a>
+            <a href="logout.php" class="btn btn-danger"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
         </div>
     </header>
 
     <div class="info-box">
         <h3 id="linksToggle">
-            <span>🔗 Connection Links</span>
+            <span><i class="fa-solid fa-link"></i> Connection Links</span>
             <span class="collapse-icon" id="collapseIcon">▼</span>
         </h3>
         <div class="info-box-content" id="linksContent">
@@ -825,14 +818,14 @@ $data = safeReadJson($data_file);
     </div>
 
     <div class="command-panel">
-        <h3>Session Controls</h3>
+        <h3><i class="fa-solid fa-terminal"></i> Session Controls</h3>
         
         <div class="command-row">
             <div class="command-col">
                 <span class="command-label">GLOBAL ACTIONS</span>
                 <div class="global-btns">
-                    <button onclick="if(confirm('Go LIVE with ALL cards?')) runCmd('action_all=show')" class="btn btn-success">ALL LIVE</button>
-                    <button onclick="if(confirm('HIDE ALL cards?')) runCmd('action_all=hide')" class="btn btn-danger">ALL HIDE</button>
+                    <button onclick="if(confirm('Go LIVE with ALL cards?')) runCmd('action_all=show')" class="btn btn-success"><i class="fa-solid fa-play"></i> ALL LIVE</button>
+                    <button onclick="if(confirm('HIDE ALL cards?')) runCmd('action_all=hide')" class="btn btn-danger"><i class="fa-solid fa-stop"></i> ALL HIDE</button>
                 </div>
             </div>
             
@@ -856,7 +849,7 @@ $data = safeReadJson($data_file);
 
     <div style="margin-bottom: 2rem;">
         <div class="feed-header">
-            <h2>Incoming Data Feed</h2>
+            <h2><i class="fa-solid fa-rss"></i> Incoming Data Feed</h2>
             <div id="purge-btn-wrapper"></div>
         </div>
     </div>
@@ -877,7 +870,6 @@ $data = safeReadJson($data_file);
         const icon = document.getElementById('collapseIcon');
         const storageKey = 'admin_links_collapsed';
 
-        // Restore state from localStorage
         if (localStorage.getItem(storageKey) === 'true') {
             content.classList.add('collapsed');
             icon.classList.add('collapsed');
@@ -901,7 +893,7 @@ $data = safeReadJson($data_file);
         const purgeWrapper = document.getElementById('purge-btn-wrapper');
         
         if (data.length > 0) {
-            purgeWrapper.innerHTML = `<button onclick="if(confirm('WARNING: PERMANENTLY DELETE ALL?')) runCmd('deleteall=confirm')" class="btn btn-danger btn-sm">PURGE ALL DATA</button>`;
+            purgeWrapper.innerHTML = `<button onclick="if(confirm('WARNING: PERMANENTLY DELETE ALL?')) runCmd('deleteall=confirm')" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash-can"></i> PURGE ALL DATA</button>`;
         } else {
             purgeWrapper.innerHTML = '';
             feed.innerHTML = '<div style="padding: 4rem; text-align: center; color: #ccc; grid-column: 1 / -1; font-family: var(--font-head); font-size: 2rem;">NO DATA AVAILABLE</div>';
@@ -930,7 +922,7 @@ $data = safeReadJson($data_file);
             
             const cardStatusClass = isVisible ? 'status-live' : 'status-hidden';
             const btnClass = isVisible ? 'btn-danger' : 'btn-success'; 
-            const btnText = isVisible ? 'HIDE' : 'GO LIVE';
+            const btnText = isVisible ? '<i class="fa-solid fa-eye-slash"></i> HIDE' : '<i class="fa-solid fa-tower-broadcast"></i> GO LIVE';
             const focusClass = isFocused ? 'is-focused' : '';
 
             const escapedText = entry.text.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -954,9 +946,9 @@ $data = safeReadJson($data_file);
                 </div>
 
                 <div class="card-actions">
-                    <button onclick="toggleEditMode('${escapedId}')" class="btn" data-id="${escapedId}">EDIT</button>
+                    <button onclick="toggleEditMode('${escapedId}')" class="btn" data-id="${escapedId}"><i class="fa-solid fa-pen-to-square"></i> EDIT</button>
 
-                    <button onclick="runCmd('toggle_focus=${escapedId}')" class="btn btn-focus ${focusClass}">FOCUS</button>
+                    <button onclick="runCmd('toggle_focus=${escapedId}')" class="btn btn-focus ${focusClass}"><i class="fa-solid fa-bullseye"></i> FOCUS</button>
 
                     <button onclick="runCmd('toggle_id=${escapedId}')" class="btn ${btnClass}">
                         ${btnText}
@@ -966,7 +958,7 @@ $data = safeReadJson($data_file);
                 </div>
 
                 <div class="card-edit-actions" style="display: none;">
-                    <button onclick="saveEdit('${escapedId}')" class="btn btn-success">💾 SAVE</button>
+                    <button onclick="saveEdit('${escapedId}')" class="btn btn-success"><i class="fa-solid fa-floppy-disk"></i> SAVE</button>
                     <button onclick="cancelEdit('${escapedId}')" class="btn">CANCEL</button>
                 </div>
             </div>`;
@@ -974,7 +966,6 @@ $data = safeReadJson($data_file);
         
         feed.innerHTML = html;
 
-        // Update Sector Button States
         Object.keys(sectorCounts).forEach(key => {
             const ctrl = document.getElementById('ctrl-' + key);
             if(ctrl) {
