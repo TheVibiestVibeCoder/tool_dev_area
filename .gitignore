@@ -12,6 +12,10 @@ users.json
 password_reset_tokens.json
 rate_limits.json
 
+# Dev Admin Data (sensitive)
+dev_admins.json
+dev_admin_rate_limit.json
+
 # Backups
 backups/
 *.backup
