@@ -102,14 +102,14 @@ function calculatePlatformStats($users) {
     foreach ($users as $user) {
         // Count active users (logged in within last week)
         if (isset($user['last_login'])) {
-            $lastLogin = strtotime($user['last_login']);
+            $lastLogin = is_numeric($user['last_login']) ? $user['last_login'] : strtotime($user['last_login']);
             if ($lastLogin && $lastLogin > $oneWeekAgo) {
                 $stats['active_users']++;
             }
         }
 
-        // Count subscription types
-        $plan = $user['subscription']['plan'] ?? 'free';
+        // Count subscription types - FIXED: use plan_id not plan
+        $plan = $user['subscription']['plan_id'] ?? 'free';
         $status = $user['subscription']['status'] ?? 'active';
 
         if ($status === 'active' || $status === 'trialing') {
@@ -130,8 +130,8 @@ function calculatePlatformStats($users) {
             $stats['subscription_breakdown']['cancelled']++;
         }
 
-        // Count workshops and entries for this user
-        $userId = $user['user_id'] ?? null;
+        // Count workshops and entries for this user - FIXED: use 'id' not 'user_id'
+        $userId = $user['id'] ?? null;
         if ($userId) {
             $userDataDir = __DIR__ . '/data/' . $userId;
             if (is_dir($userDataDir)) {
@@ -163,7 +163,7 @@ function getAllWorkshops($users) {
     $workshops = [];
 
     foreach ($users as $user) {
-        $userId = $user['user_id'] ?? null;
+        $userId = $user['id'] ?? null; // FIXED: use 'id' not 'user_id'
         if (!$userId) continue;
 
         $userDataDir = __DIR__ . '/data/' . $userId;
@@ -216,11 +216,11 @@ function generatePasswordResetTokenForUser($userId) {
         return ['success' => false, 'message' => 'Invalid users data'];
     }
 
-    // Find user
+    // Find user - FIXED: use 'id' not 'user_id'
     $userFound = false;
     $userEmail = '';
     foreach ($data['users'] as $user) {
-        if ($user['user_id'] === $userId) {
+        if ($user['id'] === $userId) {
             $userFound = true;
             $userEmail = $user['email'];
             break;
@@ -724,11 +724,11 @@ function generatePasswordResetTokenForUser($userId) {
                     <tbody>
                         <?php foreach ($allUsers as $user): ?>
                             <tr>
-                                <td><?php echo htmlspecialchars(substr($user['user_id'] ?? 'N/A', 0, 8)); ?></td>
+                                <td><?php echo htmlspecialchars(substr($user['id'] ?? 'N/A', 0, 8)); ?></td>
                                 <td><?php echo htmlspecialchars($user['email'] ?? 'N/A'); ?></td>
                                 <td>
                                     <?php
-                                    $plan = $user['subscription']['plan'] ?? 'free';
+                                    $plan = $user['subscription']['plan_id'] ?? 'free';
                                     $badgeClass = 'badge-' . $plan;
                                     ?>
                                     <span class="badge <?php echo $badgeClass; ?>"><?php echo ucfirst($plan); ?></span>
@@ -740,10 +740,16 @@ function generatePasswordResetTokenForUser($userId) {
                                     ?>
                                     <span class="badge <?php echo $statusClass; ?>"><?php echo ucfirst($status); ?></span>
                                 </td>
-                                <td><?php echo htmlspecialchars(date('Y-m-d', strtotime($user['created_at'] ?? 'now'))); ?></td>
-                                <td><?php echo isset($user['last_login']) ? htmlspecialchars(date('Y-m-d H:i', strtotime($user['last_login']))) : 'Never'; ?></td>
+                                <td><?php
+                                    $createdAt = $user['created_at'] ?? null;
+                                    echo $createdAt ? htmlspecialchars(date('Y-m-d', is_numeric($createdAt) ? $createdAt : strtotime($createdAt))) : 'N/A';
+                                ?></td>
+                                <td><?php
+                                    $lastLogin = $user['last_login'] ?? null;
+                                    echo $lastLogin ? htmlspecialchars(date('Y-m-d H:i', is_numeric($lastLogin) ? $lastLogin : strtotime($lastLogin))) : 'Never';
+                                ?></td>
                                 <td>
-                                    <button class="btn btn-primary btn-small" onclick="sendResetLink('<?php echo htmlspecialchars($user['user_id'] ?? ''); ?>', '<?php echo htmlspecialchars($user['email'] ?? ''); ?>')">
+                                    <button class="btn btn-primary btn-small" onclick="sendResetLink('<?php echo htmlspecialchars($user['id'] ?? ''); ?>', '<?php echo htmlspecialchars($user['email'] ?? ''); ?>')">
                                         🔐 Reset Password
                                     </button>
                                 </td>
