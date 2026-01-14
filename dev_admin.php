@@ -187,10 +187,15 @@ function getAllWorkshops($users) {
                     }
                 }
 
+                // Get title and strip HTML tags (like <br>)
+                $title = $config['header_title'] ?? $config['title'] ?? 'Untitled Workshop';
+                $title = strip_tags($title); // Remove HTML tags
+                $title = str_replace("\n", ' ', $title); // Replace newlines with spaces
+
                 $workshops[] = [
                     'user_id' => $userId,
                     'user_email' => $user['email'] ?? 'N/A',
-                    'title' => $config['title'] ?? 'Untitled Workshop',
+                    'title' => $title,
                     'categories_count' => isset($config['categories']) ? count($config['categories']) : 0,
                     'entries_count' => $entryCount,
                     'created_at' => $user['created_at'] ?? 'N/A'
