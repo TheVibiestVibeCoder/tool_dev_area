@@ -267,58 +267,13 @@ function isPathSafe($file_path, $base_dir = __DIR__) {
 }
 
 /**
- * CSRF Token Wrapper Functions
- * These functions provide compatibility wrappers for the CSRF functions
- * defined in user_auth.php (generateCSRFToken and validateCSRFToken)
+ * CSRF Token Compatibility Aliases
+ *
+ * Note: The actual CSRF functions (generateCSRFToken and validateCSRFToken)
+ * are defined in user_auth.php. These aliases provide lowercase versions
+ * for consistency across the codebase.
+ *
+ * Files using these functions must include user_auth.php first.
  */
-
-if (!function_exists('generateCsrfToken')) {
-    /**
-     * Generate CSRF token - wrapper for generateCSRFToken()
-     * @return string CSRF token
-     */
-    function generateCsrfToken() {
-        // Ensure session is started
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
-        // Check if user_auth.php function exists
-        if (function_exists('generateCSRFToken')) {
-            return generateCSRFToken();
-        }
-
-        // Fallback: generate token directly
-        if (!isset($_SESSION['csrf_token'])) {
-            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-        }
-        return $_SESSION['csrf_token'];
-    }
-}
-
-if (!function_exists('verifyCsrfToken')) {
-    /**
-     * Verify CSRF token - wrapper for validateCSRFToken()
-     * @param string $token Token to verify
-     * @return bool True if token is valid
-     */
-    function verifyCsrfToken($token) {
-        // Ensure session is started
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
-        // Check if user_auth.php function exists
-        if (function_exists('validateCSRFToken')) {
-            return validateCSRFToken($token);
-        }
-
-        // Fallback: validate token directly
-        if (!isset($_SESSION['csrf_token'])) {
-            return false;
-        }
-        return hash_equals($_SESSION['csrf_token'], $token);
-    }
-}
 
 ?>

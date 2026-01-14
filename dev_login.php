@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/dev_admin_auth.php';
+require_once __DIR__ . '/user_auth.php'; // For CSRF token functions
 require_once __DIR__ . '/security_helpers.php';
 
 // Initialize security
