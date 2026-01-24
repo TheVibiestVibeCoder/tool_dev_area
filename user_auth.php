@@ -176,8 +176,8 @@ function authenticateUser($email, $password) {
 
     $email = trim(strtolower($email));
 
-    // Check rate limiting (5 attempts per 15 minutes)
-    if (!checkRateLimit('login', $_SERVER['REMOTE_ADDR'], 5, 900)) {
+    // Check rate limiting (20 attempts per 15 minutes)
+    if (!checkRateLimit('login', $_SERVER['REMOTE_ADDR'], 20, 900)) {
         return ['success' => false, 'message' => 'Too many login attempts. Please try again later.', 'user' => null];
     }
 
@@ -207,6 +207,9 @@ function authenticateUser($email, $password) {
         usleep(random_int(100000, 300000));
         return ['success' => false, 'message' => $generic_error, 'user' => null];
     }
+
+    // Reset rate limit counter on successful login
+    resetRateLimit('login', $_SERVER['REMOTE_ADDR']);
 
     // Update last login
     $user['last_login'] = time();
@@ -669,6 +672,70 @@ function checkRateLimit($action, $identifier, $max_attempts, $window_seconds) {
 
     // Increment attempts
     $limits_data['limits'][$limit_index]['attempts']++;
+
+    // Write atomically
+    ftruncate($fp, 0);
+    rewind($fp);
+    fwrite($fp, json_encode($limits_data, JSON_PRETTY_PRINT));
+    fflush($fp);
+
+    // 🔓 Release lock and close
+    flock($fp, LOCK_UN);
+    fclose($fp);
+
+    return true;
+}
+
+/**
+ * Reset rate limit for a specific action and identifier
+ * 🔒 SECURITY: Uses flock() to prevent race conditions
+ *
+ * @param string $action Action name (e.g., 'login', 'register')
+ * @param string $identifier Identifier (e.g., IP address)
+ * @return bool True if reset successful, false otherwise
+ */
+function resetRateLimit($action, $identifier) {
+    if (!file_exists(RATE_LIMIT_FILE)) {
+        // No rate limit file, nothing to reset
+        return true;
+    }
+
+    // Open file for reading/writing
+    $fp = fopen(RATE_LIMIT_FILE, 'c+');
+    if (!$fp) {
+        error_log("Rate limit reset: Failed to open file");
+        return false;
+    }
+
+    // 🔒 Acquire exclusive lock
+    if (!flock($fp, LOCK_EX)) {
+        fclose($fp);
+        error_log("Rate limit reset: Failed to acquire lock");
+        return false;
+    }
+
+    // Read current limits
+    $filesize = filesize(RATE_LIMIT_FILE);
+    $limits_data = ['limits' => []];
+    if ($filesize > 0) {
+        $content = fread($fp, $filesize);
+        $limits_data = json_decode($content, true) ?: ['limits' => []];
+    }
+
+    $key = $action . '_' . $identifier;
+
+    // Find and remove the limit record
+    $found = false;
+    foreach ($limits_data['limits'] as $index => $record) {
+        if ($record['key'] === $key) {
+            unset($limits_data['limits'][$index]);
+            $found = true;
+            break;
+        }
+    }
+
+    // Re-index array after unset
+    $limits_data['limits'] = array_values($limits_data['limits']);
 
     // Write atomically
     ftruncate($fp, 0);

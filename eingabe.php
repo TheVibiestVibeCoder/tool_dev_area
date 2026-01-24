@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $new_entry = [
                 'id' => uniqid(random_int(1000, 9999) . '_', true), // Bessere ID-Generierung
                 'thema' => $thema,
-                'text' => htmlspecialchars($idee, ENT_QUOTES, 'UTF-8'),
+                'text' => $idee, // Store raw text - encoding happens during output
                 'zeit' => time(),
                 'visible' => false,
                 'focus' => false
