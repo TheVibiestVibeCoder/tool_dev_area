@@ -284,6 +284,10 @@
     // Target URL
     const TARGET_URL = 'https://learn.disinfoconsulting.eu/tool_dev_area/index.php?u=user_69652d6c2c1019.29189236';
 
+    // Extract user ID from TARGET_URL
+    const USER_ID = new URLSearchParams(new URL(TARGET_URL).search).get('u');
+    const EINGABE_URL = `eingabe.php?u=${USER_ID}`;
+
     // --- CONTENT GENERATOR ---
     const buzzwords = [
         "Desinformation", "Fake News", "Medienkompetenz", "Algorithmen", "Filterblasen",
@@ -375,7 +379,8 @@
 
         log('═══════════════════════════════════════', 'info');
         log(`🚀 STRESS TEST GESTARTET: ${numRequests} gleichzeitige Requests`, 'warning');
-        log(`📍 Ziel: ${TARGET_URL}`, 'info');
+        log(`📍 Ziel Dashboard: ${TARGET_URL}`, 'info');
+        log(`📝 Eingabe URL: ${EINGABE_URL}`, 'info');
         log(`📂 Thema: ${selectedThema === 'random' ? 'Zufällig gemischt' : selectedThema}`, 'info');
         log('═══════════════════════════════════════', 'info');
 
@@ -394,7 +399,7 @@
 
             if(numRequests <= 5) log(`📤 Sende: "${fakeContent.substring(0, 30)}..." an ${thema}`, 'info');
 
-            const promise = fetch('eingabe.php', {
+            const promise = fetch(EINGABE_URL, {
                 method: 'POST',
                 body: formData
             })
